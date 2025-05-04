@@ -5,6 +5,8 @@ export default function Home() {
     <>
       <h1>Hola a todos, Saludos desde dev</h1>
       <p>Me gusta comer, tengo hambre</p>
+      <p>No me gusta comer, no tengo hambre</p>
+      <button>Click me</button>
     </>
   );
 }
