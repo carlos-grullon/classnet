@@ -2,6 +2,27 @@
 import Link from 'next/link';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { PiStudentFill } from 'react-icons/pi';
+import { LeerCookie } from '@/utils/Tools.tsx';
+
+// Verificar que el tipo de usuario sea profesor y estudiante
+// async function verificarTipoUsuario() {
+//     const sessionId = LeerCookie('sessionId');
+//     if (!sessionId) {
+//         return;
+//     }
+//     const response = await fetch('/api/verify-session', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ sessionId }),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) {
+//         throw new Error(data.error || 'Error al verificar la sesión');
+//     }
+//     return data.userType;
+// }
 
 export default function Home() {
   return (
