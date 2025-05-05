@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Register } from "@/app/model/Auth";
+import { Register } from "@/model/Auth";
 
 export async function POST(request: Request) {
     try {
