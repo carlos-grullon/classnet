@@ -1,30 +1,24 @@
 'use client';
+
 import Link from 'next/link';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { PiStudentFill } from 'react-icons/pi';
-import { LeerCookie } from '@/utils/Tools.tsx';
+import { FetchData } from '@/utils/Tools.tsx';
 
-// Verificar que el tipo de usuario sea profesor y estudiante
-// async function verificarTipoUsuario() {
-//     const sessionId = LeerCookie('sessionId');
-//     if (!sessionId) {
-//         return;
-//     }
-//     const response = await fetch('/api/verify-session', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ sessionId }),
-//     });
-//     const data = await response.json();
-//     if (!response.ok) {
-//         throw new Error(data.error || 'Error al verificar la sesión');
-//     }
-//     return data.userType;
-// }
+async function ValidateUserType() {
+  const data = await FetchData('/api/session', {}, "GET");
+  const sessionValue = data.sessionValue;
+  if (sessionValue.userIsStudent && sessionValue.userIsTeacher) {
+    return;
+  } else if (sessionValue.userIsStudent) {
+    window.location.href = '/student/dashboard';
+  } else if (sessionValue.userIsTeacher) {
+    window.location.href = '/teacher/dashboard';
+  }
+}
 
 export default function Home() {
+  ValidateUserType();
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
       <div className="text-center">

@@ -25,13 +25,14 @@ export function EliminarCookie(name: string) {
 }
 
 export async function FetchData(url: string, data: Record<string, any> = {}, method: string = "POST", extraHeaders: Record<string, any> = {}) {
-    const response = await fetch(url, {
+    const requestBody = { body: JSON.stringify(data) };
+    const response = await fetch((process.env.HOST_AND_PORT || 'http://localhost:3000') + url, {
         method: method,
         headers: {
             "Content-Type": "application/json",
             ...extraHeaders
         },
-        body: JSON.stringify(data),
+        ...(method !== "GET" ? requestBody : {}),
         credentials: "include"
     });
 
