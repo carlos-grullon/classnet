@@ -8,9 +8,11 @@ export async function middleware(request: NextRequest) {
     const publicPaths = [
         '/login', 
         '/register', 
-        '/api/auth',
+        '/api/login',
+        '/api/register',
         '/_next/static', 
         '/favicon.ico',
+        '/api/session',
     ];
     
     // Si la ruta es pública, continuar sin verificar autenticación

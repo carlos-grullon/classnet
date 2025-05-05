@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { deleteSession } from "@/utils/Session";
-import { LeerCookie } from "@/utils/Tools.ts";
+import { LeerCookie } from "@/utils/Tools.tsx";
 
-export async function POST(request: Request) {
+export async function POST(_: Request) {
     try {
-        const sessionId = LeerCookie(request, 'sessionId');
+        const sessionId = LeerCookie('sessionId');
         if (!sessionId) {
             return NextResponse.json({ error: 'No se encontro una sesion' }, { status: 401 });
         }
