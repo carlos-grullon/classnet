@@ -36,7 +36,10 @@ export async function Register(
                 user_is_teacher: true
             }, { $set: { user_is_student: true } })
         } else {
-            throw new Error('User already exists')
+            if (user.user_is_student && user.user_is_teacher) {
+                throw new Error(`El usuario ya existe.`)
+            }
+            throw new Error(`Este usuario ya tiene una cuenta como ${user_type === 'P' ? 'Profesor' : 'Estudiante'}. Desea agregarlo como ${user_type === 'P' ? 'Estudiante' : 'Profesor'}?`)
         }
     }
 }
