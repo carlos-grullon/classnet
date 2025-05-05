@@ -1,11 +1,12 @@
-import Image from "next/image";
+// import Image from "next/image";
 
 export default function Home() {
   return (
     <>
       <h1>Hola a todos, Saludos desde dev</h1>
       <p>Me gusta comer, tengo hambre</p>
-      <button>Click me</button>
+      <p>No me gusta comer, no tengo hambre</p>
+      <button>Click me but not so hard</button>
     </>
   );
 }
