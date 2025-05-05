@@ -74,9 +74,38 @@ const RegisterForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setSuccessMessage('¡Registro exitoso! Revisa tu correo.');
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.name,
+          email: formData.email,
+          password: formData.password,
+          user_type: formData.userType
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en el registro');
+      }
+      
+      // Guardamos el ID de sesión en localStorage
+      if (data.idSession) {
+        localStorage.setItem('sessionId', data.idSession);
+      }
+
+      setSuccessMessage('¡Registro exitoso! Redirigiendo...');
       setFormData({ name: '', email: '', password: '', userType: 'P' });
+
+      // Redirigir después de un breve delay
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+
     } catch (error: any) {
       console.error('Error al registrar:', error);
       setErrors({ general: error.message || 'Ocurrió un error al registrar.' });
@@ -142,7 +171,9 @@ const RegisterForm: React.FC = () => {
         <div className="flex items-center justify-between">
           <button
             type="submit"
-            className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`bg-blue-500 w-full hover:bg-blue-700 text-white 
+              font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline 
+              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={isLoading}
           >
             {isLoading ? 'Registrando...' : 'Registrarse'}
