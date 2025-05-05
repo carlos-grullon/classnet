@@ -10,7 +10,12 @@ export async function POST(request: Request) {
             data.email,
         )
         const idSession = await createSession('', user);
-        return NextResponse.json({ idSession: idSession, twoAccountsFound: user.user_is_student && user.user_is_teacher });
+        return NextResponse.json({
+            idSession: idSession,
+            twoAccountsFound: user.user_is_student && user.user_is_teacher,
+            userIsStudent: user.user_is_student,
+            userIsTeacher: user.user_is_teacher
+        });
     } catch (error) {
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
