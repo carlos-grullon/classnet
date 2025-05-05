@@ -1,19 +1,5 @@
 @import "tailwindcss";
 
-/* Prevenir parpadeo del tema */
-html {
-  visibility: visible;
-  opacity: 1;
-}
-
-html[data-theme] {
-  color-scheme: light;
-}
-
-html[data-theme="dark"] {
-  color-scheme: dark;
-}
-
 :root[data-theme="light"] {
   /* Colores principales */
   --background: #f5f8fd;
