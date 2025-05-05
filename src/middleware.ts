@@ -3,6 +3,12 @@ import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
+    if (
+        (pathname.startsWith('/login') || pathname.startsWith('/register')) &&
+        request.cookies.get('sessionId')
+    ) {
+        return NextResponse.redirect(new URL('/', request.url));
+    }
 
     if (
         pathname.startsWith('/_next/static') ||
