@@ -25,12 +25,11 @@ export async function Register(
     })
 }
 
-export async function Login(username: string, password: string, user_type: string) {
+export async function Login(password: string, email: string) {
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({
-        username: username,
-        password: password,
-        user_type: user_type
+        email: email,
+        password: password
     })
     if (!user) {
         throw new Error('Invalid credentials')
