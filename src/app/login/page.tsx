@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/forms/FormInput";
-import { Modal } from "@/components/Modal";
 
 interface FormData {
   email: string;
@@ -42,51 +41,6 @@ export default function LoginPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [tempLoginData, setTempLoginData] = useState<any>(null);
-
-  const handleRoleSelection = async (role: 'P' | 'A') => {
-    setShowRoleModal(false);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...tempLoginData,
-          user_type: role
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al iniciar sesión");
-      }
-
-      // Guardamos el ID de sesión
-      if (data.idSession) {
-        localStorage.setItem("sessionId", data.idSession);
-      }
-
-      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
-      setFormData({ email: "", password: "" });
-
-      // Redirigir después de un breve delay
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-    } catch (error: any) {
-      console.error("Error al iniciar sesión:", error);
-      setErrors({ general: error.message || "Error al iniciar sesión" });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -116,16 +70,12 @@ export default function LoginPage() {
       if (!response.ok) {
         throw new Error(data.error || "Error al iniciar sesión");
       }
-
+      
       if (data.TwoAccountsFound === true) {
-        setTempLoginData({
-          email: formData.email,
-          password: formData.password
-        });
-        setShowRoleModal(true);
+        console.log("Se encontraron dos cuentas");
         return;
       }
-
+      
       // Guardamos el ID de sesión
       if (data.idSession) {
         localStorage.setItem("sessionId", data.idSession);
@@ -147,7 +97,6 @@ export default function LoginPage() {
   };
 
   return (
-    <>
     <AuthCard
       title="Iniciar Sesión"
       error={errors.general}
@@ -193,11 +142,5 @@ export default function LoginPage() {
         </div>
       </form>
     </AuthCard>
-    <Modal
-      isOpen={showRoleModal}
-      onClose={() => setShowRoleModal(false)}
-      onSelectRole={handleRoleSelection}
-    />
-    </>
-      );
+  );
 }
