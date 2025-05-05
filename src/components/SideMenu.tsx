@@ -1,25 +1,34 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
-import { useTheme } from '@/hooks/useTheme';
-import { EliminarCookie, LeerCookie } from '@/utils/Tools.tsx';
+import { EliminarCookie } from '@/utils/Tools.tsx';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const { theme, toggleTheme } = useTheme();
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    // Obtener preferencia del sistema
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    // Obtener tema guardado o usar preferencia del sistema
+    const savedTheme = localStorage.getItem('theme') || systemTheme;
+    setTheme(savedTheme as 'light' | 'dark');
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   const handleLogout = async () => {
     try {
       const response = await fetch('/api/logout', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId: LeerCookie('sessionId'),
-        }),
       });
       if (response.ok) {
         EliminarCookie('sessionId');
