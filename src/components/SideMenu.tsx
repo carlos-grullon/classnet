@@ -4,7 +4,7 @@ import { FiMenu, FiX } from 'react-icons/fi';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { useTheme } from '@/hooks/useTheme';
-import { EliminarCookie } from '@/utils/Tools.tsx';
+import { EliminarCookie, LeerCookie } from '@/utils/Tools.tsx';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,6 +14,12 @@ export default function SideMenu() {
     try {
       const response = await fetch('/api/logout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: LeerCookie('sessionId'),
+        }),
       });
       if (response.ok) {
         EliminarCookie('sessionId');
@@ -38,7 +44,7 @@ export default function SideMenu() {
       {/* Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity"
+          className="fixed inset-0 bg-black/30 z-40 transition-opacity"
           onClick={() => setIsOpen(false)}
         />
       )}
