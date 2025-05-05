@@ -4,27 +4,41 @@ import { HashPassword, ComparePassword } from "../utils/Tools";
 export async function Register(
     username: string,
     password: string,
-    user_type: string,
+    user_type: 'E' | 'P',
     email: string,
 ) {
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({
-        email: email, user_type: user_type
+        email: email
     })
-    if (user) {
-        throw new Error('User already exists')
+
+    if (!user) {
+        await usersCollection.insertOne({
+            username: username,
+            password: await HashPassword(password),
+            user_is_student: user_type === 'E',
+            user_is_teacher: user_type === 'P',
+            email: email,
+            status: 'A',
+            data: {},
+            created_at: new Date(),
+            updated_at: new Date()
+        })
+    } else {
+        if (user.user_is_student && user_type === 'P') {
+            await usersCollection.updateOne({
+                email: email,
+                user_is_student: true
+            }, { $set: { user_is_teacher: true } })
+        } else if (user.user_is_teacher && user_type === 'E') {
+            await usersCollection.updateOne({
+                email: email,
+                user_is_teacher: true
+            }, { $set: { user_is_student: true } })
+        } else {
+            throw new Error('User already exists')
+        }
     }
-    await usersCollection.insertOne({
-        username: username,
-        password: await HashPassword(password),
-        user_is_student: user_type === 'E',
-        user_is_teacher: user_type === 'P',
-        email: email,
-        status: 'A',
-        data: {},
-        created_at: new Date(),
-        updated_at: new Date()
-    })
 }
 
 export async function Login(password: string, email: string) {
