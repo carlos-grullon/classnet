@@ -17,7 +17,8 @@ export async function Register(
     await usersCollection.insertOne({
         username: username,
         password: await HashPassword(password),
-        user_type: user_type,
+        user_is_student: user_type === 'E',
+        user_is_teacher: user_type === 'P',
         email: email,
         status: 'A',
         data: {},
@@ -26,52 +27,20 @@ export async function Register(
     })
 }
 
-export async function Login(password: string, email: string, user_type: string) {
+export async function Login(password: string, email: string) {
     const usersCollection = await getCollection('users');
-    if (user_type === 'A') {
-        var users = await usersCollection.find({
-            email: email
-        })
-    } else {
-        var users = await usersCollection.find({
-            email: email,
-            user_type: user_type
-        })
-    }
+    const user = await usersCollection.findOne({
+        email: email,
+    })
 
-    if (!users) {
+    if (!user) {
         throw new Error('Invalid credentials')
     }
 
-    let usersArray = await users.toArray();
-    if (usersArray.length === 1) {
-        let password1 = usersArray[0].password;
-        let passwordOk = await ComparePassword(password, password1);
-        if (!passwordOk) {
-            throw new Error('Invalid credentials')
-        }
-        return usersArray;
+    const isPasswordValid = await ComparePassword(password, user.password);
+    if (!isPasswordValid) {
+        throw new Error('Invalid credentials')
     }
-    let password1 = usersArray[0].password;
-    let password2 = usersArray[1].password;
 
-    if (password1 !== password2) {
-        let password1Ok = await ComparePassword(password, password1);
-        let password2Ok = await ComparePassword(password, password2);
-        if (!password1Ok && !password2Ok) {
-            throw new Error('Invalid credentials')
-        }
-
-        if (password1Ok) {
-            return [usersArray[0]];
-        } else {
-            return [usersArray[1]];
-        }
-    } else {
-        let passwordOk = await ComparePassword(password, password1);
-        if (!passwordOk) {
-            throw new Error('Invalid credentials')
-        }
-        return usersArray;
-    }
+    return user;
 }
