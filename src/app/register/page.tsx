@@ -4,6 +4,7 @@ import React, { useState, FormEvent } from 'react';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect';
+import { CrearCookie } from '@/utils/Tools';
 
 interface FormData {
   name: string;
@@ -92,10 +93,10 @@ const RegisterForm: React.FC = () => {
       if (!response.ok) {
         throw new Error(data.error || 'Error en el registro');
       }
-      
+
       // Guardamos el ID de sesión en localStorage
       if (data.idSession) {
-        localStorage.setItem('sessionId', data.idSession);
+        CrearCookie('sessionId', data.idSession);
       }
 
       setSuccessMessage('¡Registro exitoso! Redirigiendo...');

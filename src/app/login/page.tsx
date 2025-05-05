@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/forms/FormInput";
+import { CrearCookie } from "@/utils/Tools";
 
 interface FormData {
   email: string;
@@ -78,7 +79,7 @@ export default function LoginPage() {
       
       // Guardamos el ID de sesión
       if (data.idSession) {
-        localStorage.setItem("sessionId", data.idSession);
+        CrearCookie('sessionId', data.idSession);
       }
 
       setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
