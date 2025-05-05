@@ -142,4 +142,8 @@ export const closeConnection = async (): Promise<void> => {
     await instance.close();
 };
 
+export const collections = {
+    users: await getCollection('users')
+}
+
 export default MongoDB;
