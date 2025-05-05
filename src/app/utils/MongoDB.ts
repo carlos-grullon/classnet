@@ -8,7 +8,7 @@ type MongoDBConnection = {
 
 // Variables para implementar el patrón singleton
 const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const MONGODB_DB = process.env.DATABASE_NAME || 'classnet';
+const MONGODB_DB = process.env.DATABASE_NAME || 'classnet_dev';
 
 // Caché para mantener una única instancia de conexión
 let cachedConnection: MongoDBConnection | null = null;
@@ -142,8 +142,16 @@ export const closeConnection = async (): Promise<void> => {
     await instance.close();
 };
 
+// Función para obtener las colecciones inicializadas
+export const getInitializedCollections = async () => {
+    return {
+        users: await getCollection('users')
+    };
+};
+
+// Versión sin inicializar (usar getInitializedCollections() para acceder a las colecciones inicializadas)
 export const collections = {
-    users: await getCollection('users')
+    users: null
 }
 
 export default MongoDB;

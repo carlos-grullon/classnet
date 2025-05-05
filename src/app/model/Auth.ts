@@ -1,16 +1,19 @@
-import { collections } from "../utils/MongoDB";
+import { getCollection } from "../utils/MongoDB";
 
 export async function Register(
     username: string,
     password: string,
     user_type: string,
-    email: string
+    email: string,
 ) {
-    const user = await collections.users.findOne({ username: username })
+    const usersCollection = await getCollection('users');
+    const user = await usersCollection.findOne({
+        email: email
+    })
     if (user) {
         throw new Error('User already exists')
     }
-    await collections.users.insertOne({
+    await usersCollection.insertOne({
         username: username,
         password: password,
         user_type: user_type,
@@ -22,13 +25,15 @@ export async function Register(
     })
 }
 
-export async function Login(username: string, password: string) {
-    const user = await collections.users.findOne({ username: username })
+export async function Login(username: string, password: string, user_type: string) {
+    const usersCollection = await getCollection('users');
+    const user = await usersCollection.findOne({
+        username: username,
+        password: password,
+        user_type: user_type
+    })
     if (!user) {
-        throw new Error('User not found')
-    }
-    if (user.password !== password) {
-        throw new Error('Invalid password')
+        throw new Error('Invalid credentials')
     }
     return user
 }
