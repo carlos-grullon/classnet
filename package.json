@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx tsx src/app/utils/Schema.ts && next build",
+    "build": "npx tsx src/utils/Schema.ts && next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-db": "npx tsx src/app/utils/Schema.ts"
+    "setup-db": "npx tsx src/utils/Schema.ts"
   },
   "dependencies": {
     "dotenv": "^16.5.0",

@@ -14,7 +14,7 @@ export async function createIndexes(): Promise<void> {
     await usersCollection.dropIndex('Username');
     await usersCollection.dropIndex('UserType');
 
-    await usersCollection.createIndex({ email: 1 }, { unique: true, name: 'U_Email' });
+    await usersCollection.createIndex({ email: 1, user_type: 1 }, { unique: true, name: 'U_Email' });
     await usersCollection.createIndex({ username: 1 }, { unique: false, name: 'Username' });
     await usersCollection.createIndex({ user_type: 1 }, { unique: false, name: 'UserType' });
 
