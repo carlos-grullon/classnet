@@ -4,6 +4,7 @@ import { FiMenu, FiX } from 'react-icons/fi';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { useTheme } from '@/hooks/useTheme';
+import { EliminarCookie } from '@/utils/Tools.tsx';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,7 @@ export default function SideMenu() {
         method: 'POST',
       });
       if (response.ok) {
+        EliminarCookie('sessionId');
         window.location.href = '/';
       }
     } catch (error) {
