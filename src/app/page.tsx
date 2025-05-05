@@ -1,9 +1,9 @@
 // import Image from "next/image";
 
-export default function Home() {
-  return (
+export default async function Home() {
+    return (
     <>
-      <h1>Hola a todos, Saludos desde dev</h1>
+      <h1>Home</h1>
       <p>Me gusta comer, tengo hambre</p>
       <p>Me gusta comer, tengo hambre</p>
       <p>No me gusta comer, no tengo hambre</p>
