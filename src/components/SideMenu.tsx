@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
-import { EliminarCookie } from '@/utils/Tools.tsx';
+import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,13 +27,9 @@ export default function SideMenu() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/logout', {
-        method: 'POST',
-      });
-      if (response.ok) {
-        EliminarCookie('sessionId');
-        window.location.href = '/';
-      }
+      await FetchData('/api/logout');
+      EliminarCookie('sessionId');
+      window.location.href = '/';
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }

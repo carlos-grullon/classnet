@@ -4,7 +4,7 @@ import React, { useState, FormEvent } from 'react';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect';
-import { CrearCookie } from '@/utils/Tools.tsx';
+import { CrearCookie, FetchData } from '@/utils/Tools.tsx';
 
 interface FormData {
   name: string;
@@ -75,26 +75,13 @@ const RegisterForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.name,
-          email: formData.email,
-          password: formData.password,
-          user_type: formData.userType
-        }),
+      const data = await FetchData("/api/register", {
+        username: formData.name,
+        email: formData.email,
+        password: formData.password,
+        user_type: formData.userType
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error en el registro');
-      }
-
-      // Guardamos el ID de sesión en localStorage
       if (data.idSession) {
         CrearCookie('sessionId', data.idSession);
       }

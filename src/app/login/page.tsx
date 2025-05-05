@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/forms/FormInput";
-import { CrearCookie } from "@/utils/Tools.tsx";
+import { CrearCookie, FetchData } from "@/utils/Tools.tsx";
 
 interface FormData {
   email: string;
@@ -55,22 +55,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+      const data = await FetchData("/api/login", {
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Error al iniciar sesión");
-      }
       CrearCookie('sessionId', data.idSession);
       setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");  
       if (data.twoAccountsFound === true) {
