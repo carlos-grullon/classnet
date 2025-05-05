@@ -13,7 +13,7 @@ export async function getSession(idSession: string): Promise<Record<string, any>
     }
 }
 
-export async function createSession(idSession: string = '', data: Record<string, any> = {}): Promise<void> {
+export async function createSession(idSession: string = '', data: Record<string, any> = {}): Promise<string> {
     try {
         if (idSession === '') {
             idSession = GenerarUuid();
@@ -24,6 +24,7 @@ export async function createSession(idSession: string = '', data: Record<string,
             idSession: idSession,
             data: data,
         });
+        return idSession;
     } catch (err) {
         throw err;
     }
