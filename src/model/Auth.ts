@@ -1,4 +1,5 @@
 import { getCollection } from "../utils/MongoDB";
+import { HashPassword, ComparePassword } from "../utils/Tools";
 
 export async function Register(
     username: string,
@@ -15,7 +16,7 @@ export async function Register(
     }
     await usersCollection.insertOne({
         username: username,
-        password: password,
+        password: await HashPassword(password),
         user_type: user_type,
         email: email,
         status: 'A',
@@ -28,10 +29,14 @@ export async function Register(
 export async function Login(password: string, email: string) {
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({
-        email: email,
-        password: password
+        email: email
     })
+
     if (!user) {
+        throw new Error('Invalid credentials')
+    }
+    const isPasswordValid = await ComparePassword(password, user.password);
+    if (!isPasswordValid) {
         throw new Error('Invalid credentials')
     }
     return user
