@@ -71,24 +71,16 @@ export default function LoginPage() {
       if (!response.ok) {
         throw new Error(data.error || "Error al iniciar sesión");
       }
+      CrearCookie('sessionId', data.idSession);
+      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
+
       
       if (data.TwoAccountsFound === true) {
-        console.log("Se encontraron dos cuentas");
-        return;
-      }
-      
-      // Guardamos el ID de sesión
-      if (data.idSession) {
-        CrearCookie('sessionId', data.idSession);
-      }
-
-      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
-      setFormData({ email: "", password: "" });
-
-      // Redirigir después de un breve delay
-      setTimeout(() => {
         window.location.href = "/";
-      }, 1000);
+        return;
+      } else {
+        data.userIsStudent? window.location.href = "/student" : window.location.href = "/teacher";
+      }      
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);
       setErrors({ general: error.message || "Error al iniciar sesión" });
