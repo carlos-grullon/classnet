@@ -4,7 +4,7 @@ import React, { useState, FormEvent } from 'react';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect';
-import { CrearCookie } from '@/utils/Tools';
+import { CrearCookie } from '@/utils/Tools.tsx';
 
 interface FormData {
   name: string;

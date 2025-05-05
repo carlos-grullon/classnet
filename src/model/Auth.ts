@@ -1,5 +1,5 @@
 import { getCollection } from "../utils/MongoDB";
-import { HashPassword, ComparePassword } from "../utils/Tools";
+import { HashPassword, ComparePassword } from "../utils/Tools.ts";
 
 export async function Register(
     username: string,

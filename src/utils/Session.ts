@@ -1,5 +1,5 @@
 import { getCollection } from "./MongoDB";
-import { GenerarUuid } from './Tools';
+import { GenerarUuid } from './Tools.ts';
 
 export async function getSession(idSession: string): Promise<Record<string, any>> {
     try {

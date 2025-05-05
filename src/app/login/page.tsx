@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/forms/FormInput";
-import { CrearCookie } from "@/utils/Tools";
+import { CrearCookie } from "@/utils/Tools.tsx";
 
 interface FormData {
   email: string;
