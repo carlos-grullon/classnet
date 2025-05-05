@@ -22,7 +22,7 @@ export async function createSession(idSession: string = '', data: Record<string,
         const collection = await getCollection("sessions");
         await collection.insertOne({
             idSession: idSession,
-            data: data,
+            ...data,
         });
         return idSession;
     } catch (err) {

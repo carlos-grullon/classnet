@@ -23,3 +23,43 @@ export function LeerCookie(name: string): string | null {
 export function EliminarCookie(name: string) {
     document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
 }
+
+export async function FetchData(url: string, data: Record<string, any> = {}, method: string = "POST", extraHeaders: Record<string, any> = {}) {
+    const response = await fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": "application/json",
+            ...extraHeaders
+        },
+        body: JSON.stringify(data),
+        credentials: "include"
+    });
+
+    const responseJson = await response.json();
+
+    if (!response.ok) {
+        throw new Error(responseJson.error || "Error al iniciar sesión");
+    }
+    return responseJson;
+}
+
+export async function getSession(sessionName: string = ''): Promise<Record<string, any>> {
+    const data = await FetchData("/api/session", {}, "GET");
+    if (sessionName === '') {
+        return data.sessionValue;
+    }
+    return data.sessionValue[sessionName];
+}
+
+export async function createSession(dataToCreate: Record<string, any>): Promise<string> {
+    const data = await FetchData("/api/session", dataToCreate);
+    return data.idSession;
+}
+
+export async function setSession(dataToSet: Record<string, any>): Promise<void> {
+    await FetchData("/api/session", dataToSet, "UPDATE");
+}
+
+export async function deleteSession(): Promise<void> {
+    await FetchData("/api/session", {}, "DELETE");
+}

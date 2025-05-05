@@ -9,7 +9,13 @@ export async function POST(request: Request) {
             data.password,
             data.email,
         )
-        const idSession = await createSession('', user);
+        const userSession = {
+            userId: user._id,
+            userName: user.username,
+            userIsStudent: user.user_is_student,
+            userIsTeacher: user.user_is_teacher
+        };
+        const idSession = await createSession('', userSession);
         return NextResponse.json({
             idSession: idSession,
             twoAccountsFound: user.user_is_student && user.user_is_teacher,
