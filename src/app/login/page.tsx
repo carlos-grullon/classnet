@@ -72,14 +72,12 @@ export default function LoginPage() {
         throw new Error(data.error || "Error al iniciar sesión");
       }
       CrearCookie('sessionId', data.idSession);
-      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
-
-      
-      if (data.TwoAccountsFound === true) {
+      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");  
+      if (data.twoAccountsFound === true) {
         window.location.href = "/";
         return;
       } else {
-        data.userIsStudent? window.location.href = "/student" : window.location.href = "/teacher";
+        data.userIsStudent? window.location.href = "/student/dashboard" : window.location.href = "/teacher/dashboard";
       }      
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);

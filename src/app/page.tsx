@@ -11,14 +11,14 @@ export default function Home() {
         <p className="mb-12" style={{ color: 'var(--foreground-muted)' }}>Por favor, selecciona tu tipo de usuario</p>
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
-          <Link href="/teacher-login" 
+          <Link href="/teacher/dashboard" 
             className="flex items-center bg-blue-400 justify-center gap-3 px-8 py-4 
             rounded-lg transform hover:scale-105 text-black transition-all duration-200 shadow-lg">
             <FaChalkboardTeacher className="h-6 w-6" />
             Profesor
           </Link>
 
-          <Link href="/student-login"
+          <Link href="/student/dashboard"
             className="flex items-center bg-amber-400 justify-center gap-3 px-8 
             py-4 rounded-lg transform hover:scale-105 transition-all text-black
             duration-200 shadow-lg">
