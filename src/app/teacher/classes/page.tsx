@@ -1,12 +1,15 @@
 'use client';
 import { useState } from 'react';
+import { FetchData } from '@/utils/Tools.tsx'
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface Class {
   id: string;
   name: string;
   price: number;
   level: string;
-  dayOfWeek: string[];
+  dayOfWeek: string;
   startTime: string;
   endTime: string;
   maxStudents: number;
@@ -18,13 +21,13 @@ export default function TeacherClasses() {
     name: '',
     price: 0,
     level: '',
-    dayOfWeek: [],
+    dayOfWeek: '',
     startTime: '',
     endTime: '',
     maxStudents: 30
   });
 
-  const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+  const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -37,69 +40,61 @@ export default function TeacherClasses() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Previene el comportamiento por defecto del formulario
-    
+    e.preventDefault(); 
     try {
-        // Envía los datos del formulario al servidor mediante una petición POST
-        const response = await fetch('/api/classes', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData), // Convierte los datos del formulario a JSON
-        });
-        
-        // Parsea la respuesta del servidor
-        const data = await response.json();
-        
-        // Si la respuesta no es exitosa, lanza un error
-        if (!response.ok) {
-          throw new Error(data.error || 'Error al crear la clase');
-        }
+        const data = await FetchData('/api/classes', formData, 'POST');
         
         // Crea un nuevo objeto de clase con el ID devuelto por el servidor
         const newClass = {
           ...formData,
           id: data.insertedId
         };
+
         // Añade la nueva clase al estado local
         setClasses(prev => [...prev, newClass]);
-      } catch (error) {
-        // Maneja cualquier error que ocurra durante el proceso
-        console.error('Error al guardar la clase:', error);
-      }
+
+        // Muestra mensaje de éxito
+        toast.success('¡Clase guardada con éxito!', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });
+        
+        // Resetea el formulario a sus valores iniciales después de enviar
+        setFormData({
+          name: '',
+          price: 0,
+          level: '',
+          dayOfWeek: '',
+          startTime: '',
+          endTime: '',
+          maxStudents: 30
+        });
+    } catch (error) {
+        toast.error('Error al guardar la clase. Por favor, inténtalo de nuevo.', {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true
+        });     
     }
-    // Resetea el formulario a sus valores iniciales después de enviar
-    setFormData({
-      name: '',
-      price: 0,
-      level: '',
-      dayOfWeek: [],
-      startTime: '',
-      endTime: '',
-      maxStudents: 30
-    });
-  };
-
-  const handleEdit = (classItem: Class) => {
-    setFormData(classItem);
-    setIsEditing(true);
-    setEditingId(classItem.id);
-  };
-
-  const handleDelete = (id: string) => {
-    setClasses(prev => prev.filter(c => c.id !== id));
   };
 
   return (
     <div className="min-h-screen p-8" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+      <ToastContainer />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Gestión de Clases</h1>
 
         {/* Formulario */}
         <div className="rounded-lg shadow-lg p-6 mb-8" style={{ background: 'var(--background-soft)' }}>
           <h2 className="text-xl font-semibold mb-4">
-            {isEditing ? 'Editar Clase' : 'Crear Nueva Clase'}
+            Crear Nueva Clase
           </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -164,9 +159,9 @@ export default function TeacherClasses() {
                   Día de la Semana
                 </label>
                 <select
-                  id="schedule.dayOfWeek"
-                  name="schedule.dayOfWeek"
-                  value={formData.schedule.dayOfWeek}
+                  id="dayOfWeek"
+                  name="dayOfWeek"
+                  value={formData.dayOfWeek}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-md"
                   style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
@@ -180,14 +175,14 @@ export default function TeacherClasses() {
               {/* Horario */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="schedule.startTime" className="block text-sm font-medium mb-2">
+                  <label htmlFor="startTime" className="block text-sm font-medium mb-2">
                     Hora de Inicio
                   </label>
                   <input
                     type="time"
-                    id="schedule.startTime"
-                    name="schedule.startTime"
-                    value={formData.schedule.startTime}
+                    id="startTime"
+                    name="startTime"
+                    value={formData.startTime}
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
@@ -200,9 +195,9 @@ export default function TeacherClasses() {
                   </label>
                   <input
                     type="time"
-                    id="schedule.endTime"
-                    name="schedule.endTime"
-                    value={formData.schedule.endTime}
+                    id="endTime"
+                    name="endTime"
+                    value={formData.endTime}
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
@@ -231,21 +226,16 @@ export default function TeacherClasses() {
             </div>
 
             <div className="flex justify-end space-x-4">
-              {isEditing && (
-                <button
+              <button
                   type="button"
                   onClick={() => {
-                    setIsEditing(false);
-                    setEditingId(null);
                     setFormData({
                       name: '',
                       price: 0,
                       level: '',
-                      schedule: {
-                        dayOfWeek: 'Lunes',
-                        startTime: '',
-                        endTime: ''
-                      },
+                      dayOfWeek: '',
+                      startTime: '',
+                      endTime: '',
                       maxStudents: 20
                     });
                   }}
@@ -253,12 +243,11 @@ export default function TeacherClasses() {
                 >
                   Cancelar
                 </button>
-              )}
               <button
                 type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                {isEditing ? 'Guardar Cambios' : 'Crear Clase'}
+                Crear Clase
               </button>
             </div>
           </form>
@@ -270,32 +259,18 @@ export default function TeacherClasses() {
           <div className="space-y-4">
             {classes.map(classItem => (
               <div
-                key={classItem.id}
+                key={classItem.name}
                 className="border rounded-lg p-4 flex items-center justify-between"
                 style={{ borderColor: 'var(--border)' }}
               >
                 <div>
                   <h3 className="font-semibold">{classItem.name}</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {classItem.level} • {classItem.schedule.dayOfWeek} {classItem.schedule.startTime}-{classItem.schedule.endTime}
+                    {classItem.level} • {classItem.dayOfWeek} {classItem.startTime}-{classItem.endTime}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Límite: {classItem.maxStudents} estudiantes
                   </p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleEdit(classItem)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => handleDelete(classItem.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-md"
-                  >
-                    Eliminar
-                  </button>
                 </div>
               </div>
             ))}
