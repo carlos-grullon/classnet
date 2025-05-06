@@ -43,8 +43,8 @@ export default function TeacherClasses() {
         await FetchData('/api/classes', formData, 'POST');
         SuccessMsj('¡Clase guardada con éxito!');
         ClearForm();
-    } catch (error) {
-        ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.');
+    } catch (error: any) {
+        ErrorMsj(error, 'Error al guardar la clase. Por favor, inténtalo de nuevo.');
     }
   };
 
