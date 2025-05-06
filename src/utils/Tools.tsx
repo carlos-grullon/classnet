@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 export function CrearCookie(name: string, value: string, days: number = -1) {
     const date = new Date();
     if (days >= 0) {
@@ -63,4 +65,26 @@ export async function setSession(dataToSet: Record<string, any>): Promise<void> 
 
 export async function deleteSession(): Promise<void> {
     await FetchData("/api/session", {}, "DELETE");
+}
+
+export function SuccessMsj(message: string) {
+    toast.success(message, {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true
+            });
+}
+
+export function ErrorMsj(message: string) {
+    toast.error(message, {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true
+            });
 }

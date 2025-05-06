@@ -1,28 +1,36 @@
 'use client';
 import { useState } from 'react';
-import { FetchData } from '@/utils/Tools.tsx'
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx'
 import { Class } from '@/interfaces/Class';
+import { ToastContainer } from 'react-toastify';
 
 export default function TeacherClasses() {
+  const formInitialValues = {
+    name: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
+  };
   const [classes, setClasses] = useState<Class[]>([]);
-  const [formData, setFormData] = useState<Omit<Class, 'id'>>({
-    name: '',
-    price: 0,
-    level: '',
-    dayOfWeek: '',
-    startTime: '',
-    endTime: '',
-    maxStudents: 30
-  });
+  const [formData, setFormData] = useState<Omit<Class, 'id'>>(formInitialValues);
 
-  const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  function ClearForm() {
+    setFormData(formInitialValues);
+  }
+
+  const daysOfWeek = {
+    '1': 'Lunes',
+    '2': 'Martes',
+    '3': 'Miércoles',
+    '4': 'Jueves',
+    '5': 'Viernes',
+    '6': 'Sábado',
+    '7': 'Domingo'
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    // Esto actualiza el estado de los campos del formulario
     setFormData(prev => ({
       ...prev,
+      // Si el campo es maxStudents o price, lo convierte a número
       [name]: name === 'maxStudents' || name === 'price' 
         ? parseInt(value, 10) 
         : value
@@ -32,46 +40,11 @@ export default function TeacherClasses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     try {
-        const data = await FetchData('/api/classes', formData, 'POST');
-        
-        // Crea un nuevo objeto de clase con el ID devuelto por el servidor
-        const newClass = {
-          ...formData,
-          id: data.insertedId
-        };
-
-        // Añade la nueva clase al estado local
-        setClasses(prev => [...prev, newClass]);
-
-        // Muestra mensaje de éxito
-        toast.success('¡Clase guardada con éxito!', {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true
-        });
-        
-        // Resetea el formulario a sus valores iniciales después de enviar
-        setFormData({
-          name: '',
-          price: 0,
-          level: '',
-          dayOfWeek: '',
-          startTime: '',
-          endTime: '',
-          maxStudents: 30
-        });
+        await FetchData('/api/classes', formData, 'POST');
+        SuccessMsj('¡Clase guardada con éxito!');
+        ClearForm();
     } catch (error) {
-        toast.error('Error al guardar la clase. Por favor, inténtalo de nuevo.', {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true
-        });     
+        ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.');
     }
   };
 
@@ -156,8 +129,9 @@ export default function TeacherClasses() {
                   className="w-full p-2 border rounded-md"
                   style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                 >
-                  {daysOfWeek.map(day => (
-                    <option key={day} value={day}>{day}</option>
+                  <option value="0">Seleccionar día</option>
+                  {Object.entries(daysOfWeek).map(([key, value]) => (
+                    <option key={key} value={key}>{value}</option>
                   ))}
                 </select>
               </div>
