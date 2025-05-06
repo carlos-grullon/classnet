@@ -3,17 +3,7 @@ import { useState } from 'react';
 import { FetchData } from '@/utils/Tools.tsx'
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-interface Class {
-  id: string;
-  name: string;
-  price: number;
-  level: string;
-  dayOfWeek: string;
-  startTime: string;
-  endTime: string;
-  maxStudents: number;
-}
+import { Class } from '@/interfaces/Class';
 
 export default function TeacherClasses() {
   const [classes, setClasses] = useState<Class[]>([]);
