@@ -3,12 +3,10 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
-import { getGlobalSession, isAuthenticated } from '@/utils/GlobalSession';
+import { getGlobalSession } from '@/utils/GlobalSession';
 
 export default function TeacherProfile() {
-  // Obtener la sesión global
   const session = getGlobalSession();
-  const authenticated = isAuthenticated();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -17,27 +15,17 @@ export default function TeacherProfile() {
   const [imageUrl, setImageUrl] = useState('/default-avatar.png');
   const [previewUrl, setPreviewUrl] = useState('');
   
-  // Usar useEffect para cargar los datos del perfil cuando el componente se monte
   useEffect(() => {
     GetTeacherData();
   }, []);
 
   async function GetTeacherData() {
     try {
-      if (authenticated && session) {
-        console.log('Email del usuario desde la sesión global:', session.userEmail);
-        
-        // Aquí puedes usar el email u otros datos de la sesión para obtener más información del perfil
-        // const teacherData = await FetchData('/api/teacher/profile', {
-        //   email: session.userEmail
-        // });
-        
-        // Actualizar el estado con los datos obtenidos
-        // setFormData({
-        //   name: teacherData.name || '',
-        //   description: teacherData.description || '',
-        //   classes: teacherData.classes || '',
-        // });
+      if (session) {
+        const data = await FetchData('/api/teacher/profile', {
+          email: session.userEmail
+        });
+        console.log('Datos del profesor encontrados:', data.name);
         
         // if (teacherData.imageUrl) {
         //   setImageUrl(teacherData.imageUrl);

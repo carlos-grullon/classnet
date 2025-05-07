@@ -3,22 +3,41 @@
 import Link from 'next/link';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { PiStudentFill } from 'react-icons/pi';
-import { FetchData } from '@/utils/Tools.tsx';
+import { getGlobalSession } from '@/utils/GlobalSession';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-async function ValidateUserType() {
-  const data = await FetchData('/api/session', {}, "GET");
-  const sessionValue = data.sessionValue;
-  if (sessionValue.userIsStudent && sessionValue.userIsTeacher) {
-    return;
-  } else if (sessionValue.userIsStudent) {
-    window.location.href = '/student/dashboard';
-  } else if (sessionValue.userIsTeacher) {
-    window.location.href = '/teacher/dashboard';
-  }
-}
 
 export default function Home() {
-  ValidateUserType();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const sessionValue = getGlobalSession();
+    
+    if (sessionValue) {
+      if (sessionValue.userIsStudent && sessionValue.userIsTeacher) {
+      } else if (sessionValue.userIsStudent) {
+        router.push('/student/dashboard');
+        return;
+      } else if (sessionValue.userIsTeacher) {
+        router.push('/teacher/dashboard');
+        return;
+      }
+    } else {
+    }
+    
+    setLoading(false);
+  }, [router]);
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
       <div className="text-center">
