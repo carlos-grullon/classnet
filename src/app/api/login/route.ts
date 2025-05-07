@@ -13,7 +13,8 @@ export async function POST(request: Request) {
             userId: user._id,
             userName: user.username,
             userIsStudent: user.user_is_student,
-            userIsTeacher: user.user_is_teacher
+            userIsTeacher: user.user_is_teacher,
+            userEmail: user.email
         };
         const idSession = await createSession('', userSession);
         return NextResponse.json({

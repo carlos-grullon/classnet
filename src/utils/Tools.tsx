@@ -80,6 +80,9 @@ export function SuccessMsj(message: string) {
 
 export function ErrorMsj(message: string, error: any) {
     // El mensaje se muestra al cliente, el error se muestra en la consola
+    if (error instanceof Error) {
+        console.error('!!!!!!!!! ERROR !!!!!!!!! ' + error.message);
+    }
     toast.error(message, {
               position: "top-right",
               autoClose: 5000,
@@ -88,5 +91,4 @@ export function ErrorMsj(message: string, error: any) {
               pauseOnHover: true,
               draggable: true
             });
-            console.error('!!!!!!!!! ERROR !!!!!!!!! ' + error.message);
 }

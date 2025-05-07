@@ -40,11 +40,11 @@ export default function TeacherClasses() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     try {
-        await FetchData('/api/classes', formData, 'POST');
-        SuccessMsj('¡Clase guardada con éxito!');
-        ClearForm();
+      await FetchData('/api/classes', formData, 'POST');
+      SuccessMsj('¡Clase guardada con éxito!');
+      ClearForm();
     } catch (error: any) {
-        ErrorMsj(error, 'Error al guardar la clase. Por favor, inténtalo de nuevo.');
+      ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.', error);
     }
   };
 

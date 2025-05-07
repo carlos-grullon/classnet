@@ -1,8 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
+import { ToastContainer } from 'react-toastify';
+import { getGlobalSession, isAuthenticated } from '@/utils/GlobalSession';
 
 export default function TeacherProfile() {
+  // Obtener la sesión global
+  const session = getGlobalSession();
+  const authenticated = isAuthenticated();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -10,6 +16,37 @@ export default function TeacherProfile() {
   });
   const [imageUrl, setImageUrl] = useState('/default-avatar.png');
   const [previewUrl, setPreviewUrl] = useState('');
+  
+  // Usar useEffect para cargar los datos del perfil cuando el componente se monte
+  useEffect(() => {
+    GetTeacherData();
+  }, []);
+
+  async function GetTeacherData() {
+    try {
+      if (authenticated && session) {
+        console.log('Email del usuario desde la sesión global:', session.userEmail);
+        
+        // Aquí puedes usar el email u otros datos de la sesión para obtener más información del perfil
+        // const teacherData = await FetchData('/api/teacher/profile', {
+        //   email: session.userEmail
+        // });
+        
+        // Actualizar el estado con los datos obtenidos
+        // setFormData({
+        //   name: teacherData.name || '',
+        //   description: teacherData.description || '',
+        //   classes: teacherData.classes || '',
+        // });
+        
+        // if (teacherData.imageUrl) {
+        //   setImageUrl(teacherData.imageUrl);
+        // }
+      }
+    } catch (error: any) {
+      ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.', error);
+    }
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -36,6 +73,7 @@ export default function TeacherProfile() {
 
   return (
     <div className="min-h-screen p-8" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+      <ToastContainer />
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6" style={{ background: 'var(--background-soft)', color: 'var(--foreground-muted)' }}>
         <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>
         

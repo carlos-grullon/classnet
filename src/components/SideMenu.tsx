@@ -4,10 +4,13 @@ import { FiMenu, FiX } from 'react-icons/fi';
 import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
+import { clearGlobalSession } from '@/utils/GlobalSession';
+import { useRouter } from 'next/navigation';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const router = useRouter();
 
   useEffect(() => {
     // Obtener preferencia del sistema
@@ -29,7 +32,11 @@ export default function SideMenu() {
     try {
       await FetchData('/api/logout');
       EliminarCookie('sessionId');
-      window.location.href = '/';
+      
+      // Eliminar la sesión global
+      clearGlobalSession();
+      
+      router.push('/');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }

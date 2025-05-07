@@ -5,16 +5,18 @@
             "type": "node",
             "request": "launch",
             "name": "Run Next.js Dev Server",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/next",
+            "args": [
                 "dev"
             ],
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
+            "internalConsoleOptions": "neverOpen",
+            "env": {
+                "NODE_ENV": "development"
+            }
         }
     ]
 }

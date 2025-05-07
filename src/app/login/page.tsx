@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { FormInput } from "@/components/forms/FormInput";
 import { CrearCookie, FetchData } from "@/utils/Tools.tsx";
+import { setGlobalSession } from "@/utils/GlobalSession";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   email: string;
@@ -24,6 +26,8 @@ export default function LoginPage() {
 
   const [successMessage, setSuccessMessage] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
+  
+  const router = useRouter();
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -60,14 +64,28 @@ export default function LoginPage() {
         password: formData.password,
       });
 
+      // Guardar la sesión en una cookie para el backend
       CrearCookie('sessionId', data.idSession);
-      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");  
-      if (data.twoAccountsFound === true) {
-        window.location.href = "/";
-        return;
-      } else {
-        data.userIsStudent? window.location.href = "/student/dashboard" : window.location.href = "/teacher/dashboard";
-      }      
+      
+      // Crear y guardar la sesión global
+      setGlobalSession({
+        idSession: data.idSession,
+        userIsStudent: data.userIsStudent,
+        userIsTeacher: data.userIsTeacher,
+        userEmail: formData.email
+      });
+      
+      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
+      
+      // Esperar un momento para asegurar que la sesión se guarde antes de redirigir
+      setTimeout(() => {
+        // Redireccionar según el tipo de usuario
+        if (data.twoAccountsFound === true) {
+          router.push("/");
+        } else {
+          data.userIsStudent ? router.push("/student/dashboard") : router.push("/teacher/dashboard");
+        }
+      }, 100);
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);
       setErrors({ general: error.message || "Error al iniciar sesión" });
