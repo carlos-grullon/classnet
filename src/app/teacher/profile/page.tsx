@@ -25,11 +25,7 @@ export default function TeacherProfile() {
         const data = await FetchData('/api/teacher/profile', {
           email: session.userEmail
         });
-        console.log('Datos del profesor encontrados:', data.name);
-        
-        // if (teacherData.imageUrl) {
-        //   setImageUrl(teacherData.imageUrl);
-        // }
+        console.log('Datos del profesor encontrados:', data);
       }
     } catch (error: any) {
       ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.', error);

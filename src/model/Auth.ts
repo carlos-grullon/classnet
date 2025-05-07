@@ -11,7 +11,6 @@ export async function Register(
     const user = await usersCollection.findOne({
         email: email
     })
-
     if (!user) {
         await usersCollection.insertOne({
             username: username,
@@ -20,7 +19,13 @@ export async function Register(
             user_is_teacher: user_type === 'P',
             email: email,
             status: 'A',
-            data: {},
+            data: user_type === 'P' ? {
+                description: '',
+                classes: [],
+                image: '',
+                reviews: [],
+                rating: 0,
+            } : {},
             created_at: new Date(),
             updated_at: new Date()
         })
@@ -51,12 +56,12 @@ export async function Login(password: string, email: string) {
     })
 
     if (!user) {
-        throw new Error('Invalid credentials')
+        throw new Error('Usuario no encontrado')
     }
 
     const isPasswordValid = await ComparePassword(password, user.password);
     if (!isPasswordValid) {
-        throw new Error('Invalid credentials')
+        throw new Error('Contraseña incorrecta')
     }
 
     return user;

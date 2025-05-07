@@ -6,6 +6,7 @@ import { FormInput } from '@/components/forms/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect';
 import { CrearCookie, FetchData } from '@/utils/Tools.tsx';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface FormData {
   name: string;
@@ -23,6 +24,7 @@ interface FormErrors {
 }
 
 const RegisterForm: React.FC = () => {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -83,16 +85,12 @@ const RegisterForm: React.FC = () => {
         user_type: formData.userType
       });
 
-      if (data.idSession) {
-        CrearCookie('sessionId', data.idSession);
-      }
-
       setSuccessMessage('¡Registro exitoso! Redirigiendo...');
       setFormData({ name: '', email: '', password: '', userType: 'P' });
 
       // Redirigir después de un breve delay
       setTimeout(() => {
-        window.location.href = '/';
+        router.push('/login');
       }, 1000);
 
     } catch (error: any) {

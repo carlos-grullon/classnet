@@ -7,6 +7,8 @@ import { CrearCookie, FetchData } from "@/utils/Tools.tsx";
 import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ErrorMsj } from "@/utils/Tools.tsx";
+import { ToastContainer } from "react-toastify";
 
 interface FormData {
   email: string;
@@ -90,6 +92,7 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);
       setErrors({ general: error.message || "Error al iniciar sesión" });
+      ErrorMsj(error.message, error);
     } finally {
       setIsLoading(false);
     }
@@ -101,12 +104,13 @@ export default function LoginPage() {
       error={errors.general}
       success={successMessage}
     >
+      <ToastContainer />
       <form onSubmit={handleSubmit}>
         <FormInput
           id="email"
           name="email"
           label="Email"
-          type="email"
+          type="text"
           value={formData.email}
           onChange={(e) =>
             setFormData({ ...formData, email: e.target.value })
