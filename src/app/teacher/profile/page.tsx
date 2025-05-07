@@ -7,25 +7,36 @@ import { getGlobalSession } from '@/utils/GlobalSession';
 
 export default function TeacherProfile() {
   const session = getGlobalSession();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    classes: string[];
+  }>({
     name: '',
     description: '',
-    classes: '',
+    classes: [],
   });
   const [imageUrl, setImageUrl] = useState('/default-avatar.png');
   const [previewUrl, setPreviewUrl] = useState('');
-  
+
   useEffect(() => {
     GetTeacherData();
   }, []);
-
   async function GetTeacherData() {
     try {
       if (session) {
         const data = await FetchData('/api/teacher/profile', {
           email: session.userEmail
         });
-        console.log('Datos del profesor encontrados:', data);
+        if (data) {
+          setFormData(
+            {
+              name: data.username,
+              description: data.data.description,
+              classes: ["Inglés", "Programación", "Calistenia"]//data.data.classes
+            }
+          );
+        }
       }
     } catch (error: any) {
       ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.', error);
@@ -60,7 +71,7 @@ export default function TeacherProfile() {
       <ToastContainer />
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6" style={{ background: 'var(--background-soft)', color: 'var(--foreground-muted)' }}>
         <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Foto de perfil */}
           <div className="space-y-2">
@@ -120,16 +131,22 @@ export default function TeacherProfile() {
             <label htmlFor="classes" className="block text-sm font-medium">
               Clases Impartidas
             </label>
-            <input
-              type="text"
-              id="classes"
-              name="classes"
-              value={formData.classes}
-              onChange={handleInputChange}
-              placeholder="Ejemplo: Matemáticas, Física, Química"
-              className="w-full p-2 border rounded-md"
-              style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
-            />
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.classes.map((className, index) => (
+                <span
+                  key={index}
+                  className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm"
+                >
+                  {className}
+                </span>
+              ))}
+              {formData.classes.length === 0 && (
+                <span className="text-sm italic" style={{ color: 'var(--foreground-subtle)' }}>
+                  No hay clases registradas
+                </span>
+              )}
+            </div>
+
           </div>
 
           {/* Botón de guardar */}

@@ -25,7 +25,8 @@ export async function POST(request: Request) {
         // Devolver los datos del profesor
         return NextResponse.json({
             name: teacher.username,
-            email: teacher.email
+            email: teacher.email,
+            data: teacher.data
         });
     } catch (error) {
         console.error('Error al obtener datos del profesor:', error);
