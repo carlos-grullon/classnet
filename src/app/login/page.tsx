@@ -6,6 +6,7 @@ import { FormInput } from "@/components/forms/FormInput";
 import { CrearCookie, FetchData } from "@/utils/Tools.tsx";
 import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface FormData {
   email: string;
@@ -26,7 +27,7 @@ export default function LoginPage() {
 
   const [successMessage, setSuccessMessage] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
 
   const validateForm = () => {
@@ -66,7 +67,7 @@ export default function LoginPage() {
 
       // Guardar la sesión en una cookie para el backend
       CrearCookie('sessionId', data.idSession);
-      
+
       // Crear y guardar la sesión global
       setGlobalSession({
         idSession: data.idSession,
@@ -74,9 +75,9 @@ export default function LoginPage() {
         userIsTeacher: data.userIsTeacher,
         userEmail: formData.email
       });
-      
+
       setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
-      
+
       // Esperar un momento para asegurar que la sesión se guarde antes de redirigir
       setTimeout(() => {
         // Redireccionar según el tipo de usuario
@@ -139,6 +140,11 @@ export default function LoginPage() {
           </button>
         </div>
       </form>
+      <div className="mt-4 text-center">
+        <Link href="/register" className="text-blue-500 hover:text-blue-700 text-sm">
+          ¿No tienes cuenta? Regístrate aquí
+        </Link>
+      </div>
     </AuthCard>
   );
 }

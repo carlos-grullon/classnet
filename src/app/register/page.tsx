@@ -5,6 +5,7 @@ import { AuthCard } from '@/components/auth/AuthCard';
 import { FormInput } from '@/components/forms/FormInput';
 import { FormSelect } from '@/components/forms/FormSelect';
 import { CrearCookie, FetchData } from '@/utils/Tools.tsx';
+import Link from 'next/link';
 
 interface FormData {
   name: string;
@@ -168,6 +169,11 @@ const RegisterForm: React.FC = () => {
           </button>
         </div>
       </form>
+      <div className="mt-4 text-center">
+        <Link href="/login" className="text-blue-500 hover:text-blue-700 text-sm">
+          ¿Ya tienes cuenta? Inicia sesión aquí
+        </Link>
+      </div>
     </AuthCard>
   );
 };
