@@ -1,18 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 255, 255, 255;
+  --foreground: #000000;
+  --background: #f8faff;
 }
 
 .dark {
-  --foreground-rgb: 255, 255, 255;
-  --background-rgb: 15, 23, 42;
+  --foreground: #ffffff;
+  --background: #0f172a;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
+  color: var(--foreground);
+  background: var(--background);
 }

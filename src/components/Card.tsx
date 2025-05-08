@@ -15,6 +15,7 @@ export interface CardProps {
   headerContent?: React.ReactNode;
   footerContent?: React.ReactNode;
   onClick?: () => void;
+  icon?: React.ReactNode;
 }
 
 export function Card({
@@ -30,6 +31,7 @@ export function Card({
   headerContent,
   footerContent,
   onClick,
+  icon,
 }: CardProps) {
   // Base classes para todos los cards
   const baseClasses = 'rounded-xl transition-all duration-200';
@@ -82,7 +84,8 @@ export function Card({
           ) : (
             <>
               {title && (
-                <h2 className={`font-bold text-gray-800 dark:text-white text-center ${titleSizeClasses[size]} ${titleClassName}`}>
+                <h2 className={`font-bold text-gray-800 dark:text-white text-center flex items-center justify-center gap-2 ${titleSizeClasses[size]} ${titleClassName}`}>
+                  {icon}
                   {title}
                 </h2>
               )}

@@ -1,12 +1,16 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { AuthCard } from '@/components/Card';
-import { FormInput } from '@/components/Input';
+import { Card } from '@/components/Card';
+import { Input } from '@/components/Input';
 import { FormSelect } from '@/components/forms/FormSelect';
-import { CrearCookie, FetchData } from '@/utils/Tools.tsx';
+import { Button } from '@/components/Button';
+import { CrearCookie, FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ToastContainer } from 'react-toastify';
+import ThemeToggle from '@/components/ThemeToggle';
+import { FiUserPlus } from 'react-icons/fi';
 
 interface FormData {
   name: string;
@@ -102,77 +106,88 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <AuthCard
-      title="Registro"
-      error={errors.general}
-      success={successMessage}
-    >
-      <form onSubmit={handleSubmit}>
-        <FormInput
-          id="name"
-          name="name"
-          label="Nombre:"
-          value={formData.name}
-          onChange={handleInputChange}
-          error={errors.name}
-          required
-        />
+    <>
+      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 transition-all duration-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 rounded-full" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card title="Registro" icon={<FiUserPlus className="text-blue-500" />}>
+          <ToastContainer />
+          {successMessage && (
+            <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
+              {successMessage}
+            </div>
+          )}
+          {errors.general && (
+            <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md">
+              {errors.general}
+            </div>
+          )}
+          <form onSubmit={handleSubmit}>
+            <Input
+              id="name"
+              label="Nombre"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange(e)}
+              error={errors.name}
+              required
+            />
 
-        <FormInput
-          id="email"
-          name="email"
-          type="email"
-          label="Correo Electrónico:"
-          value={formData.email}
-          onChange={handleInputChange}
-          error={errors.email}
-          required
-        />
+            <Input
+              id="email"
+              label="Correo Electrónico"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleInputChange(e)}
+              error={errors.email}
+              required
+            />
 
-        <FormInput
-          id="password"
-          name="password"
-          type="password"
-          label="Contraseña:"
-          value={formData.password}
-          onChange={handleInputChange}
-          error={errors.password}
-          required
-        />
+            <Input
+              id="password"
+              label="Contraseña"
+              type="password"
+              value={formData.password}
+              onChange={(e) => handleInputChange(e)}
+              error={errors.password}
+              required
+            />
 
-        <FormSelect
-          id="userType"
-          name="userType"
-          label="Tipo de Usuario:"
-          value={formData.userType}
-          onChange={handleInputChange}
-          error={errors.userType}
-          required
-          placeholder="Selecciona una opción"
-          options={[
-            { value: 'P', label: 'Profesor' },
-            { value: 'E', label: 'Estudiante' }
-          ]}
-        />
+            <FormSelect
+              id="userType"
+              name="userType"
+              label="Tipo de Usuario"
+              value={formData.userType}
+              onChange={handleInputChange}
+              error={errors.userType}
+              required
+              placeholder="Selecciona una opción"
+              options={[
+                { value: 'P', label: 'Profesor' },
+                { value: 'E', label: 'Estudiante' }
+              ]}
+            />
 
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className={`bg-blue-500 w-full hover:bg-blue-700 text-white 
-              font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline 
-              ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Registrando...' : 'Registrarse'}
-          </button>
-        </div>
-      </form>
-      <div className="mt-4 text-center">
-        <Link href="/login" className="text-blue-500 hover:text-blue-700 text-sm">
-          ¿Ya tienes cuenta? Inicia sesión aquí
-        </Link>
+            <div className="flex items-center">
+              <Button 
+                type="submit" 
+                variant="primary" 
+                fullWidth 
+                isLoading={isLoading}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Registrando...' : 'Registrarse'}
+              </Button>
+            </div>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            ¿Ya tienes cuenta? 
+            <Link href="/login" className="text-blue-500 hover:text-blue-700 ml-1">
+              Inicia sesión aquí
+            </Link>
+          </div>
+        </Card>
       </div>
-    </AuthCard>
+    </>
   );
 };
 
