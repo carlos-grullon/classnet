@@ -76,7 +76,6 @@ export function Input({
             bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
             ${hasError && !isFocused ? 'border-red-500 focus:border-red-500' : 'focus:border-input-focus-border'}
           `}
-          required={required}
         />
         {showError && error && (
           <div className="absolute left-0 mt-1 z-10 animate-fadeIn">

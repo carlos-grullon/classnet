@@ -106,7 +106,6 @@ export default function LoginPage() {
                 setFormData({ ...formData, email: e.target.value });
                 if (formSubmitted) validateForm();
               }}
-              required
               error={formSubmitted ? errors.email : undefined}
             />
             <Input
