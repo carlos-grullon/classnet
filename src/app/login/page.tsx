@@ -1,14 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { AuthCard } from "@/components/auth/AuthCard";
-import { FormInput } from "@/components/forms/FormInput";
-import { CrearCookie, FetchData } from "@/utils/Tools.tsx";
+import { Card } from "@/components/Card";
+import { Input } from "@/components/Input";
+import { Button } from "@/components/Button";
+import { CrearCookie, FetchData, ErrorMsj } from "@/utils/Tools.tsx";
 import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ErrorMsj } from "@/utils/Tools.tsx";
 import { ToastContainer } from "react-toastify";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface FormData {
   email: string;
@@ -16,46 +17,31 @@ interface FormData {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
   });
 
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    general?: string;
-  }>({});
-
-  const [successMessage, setSuccessMessage] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
 
-  const router = useRouter();
-
   const validateForm = () => {
-    const newErrors: typeof errors = {};
-
     if (!formData.email) {
-      newErrors.email = "El email es requerido";
+      return "El email es requerido";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "El email no es válido";
+      return "El email no es válido";
     }
-
     if (!formData.password) {
-      newErrors.password = "La contraseña es requerida";
+      return "La contraseña es requerida";
     }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return true;
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    setErrors({});
-    setSuccessMessage(undefined);
-
-    if (!validateForm()) {
+    if (validateForm() !== true) {
+      ErrorMsj(validateForm() as string, 'Error');
       return;
     }
 
@@ -78,8 +64,6 @@ export default function LoginPage() {
         userEmail: formData.email
       });
 
-      setSuccessMessage("¡Inicio de sesión exitoso! Redirigiendo...");
-
       // Esperar un momento para asegurar que la sesión se guarde antes de redirigir
       setTimeout(() => {
         // Redireccionar según el tipo de usuario
@@ -91,7 +75,6 @@ export default function LoginPage() {
       }, 100);
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error);
-      setErrors({ general: error.message || "Error al iniciar sesión" });
       ErrorMsj(error.message, error);
     } finally {
       setIsLoading(false);
@@ -99,56 +82,36 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthCard
-      title="Iniciar Sesión"
-      error={errors.general}
-      success={successMessage}
-    >
-      <ToastContainer />
-      <form onSubmit={handleSubmit}>
-        <FormInput
-          id="email"
-          name="email"
-          label="Email"
-          type="text"
-          value={formData.email}
-          onChange={(e) =>
-            setFormData({ ...formData, email: e.target.value })
-          }
-          error={errors.email}
-          required
-        />
-
-        <FormInput
-          id="password"
-          name="password"
-          label="Contraseña"
-          type="password"
-          value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
-          error={errors.password}
-          required
-        />
-
-        <div className="flex items-center justify-between">
-          <button
-            type="submit"
-            className={`bg-blue-500 w-full hover:bg-blue-700 text-white 
-              font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline 
-              ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-            disabled={isLoading}
-          >
-            {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-          </button>
-        </div>
-      </form>
-      <div className="mt-4 text-center">
-        <Link href="/register" className="text-blue-500 hover:text-blue-700 text-sm">
-          ¿No tienes cuenta? Regístrate aquí
-        </Link>
+    <>
+      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 transition-all duration-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 rounded-full" />
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card title="Iniciar Sesión">
+          <ToastContainer />
+          <form onSubmit={handleSubmit}>
+            <Input id="email" label="Email" type="text" value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+              error={validateForm() as string}
+            />
+            <Input id="password" label="Contraseña" type="password"
+              value={formData.password} required error={validateForm() as string}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+            <div className="flex items-center">
+              <Button type="submit" variant="primary" fullWidth isLoading={isLoading}
+                disabled={isLoading}>
+                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+              </Button>
+            </div>
+          </form>
+          <div className="mt-4 text-center text-sm">
+            ¿No tienes cuenta? 
+            <Link href="/register" className="text-blue-500 hover:text-blue-700 ml-1">
+              Regístrate aquí
+            </Link>
+          </div>
+        </Card>
       </div>
-    </AuthCard>
+    </>
   );
 }

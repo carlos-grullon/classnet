@@ -12,8 +12,10 @@ export interface GlobalSession {
 // Variable global para almacenar la sesión
 let currentSession: GlobalSession | null = null;
 
-// Inicializar la sesión desde localStorage al cargar el archivo
-// Este código ahora solo se ejecutará en el navegador porque el archivo es 'use client'
+// Función para inicializar la sesión - solo se ejecutará cuando se llame, no durante la importación
+function initSession() {
+  // Solo ejecutar en el navegador
+  if (typeof window !== 'undefined') {
 try {
   const stored = localStorage.getItem('classnet_session');
   if (stored) {
@@ -22,10 +24,21 @@ try {
 } catch (error) {
   console.error('Error al cargar la sesión:', error);
 }
+  }
+}
+
+// Inicializar solo en el cliente
+if (typeof window !== 'undefined') {
+  initSession();
+}
 
 
 // Obtener la sesión actual
 export function getGlobalSession(): GlobalSession | null {
+  // Asegurarse de que la sesión esté inicializada
+  if (typeof window !== 'undefined' && currentSession === null) {
+    initSession();
+  }
   return currentSession;
 }
 
@@ -33,10 +46,13 @@ export function getGlobalSession(): GlobalSession | null {
 export function setGlobalSession(session: GlobalSession | null): void {
   currentSession = session;
 
-  if (session) {
-    localStorage.setItem('classnet_session', JSON.stringify(session));
-  } else {
-    localStorage.removeItem('classnet_session');
+  // Solo acceder a localStorage en el navegador
+  if (typeof window !== 'undefined') {
+    if (session) {
+      localStorage.setItem('classnet_session', JSON.stringify(session));
+    } else {
+      localStorage.removeItem('classnet_session');
+    }
   }
 }
 
@@ -48,5 +64,9 @@ export function isAuthenticated(): boolean {
 // Cerrar sesión
 export function clearGlobalSession(): void {
   currentSession = null;
-  localStorage.removeItem('classnet_session');
+  
+  // Solo acceder a localStorage en el navegador
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('classnet_session');
+  }
 }

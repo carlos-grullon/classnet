@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { AuthCard } from '@/components/auth/AuthCard';
-import { FormInput } from '@/components/forms/FormInput';
+import { AuthCard } from '@/components/Card';
+import { FormInput } from '@/components/Input';
 import { FormSelect } from '@/components/forms/FormSelect';
 import { CrearCookie, FetchData } from '@/utils/Tools.tsx';
 import Link from 'next/link';
