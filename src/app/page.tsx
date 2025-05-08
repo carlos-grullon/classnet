@@ -39,10 +39,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-8" style={{ color: 'var(--foreground)' }}>Bienvenido a ClassNet</h1>
-        <p className="mb-12" style={{ color: 'var(--foreground-muted)' }}>Por favor, selecciona tu tipo de usuario</p>
+        <h1 className="text-4xl font-bold mb-8" >Bienvenido a ClassNet</h1>
+        <p className="mb-12" >Por favor, selecciona tu tipo de usuario</p>
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center">
           <Link href="/teacher/dashboard" 

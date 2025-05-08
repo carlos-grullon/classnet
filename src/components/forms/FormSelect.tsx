@@ -33,7 +33,6 @@ export function FormSelect({
       <label 
         htmlFor={id} 
         className="block text-sm font-medium mb-1.5" 
-        style={{ color: 'var(--foreground-muted)' }}
       >
         {label}
       </label>
@@ -47,16 +46,10 @@ export function FormSelect({
             block w-full px-4 py-2.5 rounded-lg appearance-none pr-10
             ${error ? 'border-red-500 focus:border-red-500' : 'focus:border-input-focus-border'}
           `}
-          style={{ 
-            background: 'var(--input-background)', 
-            color: 'var(--foreground)', 
-            border: '1px solid var(--input-border)',
-            boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.05)',
-          }}
           required={required}
         >
           {placeholder && (
-            <option value="" disabled style={{ color: 'var(--foreground-subtle)' }}>
+            <option value="" disabled>
               {placeholder}
             </option>
           )}
@@ -64,7 +57,6 @@ export function FormSelect({
             <option 
               key={option.value} 
               value={option.value}
-              style={{ color: 'var(--foreground)' }}
             >
               {option.label}
             </option>
@@ -72,7 +64,6 @@ export function FormSelect({
         </select>
         <div 
           className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none"
-          style={{ color: 'var(--foreground-muted)' }}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

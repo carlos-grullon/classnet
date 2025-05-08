@@ -70,7 +70,7 @@ export default function TeacherProfile() {
   return (
     <div className="min-h-screen p-8 bg-amber-50 dark:bg-amber-900">
       <ToastContainer />
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6" style={{ background: 'var(--background-soft)', color: 'var(--foreground-muted)' }}>
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -107,7 +107,6 @@ export default function TeacherProfile() {
               value={formData.name}
               onChange={handleInputChange}
               className="w-full p-2 border rounded-md"
-              style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
             />
           </div>
 
@@ -123,7 +122,6 @@ export default function TeacherProfile() {
               onChange={handleInputChange}
               rows={4}
               className="w-full p-2 border rounded-md"
-              style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
             />
           </div>
 
@@ -142,7 +140,7 @@ export default function TeacherProfile() {
                 </span>
               ))}
               {formData.classes.length === 0 && (
-                <span className="text-sm italic" style={{ color: 'var(--foreground-subtle)' }}>
+                <span className="text-sm italic">
                   No hay clases registradas
                 </span>
               )}

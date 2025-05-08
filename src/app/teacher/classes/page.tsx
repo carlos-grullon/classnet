@@ -49,13 +49,13 @@ export default function TeacherClasses() {
   };
 
   return (
-    <div className="min-h-screen p-8" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen p-8">
       <ToastContainer />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Gestión de Clases</h1>
 
         {/* Formulario */}
-        <div className="rounded-lg shadow-lg p-6 mb-8" style={{ background: 'var(--background-soft)' }}>
+        <div className="rounded-lg shadow-lg p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">
             Crear Nueva Clase
           </h2>
@@ -74,7 +74,6 @@ export default function TeacherClasses() {
                   onChange={handleInputChange}
                   required
                   className="w-full p-2 border rounded-md"
-                  style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                 />
               </div>
 
@@ -91,7 +90,6 @@ export default function TeacherClasses() {
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
-                    style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                   >
                     <option value="0">Seleccionar nivel</option>
                     <option value="1">Principiante</option>
@@ -111,7 +109,6 @@ export default function TeacherClasses() {
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
-                    style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                   />
                 </div>
               </div>
@@ -127,7 +124,6 @@ export default function TeacherClasses() {
                   value={formData.dayOfWeek}
                   onChange={handleInputChange}
                   className="w-full p-2 border rounded-md"
-                  style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                 >
                   <option value="0">Seleccionar día</option>
                   {Object.entries(daysOfWeek).map(([key, value]) => (
@@ -150,7 +146,6 @@ export default function TeacherClasses() {
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
-                    style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                   />
                 </div>
                 <div>
@@ -165,7 +160,6 @@ export default function TeacherClasses() {
                     onChange={handleInputChange}
                     required
                     className="w-full p-2 border rounded-md"
-                    style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                   />
                 </div>
               </div>
@@ -184,7 +178,6 @@ export default function TeacherClasses() {
                   required
                   min="1"
                   className="w-full p-2 border rounded-md"
-                  style={{ background: 'var(--input-background)', color: 'var(--foreground)' }}
                 />
               </div>
             </div>
@@ -218,14 +211,13 @@ export default function TeacherClasses() {
         </div>
 
         {/* Lista de clases */}
-        <div className="rounded-lg shadow-lg p-6" style={{ background: 'var(--background-soft)' }}>
+        <div className="rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Clases Existentes</h2>
           <div className="space-y-4">
             {classes.map(classItem => (
               <div
                 key={classItem.name}
                 className="border rounded-lg p-4 flex items-center justify-between"
-                style={{ borderColor: 'var(--border)' }}
               >
                 <div>
                   <h3 className="font-semibold">{classItem.name}</h3>

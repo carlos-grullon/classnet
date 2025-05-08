@@ -22,12 +22,7 @@ export default function Navbar() {
   if (!navItems.length) return null;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 z-30 border-b"
-         style={{ 
-           background: 'var(--background)', 
-           borderColor: 'var(--border)',
-           color: 'var(--foreground)'
-         }}>
+    <nav className="fixed top-0 left-0 right-0 h-16 z-30 border-b">
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
         {/* Logo o título */}
         <div className="text-xl font-bold">

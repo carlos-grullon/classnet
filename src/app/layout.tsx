@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" enableSystem>  
+        <ThemeProvider attribute="class" enableSystem={true} defaultTheme="system">  
           <main className="pt-16">
             <Navbar />
             <SideMenu />
