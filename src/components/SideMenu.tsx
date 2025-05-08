@@ -5,8 +5,13 @@ import { BiLogOut } from 'react-icons/bi';
 import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
 import { clearGlobalSession } from '@/utils/GlobalSession';
 import { useRouter } from 'next/navigation';
+import { isAuthenticated } from '@/utils/GlobalSession';
 
 export default function SideMenu() {
+  const auth = isAuthenticated();
+  if (!auth) {
+    return null;
+  }
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 

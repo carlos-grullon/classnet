@@ -28,13 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-      
-        
-        {/* <SideMenu /> */}
-        
         <main className="pt-16">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <Navbar />
+        <SideMenu />
           {children}
         </ThemeProvider>
         </main>
