@@ -1,7 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
-import { FiSun, FiMoon } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
 import { clearGlobalSession } from '@/utils/GlobalSession';
@@ -9,24 +8,8 @@ import { useRouter } from 'next/navigation';
 
 export default function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const router = useRouter();
 
-  useEffect(() => {
-    // Obtener preferencia del sistema
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    // Obtener tema guardado o usar preferencia del sistema
-    const savedTheme = localStorage.getItem('theme') || systemTheme;
-    setTheme(savedTheme as 'light' | 'dark');
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-  };
 
   const handleLogout = async () => {
     try {
@@ -82,25 +65,6 @@ export default function SideMenu() {
 
         {/* Contenido del menú */}
         <div className="p-4 space-y-4">
-          {/* Botón de tema */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            style={{ color: 'var(--foreground)' }}
-          >
-            {theme === 'light' ? (
-              <>
-                <FiMoon className="w-5 h-5" />
-                <span>Modo oscuro</span>
-              </>
-            ) : (
-              <>
-                <FiSun className="w-5 h-5" />
-                <span>Modo claro</span>
-              </>
-            )}
-          </button>
-
           {/* Botón de logout */}
           <button
             onClick={handleLogout}

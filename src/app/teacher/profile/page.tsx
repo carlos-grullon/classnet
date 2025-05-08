@@ -22,6 +22,7 @@ export default function TeacherProfile() {
   useEffect(() => {
     GetTeacherData();
   }, []);
+
   async function GetTeacherData() {
     try {
       if (session) {
@@ -31,7 +32,7 @@ export default function TeacherProfile() {
         if (data) {
           setFormData(
             {
-              name: data.username,
+              name: data.name,
               description: data.data.description,
               classes: ["Inglés", "Programación", "Calistenia"]//data.data.classes
             }
@@ -67,7 +68,7 @@ export default function TeacherProfile() {
   };
 
   return (
-    <div className="min-h-screen p-8" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
+    <div className="min-h-screen p-8 bg-amber-50 dark:bg-amber-900">
       <ToastContainer />
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6" style={{ background: 'var(--background-soft)', color: 'var(--foreground-muted)' }}>
         <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>

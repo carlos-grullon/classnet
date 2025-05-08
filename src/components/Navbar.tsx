@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -52,6 +53,7 @@ export default function Navbar() {
 
         {/* Espacio para el botón del menú */}
         <div className="w-6" />
+        <ThemeToggle />
       </div>
     </nav>
   );

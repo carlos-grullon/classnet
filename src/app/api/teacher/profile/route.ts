@@ -20,8 +20,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
         }
         
-        console.log('Datos del profesor encontrados:', teacher);
-        
         // Devolver los datos del profesor
         return NextResponse.json({
             name: teacher.username,
