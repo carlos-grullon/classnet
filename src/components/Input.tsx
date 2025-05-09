@@ -10,7 +10,7 @@ interface InputProps {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
-  required?: boolean;
+  trigger?: number;
 }
 
 export function Input({
@@ -21,7 +21,7 @@ export function Input({
   value = '',
   onChange = () => {},
   error,
-  required = false
+  trigger = 0,
 }: InputProps) {
   const [showError, setShowError] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -42,12 +42,13 @@ export function Input({
       setShowError(false);
       setHasError(false);
     }
-  }, [error]);
+  }, [error, trigger]);
 
   // Resetear el estado de error cuando el usuario hace clic en el input
   const handleFocus = () => {
     setIsFocused(true);
     setHasError(false);
+    setShowError(false)
   };
 
   const handleBlur = () => {
@@ -72,9 +73,9 @@ export function Input({
           onBlur={handleBlur}
           className={`
             block w-full px-4 py-2.5 rounded-lg appearance-none transition-colors duration-200
-            outline-none border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50
+            outline-none border focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50
             bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
-            ${hasError && !isFocused ? 'border-red-500 focus:border-red-500' : 'focus:border-input-focus-border'}
+            ${hasError && !isFocused ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600'}
           `}
         />
         {showError && error && (

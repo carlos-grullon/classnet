@@ -27,7 +27,7 @@ export default function LoginPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string, password?: string }>({});
-  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [trigger, setTrigger] = useState(0);
 
   const validateForm = () => {
     const newErrors: { email?: string, password?: string } = {};
@@ -37,18 +37,19 @@ export default function LoginPage() {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "El email no es válido";
     }
-
     if (!formData.password) {
       newErrors.password = "La contraseña es requerida";
     }
-
+    if (formData.password.length < 6) {
+      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setFormSubmitted(true);
+    setTrigger(prev => prev + 1);
 
     if (!validateForm()) {
       return;
@@ -102,22 +103,21 @@ export default function LoginPage() {
               label="Email"
               type="text"
               value={formData.email}
+              trigger={trigger}
+              error={errors.email}
               onChange={(e) => {
                 setFormData({ ...formData, email: e.target.value });
-                if (formSubmitted) validateForm();
               }}
-              error={formSubmitted ? errors.email : undefined}
             />
             <Input
               id="password"
               label="Contraseña"
               type="password"
               value={formData.password}
-              required
-              error={formSubmitted ? errors.password : undefined}
+              trigger={trigger}
+              error={errors.password}
               onChange={(e) => {
-                setFormData({ ...formData, password: e.target.value });
-                if (formSubmitted) validateForm();
+                setFormData({ ...formData, password: e.target.value })
               }}
             />
             <div className="flex items-center">
