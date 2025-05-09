@@ -44,7 +44,7 @@ export default function TeacherClasses() {
       SuccessMsj('¡Clase guardada con éxito!');
       ClearForm();
     } catch (error: any) {
-      ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.', error);
+      ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.');
     }
   };
 

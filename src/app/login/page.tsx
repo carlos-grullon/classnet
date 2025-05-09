@@ -84,8 +84,7 @@ export default function LoginPage() {
         }
       }, 100);
     } catch (error: any) {
-      console.error("Error al iniciar sesión:", error);
-      ErrorMsj(error.message, error);
+      ErrorMsj(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -96,12 +95,11 @@ export default function LoginPage() {
       <ThemeToggle className="fixed top-4 right-4 hover:scale-110 transition-all duration-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 rounded-full" />
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
-          <ToastContainer />
+          <ToastContainer/>
           <form onSubmit={handleSubmit}>
             <Input
               id="email"
               label="Email"
-              type="text"
               value={formData.email}
               trigger={trigger}
               error={errors.email}

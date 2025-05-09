@@ -78,11 +78,7 @@ export function SuccessMsj(message: string) {
             });
 }
 
-export function ErrorMsj(message: string, error: any) {
-    // El mensaje se muestra al cliente, el error se muestra en la consola
-    if (error instanceof Error) {
-        console.error('!!!!!!!!! ERROR !!!!!!!!! ' + error.message);
-    }
+export function ErrorMsj(message: string) {
     toast.error(message, {
               position: "top-right",
               autoClose: 5000,

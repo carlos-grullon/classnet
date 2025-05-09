@@ -40,7 +40,7 @@ export default function TeacherProfile() {
         }
       }
     } catch (error: any) {
-      ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.', error);
+      ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.');
     }
   }
 

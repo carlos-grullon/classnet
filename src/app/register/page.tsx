@@ -3,9 +3,9 @@
 import React, { useState, FormEvent } from 'react';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
-import { FormSelect } from '@/components/forms/FormSelect';
+import { Select } from '@/components/Select';
 import { Button } from '@/components/Button';
-import { CrearCookie, FetchData, ErrorMsj } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
@@ -27,7 +27,7 @@ interface FormErrors {
   general?: string;
 }
 
-const RegisterForm: React.FC = () => {
+function RegisterForm() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -35,15 +35,13 @@ const RegisterForm: React.FC = () => {
     password: '',
     userType: 'P',
   });
-
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [successMessage, setSuccessMessage] = useState<string | undefined>(undefined);
+  const [trigger, setTrigger] = useState(0);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    setErrors(prevErrors => ({ ...prevErrors, [name]: undefined }));
   };
 
   const validateForm = (): boolean => {
@@ -71,9 +69,7 @@ const RegisterForm: React.FC = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    setErrors({});
-    setSuccessMessage(undefined);
+    setTrigger(prev => prev + 1);
 
     if (!validateForm()) {
       return;
@@ -89,7 +85,6 @@ const RegisterForm: React.FC = () => {
         user_type: formData.userType
       });
 
-      setSuccessMessage('¡Registro exitoso! Redirigiendo...');
       setFormData({ name: '', email: '', password: '', userType: 'P' });
 
       // Redirigir después de un breve delay
@@ -98,8 +93,7 @@ const RegisterForm: React.FC = () => {
       }, 1000);
 
     } catch (error: any) {
-      console.error('Error al registrar:', error);
-      setErrors({ general: error.message || 'Ocurrió un error al registrar.' });
+      ErrorMsj(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -111,37 +105,23 @@ const RegisterForm: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card title="Registro" icon={<FiUserPlus className="text-blue-500" />}>
           <ToastContainer />
-          {successMessage && (
-            <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
-              {successMessage}
-            </div>
-          )}
-          {errors.general && (
-            <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-md">
-              {errors.general}
-            </div>
-          )}
           <form onSubmit={handleSubmit}>
             <Input
               id="name"
               label="Nombre"
-              type="text"
               value={formData.name}
               onChange={(e) => handleInputChange(e)}
               error={errors.name}
-              required
+              trigger={trigger}
             />
-
             <Input
               id="email"
               label="Correo Electrónico"
-              type="email"
               value={formData.email}
               onChange={(e) => handleInputChange(e)}
               error={errors.email}
-              required
+              trigger={trigger}
             />
-
             <Input
               id="password"
               label="Contraseña"
@@ -149,22 +129,20 @@ const RegisterForm: React.FC = () => {
               value={formData.password}
               onChange={(e) => handleInputChange(e)}
               error={errors.password}
-              required
+              trigger={trigger}
             />
-
-            <FormSelect
+            <Select
               id="userType"
-              name="userType"
               label="Tipo de Usuario"
               value={formData.userType}
               onChange={handleInputChange}
               error={errors.userType}
-              required
               placeholder="Selecciona una opción"
               options={[
                 { value: 'P', label: 'Profesor' },
                 { value: 'E', label: 'Estudiante' }
               ]}
+              trigger={trigger}
             />
 
             <div className="flex items-center">
