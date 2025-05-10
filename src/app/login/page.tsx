@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 import { Card } from "@/components/Card";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
-import { CrearCookie, FetchData, ErrorMsj } from "@/utils/Tools.tsx";
+import { CrearCookie, FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -60,6 +60,8 @@ export default function LoginPage() {
         password: formData.password,
       });
 
+      SuccessMsj("Inicio de sesión exitoso");
+
       // Guardar la sesión en una cookie para el backend
       CrearCookie('sessionId', data.idSession);
 
@@ -89,8 +91,8 @@ export default function LoginPage() {
 
   return (
     <>
-      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 transition-all duration-200 cursor-pointer hover:bg-gray-700 dark:hover:bg-gray-300 rounded-full" />
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 p-1 transition-all duration-200 cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-700 rounded-full" />
+      <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
           <ToastContainer/>
           <form onSubmit={handleSubmit}>
