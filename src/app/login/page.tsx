@@ -91,7 +91,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 p-1 transition-all duration-200 cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-700 rounded-full" />
+      <ThemeToggle className="fixed top-4 right-4" />
       <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
           <ToastContainer/>

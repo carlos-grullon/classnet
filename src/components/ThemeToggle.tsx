@@ -19,7 +19,7 @@ export default function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-      className={className}
+      className={className + " hover:rotate-[-15deg] transition-transform p-1 hover:bg-gray-400 dark:hover:bg-gray-700 rounded-full"}
     >
       {currentTheme === 'dark' ? 
       <FiSun className="w-10 h-10" /> : 
