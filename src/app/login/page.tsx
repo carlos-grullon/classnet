@@ -37,9 +37,6 @@ export default function LoginPage() {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "El email no es válido";
     }
-    if (!formData.password) {
-      newErrors.password = "La contraseña es requerida";
-    }
     if (formData.password.length < 6) {
       newErrors.password = "La contraseña debe tener al menos 6 caracteres";
     }
