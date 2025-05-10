@@ -4,6 +4,10 @@ import Image from 'next/image';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
 import { getGlobalSession } from '@/utils/GlobalSession';
+import { Card } from '@/components/Card';
+import { Input } from '@/components/Input';
+import { Textarea } from '@/components/Textarea';
+import { FiUser } from 'react-icons/fi';
 
 export default function TeacherProfile() {
   const session = getGlobalSession();
@@ -68,17 +72,15 @@ export default function TeacherProfile() {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen flex pt-3 justify-center">
       <ToastContainer />
-      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>
-
+      <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Foto de perfil */}
           <div className="space-y-2">
             <label className="block text-sm font-medium">Foto de Perfil</label>
             <div className="flex items-center space-x-4">
-              <div className="relative w-24 h-24">
+              <div className="relative w-32 h-24">
                 <Image
                   src={previewUrl || imageUrl}
                   alt="Profile"
@@ -97,33 +99,25 @@ export default function TeacherProfile() {
 
           {/* Nombre */}
           <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium">
-              Nombre
-            </label>
-            <input
-              type="text"
+            <Input
               id="name"
-              name="name"
+              type="text"
+              label="Nombre"
               value={formData.name}
-              onChange={handleInputChange}
-              className="w-full p-2 border rounded-md"
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              placeholder="Tu nombre completo"
             />
           </div>
 
           {/* Descripción */}
-          <div className="space-y-2">
-            <label htmlFor="description" className="block text-sm font-medium">
-              Descripción Breve
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={4}
-              className="w-full p-2 border rounded-md"
-            />
-          </div>
+          <Textarea
+            id="description"
+            label="Descripción Breve"
+            placeholder="Escribe una breve descripción de ti"
+            value={formData.description}
+            onChange={handleInputChange}
+            rows={4}
+          />
 
           {/* Clases impartidas */}
           <div className="space-y-2">
@@ -156,7 +150,7 @@ export default function TeacherProfile() {
             Guardar Cambios
           </button>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

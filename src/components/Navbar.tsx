@@ -22,7 +22,7 @@ export default function Navbar() {
   if (!navItems.length) return null;
 
   return (
-    <nav className="fixed top-0 left-0 bottom-1 border-zinc-950 right-0 h-16 z-30 border-b bg-white dark:bg-gray-800/95">
+    <nav className="fixed top-0 left-0 bottom-1 border-zinc-950 right-0 h-16 z-30 border-b bg-white dark:bg-gray-800/95 dark:border-white/50">
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between font-bold">
         {/* Logo o título */}
         <div className="text-xl">

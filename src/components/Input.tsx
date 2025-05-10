@@ -12,6 +12,7 @@ interface InputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   trigger?: number;
+  placeholder?: string;
 }
 
 export function Input({
@@ -23,6 +24,7 @@ export function Input({
   onChange = () => {},
   error,
   trigger = 0,
+  placeholder = '',
 }: InputProps) {
   const [showError, setShowError] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -74,6 +76,7 @@ export function Input({
           onChange={onChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          placeholder={placeholder}
           className={`
             block w-full px-4 py-2.5 rounded-lg appearance-none transition-colors duration-200
             outline-none border focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50
