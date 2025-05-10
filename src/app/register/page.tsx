@@ -5,7 +5,7 @@ import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Select } from '@/components/Select';
 import { Button } from '@/components/Button';
-import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj, handleInputChange, SuccessMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
@@ -39,9 +39,11 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [trigger, setTrigger] = useState(0);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (e.target.tagName.toLowerCase() === 'select') {
+      setErrors(prev => ({ ...prev, [e.target.name]: undefined }));
+    }
+    handleInputChange(e, formData, setFormData);
   };
 
   const validateForm = (): boolean => {
@@ -67,7 +69,7 @@ function RegisterForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
     setTrigger(prev => prev + 1);
 
@@ -86,7 +88,7 @@ function RegisterForm() {
       });
 
       setFormData({ name: '', email: '', password: '', userType: 'P' });
-
+      SuccessMsj('¡Registro exitoso!');
       // Redirigir después de un breve delay
       setTimeout(() => {
         router.push('/login');
@@ -110,7 +112,7 @@ function RegisterForm() {
               id="name"
               label="Nombre"
               value={formData.name}
-              onChange={(e) => handleInputChange(e)}
+              onChange={onInputChange}
               error={errors.name}
               trigger={trigger}
             />
@@ -118,7 +120,7 @@ function RegisterForm() {
               id="email"
               label="Correo Electrónico"
               value={formData.email}
-              onChange={(e) => handleInputChange(e)}
+              onChange={onInputChange}
               error={errors.email}
               trigger={trigger}
             />
@@ -127,7 +129,7 @@ function RegisterForm() {
               label="Contraseña"
               type="password"
               value={formData.password}
-              onChange={(e) => handleInputChange(e)}
+              onChange={onInputChange}
               error={errors.password}
               trigger={trigger}
             />
@@ -135,7 +137,7 @@ function RegisterForm() {
               id="userType"
               label="Tipo de Usuario"
               value={formData.userType}
-              onChange={handleInputChange}
+              onChange={onInputChange}
               error={errors.userType}
               placeholder="Selecciona una opción"
               options={[

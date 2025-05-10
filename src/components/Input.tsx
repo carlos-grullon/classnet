@@ -35,7 +35,7 @@ export function Input({
       
       const timer = setTimeout(() => {
         setShowError(false);
-      }, 4000);
+      }, 3000);
       
       return () => clearTimeout(timer);
     } else {

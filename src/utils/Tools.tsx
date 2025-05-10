@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { Dispatch, SetStateAction } from 'react';
 
 export function CrearCookie(name: string, value: string, days: number = -1) {
     const date = new Date();
@@ -88,3 +89,13 @@ export function ErrorMsj(message: string) {
               draggable: true
             });
 }
+
+export const handleInputChange = <T extends Record<string, any>>(
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  formData: T,
+  setFormData: Dispatch<SetStateAction<T>>
+) => {
+  const { name, value, type } = e.target;
+  const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
+  setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+};
