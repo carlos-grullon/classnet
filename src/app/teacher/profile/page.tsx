@@ -68,9 +68,9 @@ export default function TeacherProfile() {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-amber-50 dark:bg-amber-900">
+    <div className="min-h-screen p-8">
       <ToastContainer />
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-6">Perfil del Profesor</h1>
 
         <form onSubmit={handleSubmit} className="space-y-6">

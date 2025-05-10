@@ -55,7 +55,7 @@ export default function SideMenu() {
         }`}
       >
         {/* Cabecera del menú */}
-        <div className="flex justify-between items-center p-4 border-b">
+        <div className="flex justify-between items-center h-16 px-4 border-b">
           <h2 className="text-lg font-semibold">Menú</h2>
           <button
             onClick={() => setIsOpen(false)}
