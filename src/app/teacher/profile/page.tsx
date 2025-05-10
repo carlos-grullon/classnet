@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
+import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
 import { getGlobalSession } from '@/utils/GlobalSession';
 import { Card } from '@/components/Card';
@@ -48,20 +48,16 @@ export default function TeacherProfile() {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
     }
+  };
+
+  const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    handleInputChange(e, formData, setFormData);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,10 +97,11 @@ export default function TeacherProfile() {
           <div className="space-y-2">
             <Input
               id="name"
+              name="name"
               type="text"
               label="Nombre"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={handleLocalInputChange}
               placeholder="Tu nombre completo"
             />
           </div>
@@ -112,10 +109,11 @@ export default function TeacherProfile() {
           {/* Descripción */}
           <Textarea
             id="description"
+            name="description"
             label="Descripción Breve"
             placeholder="Escribe una breve descripción de ti"
             value={formData.description}
-            onChange={handleInputChange}
+            onChange={handleLocalInputChange}
             rows={4}
           />
 
