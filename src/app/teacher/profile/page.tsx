@@ -103,6 +103,7 @@ export default function TeacherProfile() {
               value={formData.name}
               onChange={handleLocalInputChange}
               placeholder="Tu nombre completo"
+              disabled={true}
             />
           </div>
 
@@ -115,6 +116,7 @@ export default function TeacherProfile() {
             value={formData.description}
             onChange={handleLocalInputChange}
             rows={4}
+            disabled={true}
           />
 
           {/* Clases impartidas */}

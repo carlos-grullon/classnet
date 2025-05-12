@@ -13,6 +13,7 @@ interface InputProps {
   error?: string;
   trigger?: number;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export function Input({
@@ -25,6 +26,7 @@ export function Input({
   error,
   trigger = 0,
   placeholder = '',
+  disabled = false
 }: InputProps) {
   const [showError, setShowError] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -76,12 +78,13 @@ export function Input({
           onChange={onChange}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          disabled={disabled}
           placeholder={placeholder}
           className={`
             block w-full px-4 py-2.5 rounded-lg appearance-none transition-colors duration-200
             outline-none border focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50
-            bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700
             ${hasError && !isFocused ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600'}
+            ${disabled ? `cursor-not-allowed dark:bg-gray-700` : `bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700`}
           `}
         />
         {type === 'password' && (
