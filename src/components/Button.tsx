@@ -11,8 +11,9 @@ export interface ButtonProps {
   fullWidth?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onClick?: (e: React.MouseEvent) => void;
   className?: string;
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -25,6 +26,7 @@ export function Button({
   isLoading = false,
   onClick,
   className = '',
+  icon,
 }: ButtonProps) {
   // Clases base que se aplicarán a todos los botones
   const baseClasses = 'font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
@@ -54,16 +56,9 @@ export function Button({
   return (
     <button
       type={type}
-      className={`
-        ${baseClasses}
-        ${variantClasses[variant]}
-        ${sizeClasses[size]}
-        ${widthClasses}
-        ${stateClasses}
-        ${className}
-      `}
-      onClick={onClick}
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClasses} ${disabled || isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
       disabled={disabled || isLoading}
+      onClick={onClick}
     >
       {isLoading ? (
         <div className="flex items-center justify-center">
@@ -71,7 +66,10 @@ export function Button({
           {children}
         </div>
       ) : (
-        children
+        <div className="flex items-center justify-center">
+          {icon && <span className="mr-1">{icon}</span>}
+          {children}
+        </div>
       )}
     </button>
   );

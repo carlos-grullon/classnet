@@ -7,10 +7,17 @@ import { getGlobalSession } from '@/utils/GlobalSession';
 import { Card } from '@/components/Card';
 import { Input } from '@/components/Input';
 import { Textarea } from '@/components/Textarea';
-import { FiUser } from 'react-icons/fi';
+import { Button } from '@/components/Button';
+import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 
 export default function TeacherProfile() {
+  // Crear variables de estado
   const session = getGlobalSession();
+  const [initialData, setInitialData] = useState<{
+    name: string;
+    description: string;
+    classes: string[];
+  } | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -22,6 +29,8 @@ export default function TeacherProfile() {
   });
   const [imageUrl, setImageUrl] = useState('/default-avatar.png');
   const [previewUrl, setPreviewUrl] = useState('');
+  const [editMode, setEditMode] = useState(false);
+
 
   useEffect(() => {
     GetTeacherData();
@@ -30,17 +39,17 @@ export default function TeacherProfile() {
   async function GetTeacherData() {
     try {
       if (session) {
-        const data = await FetchData('/api/teacher/profile', {
+        const res = await FetchData('/api/teacher/profile', {
           email: session.userEmail
         });
-        if (data) {
-          setFormData(
-            {
-              name: data.name,
-              description: data.data.description,
-              classes: ["Inglés", "Programación", "Calistenia"]//data.data.classes
-            }
-          );
+        if (res) {
+          const datos = {
+            name: res.name,
+            description: res.data.description,
+            classes: ['inglés']
+          }
+          setInitialData(datos);
+          setFormData(datos);
         }
       }
     } catch (error: any) {
@@ -67,10 +76,41 @@ export default function TeacherProfile() {
     console.log('Image:', previewUrl);
   };
 
+  const handleCancel = () => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+    setEditMode(false);
+  };
+
   return (
     <div className="min-h-screen flex pt-3 justify-center">
       <ToastContainer />
       <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
+        <div className="flex gap-2 mb-4">
+          {editMode ? (
+            <Button
+              type="submit"
+              children="Guardar"
+              icon={<FiSave />}
+            />
+          ) : (
+            <Button
+              type="button"
+              onClick={() => setEditMode(true)}
+              children="Editar"
+              icon={<FiEdit />}
+            />
+          )}
+          {editMode && (
+            <Button
+              onClick={() => handleCancel()}
+              children="Cancelar"
+              icon={<FiX />}
+              variant="danger"
+            />
+          )}
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Foto de perfil */}
           <div className="space-y-2">
@@ -103,7 +143,7 @@ export default function TeacherProfile() {
               value={formData.name}
               onChange={handleLocalInputChange}
               placeholder="Tu nombre completo"
-              disabled={true}
+              disabled={!editMode}
             />
           </div>
 
@@ -116,7 +156,7 @@ export default function TeacherProfile() {
             value={formData.description}
             onChange={handleLocalInputChange}
             rows={4}
-            disabled={true}
+            disabled={!editMode}
           />
 
           {/* Clases impartidas */}
@@ -139,16 +179,7 @@ export default function TeacherProfile() {
                 </span>
               )}
             </div>
-
           </div>
-
-          {/* Botón de guardar */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Guardar Cambios
-          </button>
         </form>
       </Card>
     </div>
