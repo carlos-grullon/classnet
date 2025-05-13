@@ -10,10 +10,14 @@
     "setup-db": "npx tsx src/utils/Schema.ts"
   },
   "dependencies": {
+    "@types/formidable": "^3.4.5",
     "bcrypt": "^5.1.1",
+    "cloudinary": "^2.6.1",
     "dotenv": "^16.5.0",
+    "formidable": "^3.5.4",
     "mongodb": "^6.16.0",
     "next": "15.3.1",
+    "next-cloudinary": "^6.16.0",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -7,6 +7,7 @@ export interface GlobalSession {
   userIsStudent?: boolean;
   userIsTeacher?: boolean;
   userEmail?: string;
+  userImage?: string;
 }
 
 // Variable global para almacenar la sesión

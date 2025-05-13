@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { Register } from "@/model/Auth";
-import { createSession } from "@/utils/Session";
 
 export async function POST(request: Request) {
     try {
@@ -14,8 +13,7 @@ export async function POST(request: Request) {
             data.user_type,
             data.email
         )
-        const idSession = await createSession('', data);
-        return NextResponse.json({ idSession: idSession });
+        return NextResponse.json({ success: true});
     } catch (error) {
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });

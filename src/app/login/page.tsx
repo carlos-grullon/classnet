@@ -70,7 +70,8 @@ export default function LoginPage() {
         idSession: data.idSession,
         userIsStudent: data.userIsStudent,
         userIsTeacher: data.userIsTeacher,
-        userEmail: formData.email
+        userEmail: formData.email,
+        userImage: data.userImage
       });
 
       // Esperar un momento para asegurar que la sesión se guarde antes de redirigir

@@ -22,7 +22,7 @@ export async function Register(
             data: user_type === 'P' ? {
                 description: '',
                 classes: [],
-                image: '',
+                image_path: '',
                 reviews: [],
                 rating: 0,
             } : {},

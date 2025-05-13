@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
 import { getGlobalSession } from '@/utils/GlobalSession';
@@ -11,9 +10,9 @@ import { Button } from '@/components/Button';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { FaPlus } from 'react-icons/fa';
 import SubjectSearch from '@/components/SubjectSearch';
+import ProfilePictureUploader from '@/components/ProfilePictureUploader';
 
 export default function TeacherProfile() {
-  // Crear variables de estado
   const session = getGlobalSession();
   const [initialData, setInitialData] = useState<{
     name: string;
@@ -29,12 +28,9 @@ export default function TeacherProfile() {
     description: '',
     classes: [],
   });
-  const [imageUrl, setImageUrl] = useState('/default-avatar.png');
-  const [previewUrl, setPreviewUrl] = useState('');
   const [editMode, setEditMode] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
 
-  // Agregar nuevo estado para materia seleccionada
   type SubjectModalState = {
     selectedSubject: string | null;
     isConfirming: boolean;
@@ -69,14 +65,6 @@ export default function TeacherProfile() {
       ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.');
     }
   }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
 
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     handleInputChange(e, formData, setFormData);
@@ -117,7 +105,6 @@ export default function TeacherProfile() {
     setEditMode(false);
   };
 
-  // Función para manejar selección de materia
   const handleSubjectSelect = (subject: string) => {
     setModalState({
       selectedSubject: subject,
@@ -125,7 +112,6 @@ export default function TeacherProfile() {
     });
   };
 
-  // Función para confirmar agregar materia
   const confirmAddSubject = () => {
     if (modalState.selectedSubject && !formData.classes.includes(modalState.selectedSubject)) {
       setFormData(prev => ({
@@ -173,25 +159,21 @@ export default function TeacherProfile() {
               />
             </div>
           )}
-          {/* Foto de perfil */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">Foto de Perfil</label>
-            <div className="flex items-center space-x-4">
-              <div className="relative w-32 h-24">
-                <Image
-                  src={previewUrl || imageUrl}
-                  alt="Profile"
-                  fill
-                  className="rounded-full object-cover"
-                />
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+
+          {/* Sección de foto de perfil */}
+          <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Foto de perfil
+            </label>
+            {session && (
+              <ProfilePictureUploader
+                email={session.userEmail}
+                currentImageUrl={session.userImage}
+                onUploadSuccess={(url) => {
+                  SuccessMsj('Foto de perfil actualizada correctamente');
+                }}
               />
-            </div>
+            )}
           </div>
 
           {/* Nombre */}
@@ -256,6 +238,7 @@ export default function TeacherProfile() {
           </div>
         </form>
       </Card>
+
       {isSubjectModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
