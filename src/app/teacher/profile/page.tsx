@@ -9,6 +9,8 @@ import { Input } from '@/components/Input';
 import { Textarea } from '@/components/Textarea';
 import { Button } from '@/components/Button';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
+import { FaPlus } from 'react-icons/fa';
+import SubjectSearch from '@/components/SubjectSearch';
 
 export default function TeacherProfile() {
   // Crear variables de estado
@@ -30,7 +32,18 @@ export default function TeacherProfile() {
   const [imageUrl, setImageUrl] = useState('/default-avatar.png');
   const [previewUrl, setPreviewUrl] = useState('');
   const [editMode, setEditMode] = useState(false);
+  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
 
+  // Agregar nuevo estado para materia seleccionada
+  type SubjectModalState = {
+    selectedSubject: string | null;
+    isConfirming: boolean;
+  };
+
+  const [modalState, setModalState] = useState<SubjectModalState>({
+    selectedSubject: null,
+    isConfirming: false
+  });
 
   useEffect(() => {
     GetTeacherData();
@@ -46,7 +59,7 @@ export default function TeacherProfile() {
           const datos = {
             name: res.name,
             description: res.data.description,
-            classes: ['inglés']
+            classes: res.data.classes
           }
           setInitialData(datos);
           setFormData(datos);
@@ -71,9 +84,30 @@ export default function TeacherProfile() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí iría la lógica para guardar los datos
-    console.log('Form data:', formData);
-    console.log('Image:', previewUrl);
+    try {
+      if (session) {
+        const data = await FetchData('/api/teacher/profile', {
+          email: session.userEmail,
+          name: formData.name,
+          description: formData.description,
+          classes: formData.classes
+        }, 'PUT');
+        
+        if (data.success) {
+          const updatedData = {
+            name: formData.name,
+            description: formData.description,
+            classes: formData.classes
+          };
+          
+          setInitialData(updatedData);
+          SuccessMsj(data.message);
+          setEditMode(false);
+        }
+      }
+    } catch (error: any) {
+      ErrorMsj(error.message);
+    }
   };
 
   const handleCancel = () => {
@@ -83,35 +117,62 @@ export default function TeacherProfile() {
     setEditMode(false);
   };
 
+  // Función para manejar selección de materia
+  const handleSubjectSelect = (subject: string) => {
+    setModalState({
+      selectedSubject: subject,
+      isConfirming: true
+    });
+  };
+
+  // Función para confirmar agregar materia
+  const confirmAddSubject = () => {
+    if (modalState.selectedSubject && !formData.classes.includes(modalState.selectedSubject)) {
+      setFormData(prev => ({
+        ...prev,
+        classes: [...prev.classes, modalState.selectedSubject as string]
+      }));
+      SuccessMsj('Materia agregada correctamente');
+    } else if (modalState.selectedSubject) {
+      ErrorMsj('Esta materia ya está agregada');
+    }
+    
+    setModalState({ selectedSubject: null, isConfirming: false });
+    setIsSubjectModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen flex pt-3 justify-center">
       <ToastContainer />
       <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
-        <div className="flex gap-2 mb-4">
-          {editMode ? (
-            <Button
-              type="submit"
-              children="Guardar"
-              icon={<FiSave />}
-            />
-          ) : (
+        {!editMode && (
+          <div className="flex gap-2 mb-4">
             <Button
               type="button"
               onClick={() => setEditMode(true)}
               children="Editar"
               icon={<FiEdit />}
             />
-          )}
-          {editMode && (
-            <Button
-              onClick={() => handleCancel()}
-              children="Cancelar"
-              icon={<FiX />}
-              variant="danger"
-            />
-          )}
-        </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
+          {editMode && (
+            <div className="flex gap-2 mb-4">
+              <Button
+                type="submit"
+                children="Guardar"
+                icon={<FiSave />}
+              />
+              <Button
+                type="button"
+                onClick={handleCancel}
+                children="Cancelar"
+                icon={<FiX />}
+                variant="danger"
+              />
+            </div>
+          )}
           {/* Foto de perfil */}
           <div className="space-y-2">
             <label className="block text-sm font-medium">Foto de Perfil</label>
@@ -161,9 +222,22 @@ export default function TeacherProfile() {
 
           {/* Clases impartidas */}
           <div className="space-y-2">
-            <label htmlFor="classes" className="block text-sm font-medium">
-              Clases Impartidas
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="classes" className="block text-sm font-medium">
+                Clases Impartidas
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-2"
+                onClick={() => setIsSubjectModalOpen(true)}
+                disabled={!editMode}
+              >
+                <span className="flex items-center">
+                  <span className="mr-1"><FaPlus /></span> Agregar materia
+                </span>
+              </Button>
+            </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {formData.classes.map((className, index) => (
                 <span
@@ -182,6 +256,48 @@ export default function TeacherProfile() {
           </div>
         </form>
       </Card>
+      {isSubjectModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">
+                {modalState.isConfirming ? 'Confirmar materia' : 'Seleccionar materia'}
+              </h3>
+              <button 
+                onClick={() => {
+                  setModalState({ selectedSubject: null, isConfirming: false });
+                  setIsSubjectModalOpen(false);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            {modalState.isConfirming ? (
+              <div className="space-y-4">
+                <p>¿Agregar <span className="font-semibold">{modalState.selectedSubject}</span>?</p>
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setModalState({ selectedSubject: null, isConfirming: false })}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={confirmAddSubject}
+                    variant="primary"
+                  >
+                    Confirmar
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <SubjectSearch onSubjectSelect={handleSubjectSelect} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

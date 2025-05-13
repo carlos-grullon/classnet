@@ -6,7 +6,7 @@ import { FiLoader } from 'react-icons/fi';
 export interface ButtonProps {
   children: React.ReactNode;
   type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   fullWidth?: boolean;
   disabled?: boolean;
@@ -38,6 +38,7 @@ export function Button({
     outline: 'bg-transparent border border-blue-500 text-blue-500 hover:bg-blue-50 focus:ring-blue-500 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20',
     danger: 'bg-red-500 hover:bg-red-700 text-white focus:ring-red-500 dark:bg-red-600 dark:hover:bg-red-700',
     success: 'bg-green-500 hover:bg-green-700 text-white focus:ring-green-500 dark:bg-green-600 dark:hover:bg-green-700',
+    ghost: 'bg-transparent text-blue-500 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200 focus:ring-0 focus:ring-offset-0',
   };
   
   // Clases por tamaño
