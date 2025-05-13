@@ -11,6 +11,7 @@ import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { FaPlus } from 'react-icons/fa';
 import SubjectSearch from '@/components/SubjectSearch';
 import ProfilePictureUploader from '@/components/ProfilePictureUploader';
+import ImageModal from '@/components/ImageModal';
 
 export default function TeacherProfile() {
   const session = getGlobalSession();
@@ -30,6 +31,7 @@ export default function TeacherProfile() {
   });
   const [editMode, setEditMode] = useState(false);
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   type SubjectModalState = {
     selectedSubject: string | null;
@@ -130,6 +132,13 @@ export default function TeacherProfile() {
   return (
     <div className="min-h-screen flex pt-3 justify-center">
       <ToastContainer />
+      {isImageModalOpen && (
+        <ImageModal
+          imageUrl={session?.userImage}
+          onClose={() => setIsImageModalOpen(false)}
+          altText="Foto de perfil"
+        />
+      )}
       <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
         {!editMode && (
           <div className="flex gap-2 mb-4">
@@ -172,6 +181,8 @@ export default function TeacherProfile() {
                 onUploadSuccess={(url) => {
                   SuccessMsj('Foto de perfil actualizada correctamente');
                 }}
+                editMode={editMode}
+                onImageClick={() => session?.userImage && setIsImageModalOpen(true)}
               />
             )}
           </div>
