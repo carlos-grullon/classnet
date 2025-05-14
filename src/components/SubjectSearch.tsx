@@ -178,7 +178,7 @@ interface SubjectSearchProps {
   onSubjectSelect?: (subject: string) => void;
 }
 
-const SubjectSearch: React.FC<SubjectSearchProps> = ({ onSubjectSelect }) => {
+export const SubjectSearch: React.FC<SubjectSearchProps> = ({ onSubjectSelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -230,5 +230,3 @@ const SubjectSearch: React.FC<SubjectSearchProps> = ({ onSubjectSelect }) => {
     </div>
   );
 };
-
-export default SubjectSearch;

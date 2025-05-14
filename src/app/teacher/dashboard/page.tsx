@@ -1,6 +1,6 @@
 "use client";
 
-import ProfilePictureUploader from "@/components/ProfilePictureUploader";
+import { ProfilePictureUploader } from "@/components";
 import { getGlobalSession } from "@/utils/GlobalSession";
 
 export default function TeacherDashboard() {

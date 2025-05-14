@@ -1,9 +1,9 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import ThemeToggle from './ThemeToggle';
+import { ThemeToggle } from './ThemeToggle';
 
-export default function Navbar() {
+export function Navbar() {
   const pathname = usePathname();
   
   const isTeacherRoute = pathname?.startsWith('/teacher');

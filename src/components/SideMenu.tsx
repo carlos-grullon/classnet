@@ -3,11 +3,10 @@ import { useState, useEffect } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
-import { clearGlobalSession } from '@/utils/GlobalSession';
+import { clearGlobalSession, isAuthenticated } from '@/utils/GlobalSession';
 import { useRouter, usePathname } from 'next/navigation';
-import { isAuthenticated } from '@/utils/GlobalSession';
 
-export default function SideMenu() {
+export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [auth, setAuth] = useState(false);
   const router = useRouter();

@@ -1,15 +1,11 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { Card } from '@/components/Card';
-import { Input } from '@/components/Input';
-import { Select } from '@/components/Select';
-import { Button } from '@/components/Button';
+import { Card, Input, Select, Button, ThemeToggle } from '@/components';
 import { FetchData, ErrorMsj, handleInputChange, SuccessMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
-import ThemeToggle from '@/components/ThemeToggle';
 import { FiUserPlus } from 'react-icons/fi';
 
 interface FormData {

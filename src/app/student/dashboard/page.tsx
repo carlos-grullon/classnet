@@ -1,5 +1,5 @@
 "use client";
-import SideMenu from '@/components/SideMenu';
+import { SideMenu } from '@/components';
 
 export default function StudentDashboard() {
     return (

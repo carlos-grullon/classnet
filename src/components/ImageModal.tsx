@@ -13,7 +13,7 @@ interface ImageModalProps {
   children?: ReactNode;
 }
 
-export default function ImageModal({
+export function ImageModal({
   imageUrl,
   onClose,
   altText = 'Imagen ampliada',

@@ -17,7 +17,7 @@ interface ProfilePictureUploaderProps {
   onImageClick?: () => void;
 }
 
-export default function ProfilePictureUploader({
+export function ProfilePictureUploader({
   email,
   currentImageUrl,
   onUploadSuccess,
