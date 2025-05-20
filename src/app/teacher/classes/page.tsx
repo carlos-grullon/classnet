@@ -1,19 +1,18 @@
 'use client';
 import { useState } from 'react';
-import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx'
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Class } from '@/interfaces/Class';
 import { ToastContainer } from 'react-toastify';
+import { Card, Input, Select, Button } from '@/components';
+import { FiPlus, FiX, FiSave, FiClock, FiDollarSign, FiUsers, FiBookOpen } from 'react-icons/fi';
 
 export default function TeacherClasses() {
   const formInitialValues = {
     name: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
   };
+  
   const [classes, setClasses] = useState<Class[]>([]);
-  const [formData, setFormData] = useState<Omit<Class, 'id'>>(formInitialValues);
-
-  function ClearForm() {
-    setFormData(formInitialValues);
-  }
+  const [formData, setFormData] = useState(formInitialValues);
 
   const daysOfWeek = {
     '1': 'Lunes',
@@ -26,13 +25,12 @@ export default function TeacherClasses() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    // Esto actualiza el estado de los campos del formulario
+    const { name, value, type } = e.target;
+    
     setFormData(prev => ({
       ...prev,
-      // Si el campo es maxStudents o price, lo convierte a número
-      [name]: name === 'maxStudents' || name === 'price' 
-        ? parseInt(value, 10) 
+      [name]: type === 'number' || name === 'maxStudents' || name === 'price'
+        ? parseFloat(value) || 0
         : value
     }));
   };
@@ -42,201 +40,175 @@ export default function TeacherClasses() {
     try {
       await FetchData('/api/classes', formData, 'POST');
       SuccessMsj('¡Clase guardada con éxito!');
-      ClearForm();
+      setFormData(formInitialValues);
     } catch (error: any) {
       ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.');
     }
   };
 
+  const getDayName = (day: string) => {
+    return daysOfWeek[day as keyof typeof daysOfWeek] || day;
+  };
+
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen p-4 md:p-8">
       <ToastContainer />
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Gestión de Clases</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Gestión de Clases</h1>
 
-        {/* Formulario */}
-        <div className="rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">
-            Crear Nueva Clase
-          </h2>
+        <Card 
+          title="Crear Nueva Clase" 
+          icon={<FiBookOpen className="text-blue-500" />}
+          className="mb-8"
+          fullWidth = {true}
+        >
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Nombre de la clase */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-2">
-                  Nombre de la Clase
-                </label>
-                <input
-                  type="text"
+                <Input
                   id="name"
                   name="name"
+                  type="text"
+                  label="Nombre de la Clase"
                   value={formData.name}
                   onChange={handleInputChange}
-                  required
-                  className="w-full p-2 border rounded-md"
+                  placeholder="Ej: Matemáticas Avanzadas"
                 />
               </div>
 
-              {/* Nivel */}
-              <div className='grid grid-cols-2 gap-4'>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="level" className="block text-sm font-medium mb-2">
-                    Nivel
-                  </label>
-                  <select
+                  <Select
                     id="level"
                     name="level"
+                    label="Nivel"
                     value={formData.level}
                     onChange={handleInputChange}
-                    required
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="0">Seleccionar nivel</option>
-                    <option value="1">Principiante</option>
-                    <option value="2">Intermedio</option>
-                    <option value="3">Avanzado</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Seleccionar nivel' },
+                      { value: '1', label: 'Principiante' },
+                      { value: '2', label: 'Intermedio' },
+                      { value: '3', label: 'Avanzado' }
+                    ]}
+                  />
                 </div>
                 <div>
                   <label htmlFor="price" className="block text-sm font-medium mb-2">
                     Precio
                   </label>
                   <input
-                    type="number"
                     id="price"
                     name="price"
+                    type="number"
                     value={formData.price}
                     onChange={handleInputChange}
-                    required
+                    min="0"
+                    step="0.01"
                     className="w-full p-2 border rounded-md"
                   />
                 </div>
               </div>
 
-              {/* Día de la semana */}
               <div>
-                <label htmlFor="schedule.dayOfWeek" className="block text-sm font-medium mb-2">
-                  Día de la Semana
-                </label>
-                <select
+                <Select
                   id="dayOfWeek"
                   name="dayOfWeek"
+                  label="Día de la Semana"
                   value={formData.dayOfWeek}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="0">Seleccionar día</option>
-                  {Object.entries(daysOfWeek).map(([key, value]) => (
-                    <option key={key} value={key}>{value}</option>
-                  ))}
-                </select>
+                  options={[
+                    { value: '', label: 'Seleccionar día' },
+                    ...Object.entries(daysOfWeek).map(([key, value]) => ({
+                      value: key,
+                      label: value
+                    }))
+                  ]}
+                />
               </div>
 
-              {/* Horario */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="startTime" className="block text-sm font-medium mb-2">
                     Hora de Inicio
                   </label>
                   <input
-                    type="time"
                     id="startTime"
                     name="startTime"
+                    type="time"
                     value={formData.startTime}
                     onChange={handleInputChange}
-                    required
                     className="w-full p-2 border rounded-md"
                   />
                 </div>
                 <div>
-                  <label htmlFor="schedule.endTime" className="block text-sm font-medium mb-2">
+                  <label htmlFor="endTime" className="block text-sm font-medium mb-2">
                     Hora de Fin
                   </label>
                   <input
-                    type="time"
                     id="endTime"
                     name="endTime"
+                    type="time"
                     value={formData.endTime}
                     onChange={handleInputChange}
-                    required
                     className="w-full p-2 border rounded-md"
                   />
                 </div>
               </div>
 
-              {/* Límite de estudiantes */}
               <div>
                 <label htmlFor="maxStudents" className="block text-sm font-medium mb-2">
                   Límite de Estudiantes
                 </label>
                 <input
-                  type="number"
                   id="maxStudents"
                   name="maxStudents"
+                  type="number"
                   value={formData.maxStudents}
                   onChange={handleInputChange}
-                  required
                   min="1"
                   className="w-full p-2 border rounded-md"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end space-x-4">
-              <button
-                  type="button"
-                  onClick={() => {
-                    setFormData({
-                      name: '',
-                      price: 0,
-                      level: '',
-                      dayOfWeek: '',
-                      startTime: '',
-                      endTime: '',
-                      maxStudents: 20
-                    });
-                  }}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  Cancelar
-                </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                type="button"
+                onClick={() => setFormData(formInitialValues)}
+                variant="outline"
+                icon={<FiX />}
               >
-                Crear Clase
-              </button>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                icon={<FiSave />}
+              >
+                Guardar Clase
+              </Button>
             </div>
           </form>
-        </div>
+        </Card>
 
-        {/* Lista de clases */}
-        <div className="rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">Clases Existentes</h2>
-          <div className="space-y-4">
-            {classes.map(classItem => (
-              <div
-                key={classItem.name}
-                className="border rounded-lg p-4 flex items-center justify-between"
-              >
-                <div>
-                  <h3 className="font-semibold">{classItem.name}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {classItem.level} • {classItem.dayOfWeek} {classItem.startTime}-{classItem.endTime}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Límite: {classItem.maxStudents} estudiantes
+        <Card title="Clases Existentes" fullWidth = {true}>
+          {classes.length === 0 ? (
+            <p className="text-gray-500 text-center py-4">
+              No hay clases registradas. Crea tu primera clase.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {classes.map((cls, index) => (
+                <div key={index} className="p-4 border rounded-lg">
+                  <h3 className="font-semibold">{cls.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {getDayName(cls.dayOfWeek)} • {cls.startTime} - {cls.endTime}
                   </p>
                 </div>
-              </div>
-            ))}
-            {classes.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400">
-                No hay clases creadas aún
-              </p>
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

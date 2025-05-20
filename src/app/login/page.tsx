@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Card, ThemeToggle, Input, Button } from "@/components";
-import { CrearCookie, FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
+import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -58,9 +58,6 @@ export default function LoginPage() {
       });
 
       SuccessMsj("Inicio de sesión exitoso");
-
-      // Guardar la sesión en una cookie para el backend
-      CrearCookie('sessionId', data.idSession);
 
       // Crear y guardar la sesión global
       setGlobalSession({

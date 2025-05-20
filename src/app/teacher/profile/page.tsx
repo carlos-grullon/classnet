@@ -51,8 +51,8 @@ export default function TeacherProfile() {
         if (res) {
           const datos = {
             name: res.name,
-            description: res.data.description,
-            classes: res.data.classes
+            description: res.data.description || '',
+            classes: res.data.classes || []
           }
           setInitialData(datos);
           setFormData(datos);

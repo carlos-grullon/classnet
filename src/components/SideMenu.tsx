@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
-import { EliminarCookie, FetchData } from '@/utils/Tools.tsx';
+import { FetchData } from '@/utils/Tools.tsx';
 import { clearGlobalSession, isAuthenticated } from '@/utils/GlobalSession';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -24,7 +24,6 @@ export function SideMenu() {
   const handleLogout = async () => {
     try {
       await FetchData('/api/logout');
-      EliminarCookie('sessionId');
       setIsOpen(false);
       clearGlobalSession();
       router.push('/login');

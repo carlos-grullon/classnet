@@ -20,25 +20,21 @@ export async function ComparePassword(password: string, hash: string): Promise<b
     return await bcrypt.compare(password, hash);
 }
 
-export function CrearCookie(name: string, value: string, days: number = -1) {
+export function CrearCookie(name: string, value: string, days: number = 7) {
     const response = NextResponse.next();
     const date = new Date();
+    // Set expiration to 7 days from now
+    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
     
-    if (days >= 0) {
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        response.cookies.set({
-            name,
-            value,
-            expires: date,
-            path: '/'
-        });
-    } else {
-        response.cookies.set({
-            name,
-            value,
-            path: '/'
-        });
-    }
+    response.cookies.set({
+        name,
+        value,
+        expires: date,
+        path: '/',
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true
+    });
     
     return response;
 }
