@@ -7,7 +7,6 @@ import { Card, Input, Textarea, Button } from '@/components';
 import { SubjectSearch, ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { FaPlus } from 'react-icons/fa';
-import { subjectsData } from '@/components/SubjectSearch';
 
 export default function TeacherProfile() {
   const session = getGlobalSession();
@@ -48,6 +47,21 @@ export default function TeacherProfile() {
     subjectToRemove: null,
     subjectName: ''
   });
+
+  const [subjectsData, setSubjectsData] = useState({});
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const res = await fetch('/api/subjects');
+        const data = await res.json();
+        setSubjectsData(data);
+      } catch (error) {
+        console.error('Failed to load subjects:', error);
+      }
+    };
+    fetchSubjects();
+  }, []);
 
   useEffect(() => {
     GetTeacherData();
@@ -157,15 +171,14 @@ export default function TeacherProfile() {
   const getSubjectName = (code: string | null): string => {
     if (!code) return '';
     
-    const category = code.substring(0, 3) as keyof typeof subjectsData;
-    const subjectCode = code.substring(3);
+    // Manejar exclusivamente formato "CAT-CODE"
+    const [category, subjectCode] = code.split('-');
     
-    // Type-safe access to subjectsData
-    const categorySubjects = subjectsData[category];
+    const categorySubjects = subjectsData[category as keyof typeof subjectsData];
     if (categorySubjects && subjectCode in categorySubjects) {
       return categorySubjects[subjectCode as keyof typeof categorySubjects];
     }
-    return code; // Fallback to code if not found
+    return code; // Fallback al código si no se encuentra
   };
 
   return (
@@ -272,37 +285,22 @@ export default function TeacherProfile() {
                   </span>
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.classes.map((className, index) => {
-                  const subjectName = getSubjectName(className);
-                  return (
-                    <span
-                      key={index}
-                      className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm dark:bg-blue-900 dark:text-blue-200"
+              {formData.classes.map((classCode) => (
+                <div key={classCode} className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm dark:bg-blue-900 dark:text-blue-200 ml-1">
+                  <span>{getSubjectName(classCode)}</span>
+                  {editMode && (
+                    <button 
+                      type="button"
+                      onClick={() => handleRemoveSubject(classCode)}
+                      className="text-red-500 hover:text-red-700 dark:hover:text-red-400 ml-1"
                     >
-                      {subjectName}
-                      {editMode && (
-                        <button
-                          type="button"
-                          className="ml-2 text-red-500 hover:text-red-700"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleRemoveSubject(className);
-                          }}
-                        >
-                          <FiX size={16} />
-                        </button>
-                      )}
-                    </span>
-                  );
-                })}
-                {formData.classes.length === 0 && (
-                  <span className="text-sm italic">
-                    No hay clases registradas
-                  </span>
-                )}
-              </div>
+                      <span className="flex items-center p-1 bg-gray-200 bg-opacity-60 dark:bg-gray-700 rounded-full">  
+                        <FiX />
+                      </span>
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </form>
         </Card>
