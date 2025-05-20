@@ -7,6 +7,7 @@ import { Card, Input, Textarea, Button } from '@/components';
 import { SubjectSearch, ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { FaPlus } from 'react-icons/fa';
+import { subjectsData } from '@/components/SubjectSearch';
 
 export default function TeacherProfile() {
   const session = getGlobalSession();
@@ -36,6 +37,16 @@ export default function TeacherProfile() {
   const [modalState, setModalState] = useState<SubjectModalState>({
     selectedSubject: null,
     isConfirming: false
+  });
+
+  const [removeSubjectModal, setRemoveSubjectModal] = useState<{
+    isOpen: boolean;
+    subjectToRemove: string | null;
+    subjectName: string;
+  }>({
+    isOpen: false,
+    subjectToRemove: null,
+    subjectName: ''
   });
 
   useEffect(() => {
@@ -102,9 +113,9 @@ export default function TeacherProfile() {
     setEditMode(false);
   };
 
-  const handleSubjectSelect = (subject: string) => {
+  const handleSubjectSelect = (subjectCode: string) => {
     setModalState({
-      selectedSubject: subject,
+      selectedSubject: subjectCode,
       isConfirming: true
     });
   };
@@ -122,6 +133,39 @@ export default function TeacherProfile() {
 
     setModalState({ selectedSubject: null, isConfirming: false });
     setIsSubjectModalOpen(false);
+  };
+
+  const handleRemoveSubject = (subjectCode: string) => {
+    const subjectName = getSubjectName(subjectCode);
+    setRemoveSubjectModal({
+      isOpen: true,
+      subjectToRemove: subjectCode,
+      subjectName
+    });
+  };
+
+  const confirmRemoveSubject = () => {
+    if (removeSubjectModal.subjectToRemove) {
+      setFormData(prev => ({
+        ...prev,
+        classes: prev.classes.filter(code => code !== removeSubjectModal.subjectToRemove)
+      }));
+    }
+    setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' });
+  };
+
+  const getSubjectName = (code: string | null): string => {
+    if (!code) return '';
+    
+    const category = code.substring(0, 3) as keyof typeof subjectsData;
+    const subjectCode = code.substring(3);
+    
+    // Type-safe access to subjectsData
+    const categorySubjects = subjectsData[category];
+    if (categorySubjects && subjectCode in categorySubjects) {
+      return categorySubjects[subjectCode as keyof typeof categorySubjects];
+    }
+    return code; // Fallback to code if not found
   };
 
   return (
@@ -229,14 +273,30 @@ export default function TeacherProfile() {
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2 mt-2">
-                {formData.classes.map((className, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm"
-                  >
-                    {className}
-                  </span>
-                ))}
+                {formData.classes.map((className, index) => {
+                  const subjectName = getSubjectName(className);
+                  return (
+                    <span
+                      key={index}
+                      className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm dark:bg-blue-900 dark:text-blue-200"
+                    >
+                      {subjectName}
+                      {editMode && (
+                        <button
+                          type="button"
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveSubject(className);
+                          }}
+                        >
+                          <FiX size={16} />
+                        </button>
+                      )}
+                    </span>
+                  );
+                })}
                 {formData.classes.length === 0 && (
                   <span className="text-sm italic">
                     No hay clases registradas
@@ -267,7 +327,7 @@ export default function TeacherProfile() {
 
               {modalState.isConfirming ? (
                 <div className="space-y-4">
-                  <p>¿Agregar <span className="font-semibold">{modalState.selectedSubject}</span>?</p>
+                  <p>¿Agregar <span className="font-semibold">{getSubjectName(modalState.selectedSubject)}</span>?</p>
                   <div className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -288,7 +348,44 @@ export default function TeacherProfile() {
               )}
             </div>
           </div>
-        )}</div>
+        )}
+
+        {removeSubjectModal.isOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">
+                  Eliminar materia
+                </h3>
+                <button
+                  onClick={() => setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' })}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <FiX size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p>¿Eliminar <span className="font-semibold">{removeSubjectModal.subjectName}</span>?</p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' })}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={confirmRemoveSubject}
+                    variant="danger"
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       <div></div>
     </div>
   );

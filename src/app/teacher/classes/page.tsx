@@ -8,7 +8,7 @@ import { FiPlus, FiX, FiSave, FiClock, FiDollarSign, FiUsers, FiBookOpen } from 
 
 export default function TeacherClasses() {
   const formInitialValues = {
-    name: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
+    subject: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
   };
   
   const [classes, setClasses] = useState<Class[]>([]);
@@ -65,14 +65,23 @@ export default function TeacherClasses() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  label="Nombre de la Clase"
-                  value={formData.name}
+                <Select
+                  id="subject"
+                  label="Materia"
+                  value={formData.subject}
                   onChange={handleInputChange}
-                  placeholder="Ej: Matemáticas Avanzadas"
+                  options={[
+                    { value: '', label: 'Seleccionar materia' },
+                    { value: 'matematicas', label: 'Matemáticas' },
+                    { value: 'ciencias', label: 'Ciencias' },
+                    { value: 'historia', label: 'Historia' },
+                    { value: 'geografia', label: 'Geografía' },
+                    { value: 'ingles', label: 'Inglés' },
+                    { value: 'espanol', label: 'Español' },
+                    { value: 'artes', label: 'Artes' },
+                    { value: 'musica', label: 'Música' },
+                    { value: 'tecnologia', label: 'Tecnología' },
+                  ]}
                 />
               </div>
 
@@ -80,7 +89,6 @@ export default function TeacherClasses() {
                 <div>
                   <Select
                     id="level"
-                    name="level"
                     label="Nivel"
                     value={formData.level}
                     onChange={handleInputChange}
@@ -112,7 +120,6 @@ export default function TeacherClasses() {
               <div>
                 <Select
                   id="dayOfWeek"
-                  name="dayOfWeek"
                   label="Día de la Semana"
                   value={formData.dayOfWeek}
                   onChange={handleInputChange}
