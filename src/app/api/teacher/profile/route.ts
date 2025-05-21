@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
 
+interface SubjectRef {
+    category: string;
+    code: string;
+}
+
 export async function POST(request: Request) {
     try {
         const data = await request.json();
@@ -26,7 +31,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
     try {
-        const { email, name, description, classes } = await request.json();
+        const { email, name, description, subjects }: { email: string; name: string; description: string; subjects: SubjectRef[] } = await request.json();
         
         if (!email) {
             return NextResponse.json({ error: 'Email es requerido' }, { status: 400 });
@@ -40,7 +45,7 @@ export async function PUT(request: Request) {
                 $set: { 
                     username: name,
                     'data.description': description,
-                    'data.classes': classes
+                    'data.subjects': subjects
                 } 
             }
         );
@@ -52,7 +57,7 @@ export async function PUT(request: Request) {
         return NextResponse.json({ 
             success: true,
             message: 'Perfil actualizado correctamente',
-            updatedFields: { name, description, classes }
+            updatedFields: { name, description, subjects }
         });
         
     } catch (error) {

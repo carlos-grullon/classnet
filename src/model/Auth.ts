@@ -21,10 +21,11 @@ export async function Register(
             status: 'A',
             data: user_type === 'P' ? {
                 description: '',
-                classes: [],
+                subjects: [],
                 image_path: '',
                 reviews: [],
                 rating: 0,
+                classes: []
             } : {},
             created_at: new Date(),
             updated_at: new Date()

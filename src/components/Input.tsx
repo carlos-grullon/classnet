@@ -14,6 +14,7 @@ interface InputProps {
   trigger?: number;
   placeholder?: string;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 export function Input({
@@ -26,7 +27,8 @@ export function Input({
   error,
   trigger = 0,
   placeholder = '',
-  disabled = false
+  disabled = false,
+  autoFocus = false
 }: InputProps) {
   const [showError, setShowError] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -79,6 +81,7 @@ export function Input({
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
+          autoFocus={autoFocus}
           placeholder={placeholder}
           className={`
             block w-full px-4 py-2.5 rounded-lg appearance-none transition-colors duration-200

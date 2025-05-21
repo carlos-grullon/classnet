@@ -1,18 +1,31 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Class } from '@/interfaces/Class';
+import { ObjectId } from 'mongodb';
+
+interface Subject {
+  _id: ObjectId;
+  category: string;
+  code: string;
+  name: string;
+}
+
 import { ToastContainer } from 'react-toastify';
 import { Card, Input, Select, Button } from '@/components';
 import { FiPlus, FiX, FiSave, FiClock, FiDollarSign, FiUsers, FiBookOpen } from 'react-icons/fi';
+import { getGlobalSession } from '@/utils/GlobalSession';
 
 export default function TeacherClasses() {
+  
   const formInitialValues = {
     subject: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
   };
   
   const [classes, setClasses] = useState<Class[]>([]);
+  const [teacherSubjects, setTeacherSubjects] = useState<string[]>(['Añade una materia en tu perfil']);
   const [formData, setFormData] = useState(formInitialValues);
+  const [subjectsData, setSubjectsData] = useState<Subject[]>([]);
 
   const daysOfWeek = {
     '1': 'Lunes',
@@ -23,6 +36,35 @@ export default function TeacherClasses() {
     '6': 'Sábado',
     '7': 'Domingo'
   };
+  const session = getGlobalSession();
+
+  useEffect(() => {
+    const GetTeacherData = async () => {
+      try {
+        if (session) {
+          const res = await FetchData('/api/teacher/profile', {
+            email: session.userEmail
+          });
+          if (res) {
+            if (res.data.subjects.length > 0) {
+              // Mapear la lista de materias y separar la categoría y el código
+              const teacherSubjectsFormatted = res.data.subjects.map((i: string) => {
+                const [category, code] = i.split('-');
+                return {
+                  category,
+                  code
+                };
+              });
+              setTeacherSubjects(teacherSubjectsFormatted);
+            }
+          }
+        }
+      } catch (error: any) {
+        ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.');
+      }
+    };
+    GetTeacherData();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -72,15 +114,12 @@ export default function TeacherClasses() {
                   onChange={handleInputChange}
                   options={[
                     { value: '', label: 'Seleccionar materia' },
-                    { value: 'matematicas', label: 'Matemáticas' },
-                    { value: 'ciencias', label: 'Ciencias' },
-                    { value: 'historia', label: 'Historia' },
-                    { value: 'geografia', label: 'Geografía' },
-                    { value: 'ingles', label: 'Inglés' },
-                    { value: 'espanol', label: 'Español' },
-                    { value: 'artes', label: 'Artes' },
-                    { value: 'musica', label: 'Música' },
-                    { value: 'tecnologia', label: 'Tecnología' },
+                    ...subjectsData.map(subject => {
+                      return {
+                        value: subject.code,
+                        label: subject.name
+                      };
+                    })
                   ]}
                 />
               </div>

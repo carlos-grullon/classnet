@@ -4,64 +4,33 @@ import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tool
 import { ToastContainer } from 'react-toastify';
 import { getGlobalSession } from '@/utils/GlobalSession';
 import { Card, Input, Textarea, Button } from '@/components';
-import { SubjectSearch, ProfilePictureUploader, ImageModal } from '@/components';
+import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
+import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
+import { Subject } from '@/components/SubjectSearch';
 
 export default function TeacherProfile() {
+  
   const session = getGlobalSession();
   const [initialData, setInitialData] = useState<{
     name: string;
     description: string;
-    classes: string[];
+    subjects: Array<{ category: string; code: string }>;
   } | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
-    classes: string[];
+    subjects: Array<{ category: string; code: string }>;
   }>({
     name: '',
     description: '',
-    classes: [],
+    subjects: []
   });
   const [editMode, setEditMode] = useState(false);
-  const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-
-  type SubjectModalState = {
-    selectedSubject: string | null;
-    isConfirming: boolean;
-  };
-
-  const [modalState, setModalState] = useState<SubjectModalState>({
-    selectedSubject: null,
-    isConfirming: false
-  });
-
-  const [removeSubjectModal, setRemoveSubjectModal] = useState<{
-    isOpen: boolean;
-    subjectToRemove: string | null;
-    subjectName: string;
-  }>({
-    isOpen: false,
-    subjectToRemove: null,
-    subjectName: ''
-  });
-
-  const [subjectsData, setSubjectsData] = useState({});
-
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const res = await fetch('/api/subjects');
-        const data = await res.json();
-        setSubjectsData(data);
-      } catch (error) {
-        console.error('Failed to load subjects:', error);
-      }
-    };
-    fetchSubjects();
-  }, []);
+  const [isSubjectSearchOpen, setIsSubjectSearchOpen] = useState(false);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
 
   useEffect(() => {
     GetTeacherData();
@@ -70,21 +39,24 @@ export default function TeacherProfile() {
   async function GetTeacherData() {
     try {
       if (session) {
-        const res = await FetchData('/api/teacher/profile', {
-          email: session.userEmail
-        });
-        if (res) {
+        const [profileRes, subjectsRes] = await Promise.all([
+          FetchData('/api/teacher/profile', { email: session.userEmail }),
+          FetchData('/api/subjects', {}, 'GET')
+        ]);
+        
+        if (profileRes && subjectsRes) {
           const datos = {
-            name: res.name,
-            description: res.data.description || '',
-            classes: res.data.classes || []
-          }
+            name: profileRes.name,
+            description: profileRes.data.description || '',
+            subjects: profileRes.data.subjects || []
+          };
+          setAllSubjects(subjectsRes.subjects || subjectsRes);
           setInitialData(datos);
           setFormData(datos);
         }
       }
     } catch (error: any) {
-      ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.');
+      ErrorMsj('Error al obtener los datos del perfil');
     }
   }
 
@@ -100,14 +72,14 @@ export default function TeacherProfile() {
           email: session.userEmail,
           name: formData.name,
           description: formData.description,
-          classes: formData.classes
+          subjects: formData.subjects
         }, 'PUT');
 
         if (data.success) {
           const updatedData = {
             name: formData.name,
             description: formData.description,
-            classes: formData.classes
+            subjects: formData.subjects
           };
 
           setInitialData(updatedData);
@@ -127,58 +99,11 @@ export default function TeacherProfile() {
     setEditMode(false);
   };
 
-  const handleSubjectSelect = (subjectCode: string) => {
-    setModalState({
-      selectedSubject: subjectCode,
-      isConfirming: true
-    });
-  };
-
-  const confirmAddSubject = () => {
-    if (modalState.selectedSubject && !formData.classes.includes(modalState.selectedSubject)) {
-      setFormData(prev => ({
-        ...prev,
-        classes: [...prev.classes, modalState.selectedSubject as string]
-      }));
-      SuccessMsj('Materia agregada correctamente');
-    } else if (modalState.selectedSubject) {
-      ErrorMsj('Esta materia ya está agregada');
-    }
-
-    setModalState({ selectedSubject: null, isConfirming: false });
-    setIsSubjectModalOpen(false);
-  };
-
-  const handleRemoveSubject = (subjectCode: string) => {
-    const subjectName = getSubjectName(subjectCode);
-    setRemoveSubjectModal({
-      isOpen: true,
-      subjectToRemove: subjectCode,
-      subjectName
-    });
-  };
-
-  const confirmRemoveSubject = () => {
-    if (removeSubjectModal.subjectToRemove) {
-      setFormData(prev => ({
-        ...prev,
-        classes: prev.classes.filter(code => code !== removeSubjectModal.subjectToRemove)
-      }));
-    }
-    setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' });
-  };
-
-  const getSubjectName = (code: string | null): string => {
-    if (!code) return '';
-    
-    // Manejar exclusivamente formato "CAT-CODE"
-    const [category, subjectCode] = code.split('-');
-    
-    const categorySubjects = subjectsData[category as keyof typeof subjectsData];
-    if (categorySubjects && subjectCode in categorySubjects) {
-      return categorySubjects[subjectCode as keyof typeof categorySubjects];
-    }
-    return code; // Fallback al código si no se encuentra
+  const removeSubject = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      subjects: prev.subjects.filter((_, i) => i !== index)
+    }));
   };
 
   return (
@@ -267,124 +192,78 @@ export default function TeacherProfile() {
               disabled={!editMode}
             />
 
-            {/* Clases impartidas */}
+            {/* Materias */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="classes" className="block text-sm font-medium">
-                  Clases Impartidas
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Materias
                 </label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2"
-                  onClick={() => setIsSubjectModalOpen(true)}
-                  disabled={!editMode}
-                >
-                  <span className="flex items-center">
-                    <span className="mr-1"><FaPlus /></span> Agregar materia
-                  </span>
-                </Button>
+                {editMode && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsSubjectSearchOpen(true)}
+                  >
+                    <span className="flex items-center">
+                      <FaPlus className="mr-1" /> Agregar
+                    </span>
+                  </Button>
+                )}
               </div>
-              {formData.classes.map((classCode) => (
-                <div key={classCode} className="inline-flex px-3 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full text-sm dark:bg-blue-900 dark:text-blue-200 ml-1">
-                  <span>{getSubjectName(classCode)}</span>
-                  {editMode && (
-                    <button 
-                      type="button"
-                      onClick={() => handleRemoveSubject(classCode)}
-                      className="text-red-500 hover:text-red-700 dark:hover:text-red-400 ml-1"
-                    >
-                      <span className="flex items-center p-1 bg-gray-200 bg-opacity-60 dark:bg-gray-700 rounded-full">  
-                        <FiX />
+              <div className="flex flex-wrap gap-2">
+                {formData.subjects.length === 0 ? (
+                  <span className="text-sm text-gray-500">No hay materias asignadas</span>
+                ) : (
+                  formData.subjects.map((subject, index) => {
+                    const fullSubject = allSubjects.find(s => 
+                      s.category === subject.category && 
+                      s.code === subject.code
+                    );
+                    
+                    return (
+                      <span 
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                        title={`${subject.category} - ${subject.code}`}
+                      >
+                        {fullSubject?.name || `${subject.category}-${subject.code}`}
+                        {editMode && (
+                          <button 
+                            onClick={() => removeSubject(index)}
+                            className="ml-1 text-blue-500 hover:text-blue-700"
+                          >
+                            <FiX size={14} />
+                          </button>
+                        )}
                       </span>
-                    </button>
-                  )}
-                </div>
-              ))}
+                    );
+                  })
+                )}
+              </div>
             </div>
           </form>
         </Card>
-
-        {isSubjectModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">
-                  {modalState.isConfirming ? 'Confirmar materia' : 'Seleccionar materia'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setModalState({ selectedSubject: null, isConfirming: false });
-                    setIsSubjectModalOpen(false);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-
-              {modalState.isConfirming ? (
-                <div className="space-y-4">
-                  <p>¿Agregar <span className="font-semibold">{getSubjectName(modalState.selectedSubject)}</span>?</p>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setModalState({ selectedSubject: null, isConfirming: false })}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={confirmAddSubject}
-                      variant="primary"
-                    >
-                      Confirmar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <SubjectSearch onSubjectSelect={handleSubjectSelect} />
-              )}
-            </div>
-          </div>
-        )}
-
-        {removeSubjectModal.isOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">
-                  Eliminar materia
-                </h3>
-                <button
-                  onClick={() => setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' })}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <p>¿Eliminar <span className="font-semibold">{removeSubjectModal.subjectName}</span>?</p>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setRemoveSubjectModal({ isOpen: false, subjectToRemove: null, subjectName: '' })}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={confirmRemoveSubject}
-                    variant="danger"
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       <div></div>
+      <SubjectSearch 
+        isOpen={isSubjectSearchOpen}
+        onClose={() => setIsSubjectSearchOpen(false)}
+        onSelect={(subject) => {
+          // Verificar si ya existe
+          const exists = formData.subjects.some(
+            s => s.category === subject.category && s.code === subject.code
+          );
+          
+          if (!exists) {
+            setFormData(prev => ({
+              ...prev,
+              subjects: [...prev.subjects, subject]
+            }));
+          } else {
+            alert('Esta materia ya fue agregada');
+          }
+        }}
+      />
     </div>
   );
 }
