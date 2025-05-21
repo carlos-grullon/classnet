@@ -23,9 +23,10 @@ export default function TeacherClasses() {
   };
   
   const [classes, setClasses] = useState<Class[]>([]);
-  const [teacherSubjects, setTeacherSubjects] = useState<string[]>(['Añade una materia en tu perfil']);
+  const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
   const [formData, setFormData] = useState(formInitialValues);
   const [subjectsData, setSubjectsData] = useState<Subject[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
 
   const daysOfWeek = {
     '1': 'Lunes',
@@ -42,25 +43,20 @@ export default function TeacherClasses() {
     const GetTeacherData = async () => {
       try {
         if (session) {
-          const res = await FetchData('/api/teacher/profile', {
-            email: session.userEmail
-          });
-          if (res) {
-            if (res.data.subjects.length > 0) {
-              // Mapear la lista de materias y separar la categoría y el código
-              const teacherSubjectsFormatted = res.data.subjects.map((i: string) => {
-                const [category, code] = i.split('-');
-                return {
-                  category,
-                  code
-                };
-              });
-              setTeacherSubjects(teacherSubjectsFormatted);
+          const [profileRes, subjectsRes] = await Promise.all([
+            FetchData('/api/teacher/profile', { email: session.userEmail }),
+            FetchData('/api/subjects', {}, 'GET')
+          ]);
+          
+          if (profileRes && subjectsRes) {
+            setAllSubjects(subjectsRes.subjects || subjectsRes);
+            if (profileRes.data.subjects?.length > 0) {
+              setTeacherSubjects(profileRes.data.subjects);
             }
           }
         }
       } catch (error: any) {
-        ErrorMsj('Error al obtener los datos del perfil. Por favor, inténtalo de nuevo.');
+        ErrorMsj('Error al obtener los datos del perfil');
       }
     };
     GetTeacherData();
@@ -110,14 +106,23 @@ export default function TeacherClasses() {
                 <Select
                   id="subject"
                   label="Materia"
-                  value={formData.subject}
-                  onChange={handleInputChange}
+                  value={JSON.stringify(formData.subject)}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      subject: e.target.value ? JSON.parse(e.target.value) : { category: '', code: '' }
+                    });
+                  }}
                   options={[
-                    { value: '', label: 'Seleccionar materia' },
-                    ...subjectsData.map(subject => {
+                    { value: '', label: 'Selecciona una materia' },
+                    ...teacherSubjects.map((subject) => {
+                      const fullSubject = allSubjects.find(s => 
+                        s.category === subject.category && 
+                        s.code === subject.code
+                      );
                       return {
-                        value: subject.code,
-                        label: subject.name
+                        value: JSON.stringify(subject),
+                        label: fullSubject?.name || `${subject.category}-${subject.code}`
                       };
                     })
                   ]}
