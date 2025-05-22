@@ -19,14 +19,17 @@ export const DaysCheckboxGroup = ({ selectedDays, onChange }: DaysCheckboxGroupP
 
   const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const dayId = e.target.value;
-    let newSelectedDays = [...selectedDays];
+    const isChecked = e.target.checked;
     
-    if (e.target.checked) {
-      newSelectedDays.push(dayId);
-    } else {
-      newSelectedDays = newSelectedDays.filter(id => id !== dayId);
-    }
-    
+    // Filtrar strings vacíos y convertir a string
+    const cleanSelectedDays = selectedDays
+      .map(String)
+      .filter(day => day.trim() !== '');
+      
+    let newSelectedDays = isChecked
+      ? [...cleanSelectedDays, dayId] // Agregar día si está marcado
+      : cleanSelectedDays.filter(id => id !== dayId); // Remover si está desmarcado
+
     onChange(newSelectedDays);
   };
 

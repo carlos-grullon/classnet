@@ -3,14 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Input } from '@/components';
 import { Modal } from '@/components';
-import { FiSearch, FiX } from 'react-icons/fi';
-
-export interface Subject {
-  _id: string;
-  category: string;
-  code: string;
-  name: string;
-}
+import { FiSearch } from 'react-icons/fi';
+import { Subject } from '@/interfaces';
 
 interface SubjectSearchProps {
   isOpen: boolean;

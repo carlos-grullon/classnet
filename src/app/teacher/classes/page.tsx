@@ -1,58 +1,45 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
-import { Class } from '@/interfaces/Class';
-import { ObjectId } from 'mongodb';
-
-interface Subject {
-  _id: ObjectId;
-  category: string;
-  code: string;
-  name: string;
-}
-
+import { ClassFormValues, ClassFormSchema } from '@/validations/class';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, Controller } from 'react-hook-form';
 import { ToastContainer } from 'react-toastify';
 import { Card, Input, Select, Button, DaysCheckboxGroup } from '@/components';
+import { CurrencyInput } from '@/components/CurrencyInput';
+import NumericInput from '@/components/NumericInput';
 import { FiPlus, FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { getGlobalSession } from '@/utils/GlobalSession';
+import { Subject } from '@/interfaces';
 
 export default function TeacherClasses() {
   
-  interface FormData {
-    subject: string;
-    price: number;
-    level: string;
-    selectedDays: string[];
-    startTime: string;
-    endTime: string;
-    maxStudents: number;
-  }
 
-  const formInitialValues: FormData = {
-    subject: '', 
-    price: 0, 
-    level: '', 
-    selectedDays: [], 
-    startTime: '', 
-    endTime: '', 
-    maxStudents: 30
-  };
+  const form = useForm<ClassFormValues>({
+    resolver: zodResolver(ClassFormSchema),
+    defaultValues: {
+      subject: '', 
+      price: 0, 
+      level: '', 
+      selectedDays: [], 
+      startTime: '', 
+      endTime: '', 
+      maxStudents: 30
+    }
+  });
   
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
-  const [formData, setFormData] = useState<FormData>(formInitialValues);
-  const [subjectsData, setSubjectsData] = useState<Subject[]>([]);
-  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors }, 
+    setValue,
+    reset,
+    control
+  } = form;
 
-  const daysOfWeek = {
-    '1': 'Lunes',
-    '2': 'Martes',
-    '3': 'Miércoles',
-    '4': 'Jueves',
-    '5': 'Viernes',
-    '6': 'Sábado',
-    '7': 'Domingo'
-  };
+  const [classes, setClasses] = useState<ClassFormValues[]>([]);
+  const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
+  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const session = getGlobalSession();
 
   useEffect(() => {
@@ -78,35 +65,42 @@ export default function TeacherClasses() {
     GetTeacherData();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: name === 'price' || name === 'maxStudents' ? Number(value) : value
-    });
-  };
-
   const handleDaysChange = (days: string[]) => {
-    setFormData({
-      ...formData,
-      selectedDays: days
-    });
+    setValue('selectedDays', days, { shouldValidate: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
+  const onSubmit = async (data: ClassFormValues) => {
+    console.log(data);
+    const hasValidDays = data.selectedDays?.some(day => day && day.trim() !== '');
+    if (!hasValidDays) {
+      ErrorMsj('Selecciona al menos un día');
+      return;
+    }
+
     try {
-      console.log(formData);
-      await FetchData('/api/teacher/classes', formData, 'POST');
-      SuccessMsj('¡Clase guardada con éxito!');
-      setFormData(formInitialValues);
+      const response = await FetchData('/api/teacher/classes', {
+        email: session?.userEmail,
+        classes: data
+      }, 'PUT');
+      SuccessMsj(response.message || 'Clase creada exitosamente');
+      reset();
     } catch (error: any) {
-      ErrorMsj('Error al guardar la clase. Por favor, inténtalo de nuevo.');
+      ErrorMsj(error.message || 'Error al crear la clase');
     }
   };
 
-  const getDayName = (day: string) => {
-    return daysOfWeek[day as keyof typeof daysOfWeek] || day;
+  const getDayName = (days: string[]): string => {
+    const daysMap = {
+      '1': 'Lunes',
+      '2': 'Martes',
+      '3': 'Miércoles',
+      '4': 'Jueves',
+      '5': 'Viernes',
+      '6': 'Sábado',
+      '7': 'Domingo'
+    };
+    
+    return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
   };
 
   return (
@@ -121,112 +115,125 @@ export default function TeacherClasses() {
           className="mb-8"
           fullWidth = {true}
         >
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid md:grid-cols-12 gap-6">
               <div className="md:col-span-6">
-                <Select
-                  id="subject"
-                  label="Materia"
-                  value={JSON.stringify(formData.subject)}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      subject: e.target.value ? JSON.parse(e.target.value) : { category: '', code: '' }
-                    });
-                  }}
-                  options={[
-                    { value: '', label: 'Selecciona una materia' },
-                    ...teacherSubjects.map((subject) => {
-                      const fullSubject = allSubjects.find(s => 
-                        s.category === subject.category && 
-                        s.code === subject.code
-                      );
-                      return {
-                        value: JSON.stringify(subject),
-                        label: fullSubject?.name || `${subject.category}-${subject.code}`
-                      };
-                    })
-                  ]}
+                <Controller
+                  name="subject"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      id="subject"
+                      label="Materia"
+                      error={errors.subject?.message}
+                      options={[
+                        { value: '', label: 'Seleccionar materia' },
+                        ...allSubjects.map(subject => ({
+                          value: subject._id.toString(),
+                          label: subject.name
+                        }))
+                      ]}
+                    />
+                  )}
                 />
               </div>
 
               <div className="grid md:col-span-6 md:grid-cols-2 gap-4">
                 <div>
-                  <Select
-                    id="level"
-                    label="Nivel"
-                    value={formData.level}
-                    onChange={handleInputChange}
-                    options={[
-                      { value: '', label: 'Seleccionar nivel' },
-                      { value: '1', label: 'Principiante' },
-                      { value: '2', label: 'Intermedio' },
-                      { value: '3', label: 'Avanzado' }
-                    ]}
+                  <Controller
+                    name="level"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        {...field}
+                        id="level"
+                        label="Nivel"
+                        error={errors.level?.message}
+                        options={[
+                          { value: '', label: 'Seleccionar nivel' },
+                          { value: '1', label: 'Principiante' },
+                          { value: '2', label: 'Intermedio' },
+                          { value: '3', label: 'Avanzado' }
+                        ]}
+                      />
+                    )}
                   />
                 </div>
                 <div>
-                  <label htmlFor="price" className="block text-sm font-medium mb-2">
-                    Precio
-                  </label>
-                  <Input
-                    id="price"
+                  <Controller
                     name="price"
-                    type="text"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="number w-full"
+                    control={control}
+                    render={({ field }) => (
+                      <CurrencyInput
+                        {...field}
+                        id="price"
+                        label="Precio"
+                        error={errors.price?.message}
+                        onChange={(value: number) => field.onChange(value)}
+                      />
+                    )}
                   />
                 </div>
               </div>
 
               <div className="md:col-span-4">
                 <DaysCheckboxGroup 
-                  selectedDays={formData.selectedDays} 
+                  selectedDays={form.getValues('selectedDays')} 
                   onChange={handleDaysChange} 
                 />
+                {errors.selectedDays?.message && <p className="text-red-500 text-sm">{errors.selectedDays.message}</p>}
               </div>
 
               <div className="grid md:grid-cols-2 md:col-span-6 gap-4">
                 <div>
-                  <label htmlFor="startTime" className="block text-sm font-medium mb-2">
-                    Hora de Inicio
-                  </label>
-                  <Input
-                    id="startTime"
+                  <Controller
                     name="startTime"
-                    type="time"
-                    value={formData.startTime}
-                    onChange={handleInputChange}
-                    className="w-full"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="startTime"
+                        label="Hora de Inicio"
+                        type="time"
+                        error={errors.startTime?.message}
+                        className="w-full"
+                      />
+                    )}
                   />
                 </div>
                 <div>
-                  <label htmlFor="endTime" className="block text-sm font-medium mb-2">
-                    Hora de Fin
-                  </label>
-                  <Input
-                    id="endTime"
+                  <Controller
                     name="endTime"
-                    type="time"
-                    value={formData.endTime}
-                    onChange={handleInputChange}
-                    className="w-full"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        {...field}
+                        id="endTime"
+                        label="Hora de Fin"
+                        type="time"
+                        error={errors.endTime?.message}
+                        className="w-full"
+                      />
+                    )}
                   />
                 </div>
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor="maxStudents" className="block text-sm font-medium mb-2">
-                  Límite de Estudiantes
-                </label>
-                <Input
-                  id="maxStudents"
+                <Controller
                   name="maxStudents"
-                  type="text"
-                  value={formData.maxStudents}
-                  onChange={handleInputChange}
-                  className="number w-full"
+                  control={control}
+                  render={({ field }) => (
+                    <NumericInput
+                      {...field}
+                      id="maxStudents"
+                      label="Límite de Estudiantes"
+                      error={errors.maxStudents?.message}
+                      className="w-full"
+                      value={field.value}
+                    />
+                  )}
                 />
               </div>
             </div>
@@ -234,7 +241,7 @@ export default function TeacherClasses() {
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button
                 type="button"
-                onClick={() => setFormData(formInitialValues)}
+                onClick={() => reset()}
                 variant="outline"
                 icon={<FiX />}
               >
@@ -260,9 +267,9 @@ export default function TeacherClasses() {
             <div className="space-y-4">
               {classes.map((cls, index) => (
                 <div key={index} className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">{cls.name}</h3>
+                  <h3 className="font-semibold">{cls.subject}</h3>
                   <p className="text-sm text-gray-600">
-                    {getDayName(cls.dayOfWeek)} • {cls.startTime} - {cls.endTime}
+                    {getDayName(cls.selectedDays)} • {cls.startTime} - {cls.endTime}
                   </p>
                 </div>
               ))}

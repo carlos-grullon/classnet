@@ -8,7 +8,7 @@ import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
-import { Subject } from '@/components/SubjectSearch';
+import { Subject } from '@/interfaces';
 
 export default function TeacherProfile() {
   
