@@ -4,23 +4,38 @@ import { useState, useEffect } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 interface InputProps {
-  id: string;
+  id?: string;
   name?: string;
   label?: string;
   type?: string;
-  value?: string;
+  value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: string;
   trigger?: number;
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  min?: string;
+  step?: string;
+  className?: string;
 }
+
+const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void) => {
+  if (e.target.className.includes('number')) {
+    // Allow only numbers and decimal point
+    const regex = /^[0-9]*\.?[0-9]*$/;
+    if (regex.test(e.target.value) || e.target.value === '') {
+      if (onChange) onChange(e);
+    }
+  } else {
+    if (onChange) onChange(e);
+  }
+};
 
 export function Input({
   id,
-  name = id,
-  label = '',
+  name = id || '',
+  label,
   type = 'text',
   value = '',
   onChange = () => {},
@@ -28,7 +43,10 @@ export function Input({
   trigger = 0,
   placeholder = '',
   disabled = false,
-  autoFocus = false
+  autoFocus = false,
+  min = '',
+  step = '',
+  className = ''
 }: InputProps) {
   const [showError, setShowError] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -36,28 +54,22 @@ export function Input({
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === 'password' && showPassword ? 'text' : type;
 
-  // Efecto para mostrar el error por 4 segundos
   useEffect(() => {
     if (error) {
       setShowError(true);
       setHasError(true);
-      
-      const timer = setTimeout(() => {
-        setShowError(false);
-      }, 3000);
-      
-      return () => clearTimeout(timer);
-    } else {
-      setShowError(false);
-      setHasError(false);
     }
-  }, [error, trigger]);
+  }, [error]);
 
-  // Resetear el estado de error cuando el usuario hace clic en el input
+  useEffect(() => {
+    if (trigger > 0) {
+      setShowError(true);
+    }
+  }, [trigger]);
+
   const handleFocus = () => {
     setIsFocused(true);
     setHasError(false);
-    setShowError(false)
   };
 
   const handleBlur = () => {
@@ -65,51 +77,47 @@ export function Input({
   };
 
   return (
-    <div className="mb-4 relative">
-      <label 
-        className="block text-sm font-medium mb-1.5" 
-      >
-        {label}
-      </label>
+    <div className="flex flex-col gap-1">
+      {label && (
+        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </label>
+      )}
       <div className="relative">
         <input
-          type={inputType}
           id={id}
           name={name}
+          type={inputType}
           value={value}
-          onChange={onChange}
+          onChange={(e) => handleNumericInput(e, onChange)}
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
           autoFocus={autoFocus}
           placeholder={placeholder}
+          min={min}
+          step={step}
           className={`
             block w-full px-4 py-2.5 rounded-lg appearance-none transition-colors duration-200
             outline-none border focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-400/50
-            ${hasError && !isFocused ? 'border-red-500 focus:border-red-500' : 'border-gray-300 dark:border-gray-600'}
+            ${hasError ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${disabled ? `cursor-not-allowed dark:bg-gray-700` : `bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700`}
+            ${className}
           `}
         />
         {type === 'password' && (
           <button
             type="button"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
             onClick={() => setShowPassword(!showPassword)}
           >
-            {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            {showPassword ? <FiEyeOff /> : <FiEye />}
           </button>
         )}
-        {showError && error && (
-          <div className="absolute left-0 mt-1 z-10 animate-fadeIn">
-            <div className="flex items-center bg-red-50 text-red-500 px-3 py-2 rounded-md shadow-md">
-              <svg className="w-4 h-4 mr-1.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <p className="text-xs font-medium">{error}</p>
-            </div>
-          </div>
-        )}
       </div>
+      {showError && error && (
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+      )}
     </div>
   );
 }

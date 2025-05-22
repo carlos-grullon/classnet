@@ -10,3 +10,4 @@ export * from './ImageModal';
 export * from './ProfilePictureUploader';
 export * from './SideMenu';
 export * from './ThemeToggle';
+export * from './DaysCheckboxGroup';

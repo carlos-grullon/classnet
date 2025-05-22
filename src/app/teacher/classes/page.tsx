@@ -12,19 +12,35 @@ interface Subject {
 }
 
 import { ToastContainer } from 'react-toastify';
-import { Card, Input, Select, Button } from '@/components';
-import { FiPlus, FiX, FiSave, FiClock, FiDollarSign, FiUsers, FiBookOpen } from 'react-icons/fi';
+import { Card, Input, Select, Button, DaysCheckboxGroup } from '@/components';
+import { FiPlus, FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { getGlobalSession } from '@/utils/GlobalSession';
 
 export default function TeacherClasses() {
   
-  const formInitialValues = {
-    subject: '', price: 0, level: '', dayOfWeek: '', startTime: '', endTime: '', maxStudents: 30
+  interface FormData {
+    subject: string;
+    price: number;
+    level: string;
+    selectedDays: string[];
+    startTime: string;
+    endTime: string;
+    maxStudents: number;
+  }
+
+  const formInitialValues: FormData = {
+    subject: '', 
+    price: 0, 
+    level: '', 
+    selectedDays: [], 
+    startTime: '', 
+    endTime: '', 
+    maxStudents: 30
   };
   
   const [classes, setClasses] = useState<Class[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
-  const [formData, setFormData] = useState(formInitialValues);
+  const [formData, setFormData] = useState<FormData>(formInitialValues);
   const [subjectsData, setSubjectsData] = useState<Subject[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
 
@@ -63,20 +79,25 @@ export default function TeacherClasses() {
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' || name === 'maxStudents' || name === 'price'
-        ? parseFloat(value) || 0
-        : value
-    }));
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: name === 'price' || name === 'maxStudents' ? Number(value) : value
+    });
+  };
+
+  const handleDaysChange = (days: string[]) => {
+    setFormData({
+      ...formData,
+      selectedDays: days
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     try {
-      await FetchData('/api/classes', formData, 'POST');
+      console.log(formData);
+      await FetchData('/api/teacher/classes', formData, 'POST');
       SuccessMsj('¡Clase guardada con éxito!');
       setFormData(formInitialValues);
     } catch (error: any) {
@@ -101,8 +122,8 @@ export default function TeacherClasses() {
           fullWidth = {true}
         >
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
+            <div className="grid md:grid-cols-12 gap-6">
+              <div className="md:col-span-6">
                 <Select
                   id="subject"
                   label="Materia"
@@ -129,7 +150,7 @@ export default function TeacherClasses() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:col-span-6 md:grid-cols-2 gap-4">
                 <div>
                   <Select
                     id="level"
@@ -148,76 +169,64 @@ export default function TeacherClasses() {
                   <label htmlFor="price" className="block text-sm font-medium mb-2">
                     Precio
                   </label>
-                  <input
+                  <Input
                     id="price"
                     name="price"
-                    type="number"
+                    type="text"
                     value={formData.price}
                     onChange={handleInputChange}
-                    min="0"
-                    step="0.01"
-                    className="w-full p-2 border rounded-md"
+                    className="number w-full"
                   />
                 </div>
               </div>
 
-              <div>
-                <Select
-                  id="dayOfWeek"
-                  label="Día de la Semana"
-                  value={formData.dayOfWeek}
-                  onChange={handleInputChange}
-                  options={[
-                    { value: '', label: 'Seleccionar día' },
-                    ...Object.entries(daysOfWeek).map(([key, value]) => ({
-                      value: key,
-                      label: value
-                    }))
-                  ]}
+              <div className="md:col-span-4">
+                <DaysCheckboxGroup 
+                  selectedDays={formData.selectedDays} 
+                  onChange={handleDaysChange} 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 md:col-span-6 gap-4">
                 <div>
                   <label htmlFor="startTime" className="block text-sm font-medium mb-2">
                     Hora de Inicio
                   </label>
-                  <input
+                  <Input
                     id="startTime"
                     name="startTime"
                     type="time"
                     value={formData.startTime}
                     onChange={handleInputChange}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full"
                   />
                 </div>
                 <div>
                   <label htmlFor="endTime" className="block text-sm font-medium mb-2">
                     Hora de Fin
                   </label>
-                  <input
+                  <Input
                     id="endTime"
                     name="endTime"
                     type="time"
                     value={formData.endTime}
                     onChange={handleInputChange}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full"
                   />
                 </div>
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label htmlFor="maxStudents" className="block text-sm font-medium mb-2">
                   Límite de Estudiantes
                 </label>
-                <input
+                <Input
                   id="maxStudents"
                   name="maxStudents"
-                  type="number"
+                  type="text"
                   value={formData.maxStudents}
                   onChange={handleInputChange}
-                  min="1"
-                  className="w-full p-2 border rounded-md"
+                  className="number w-full"
                 />
               </div>
             </div>
