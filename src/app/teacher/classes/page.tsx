@@ -70,17 +70,11 @@ export default function TeacherClasses() {
   };
 
   const onSubmit = async (data: ClassFormValues) => {
-    console.log(data);
-    const hasValidDays = data.selectedDays?.some(day => day && day.trim() !== '');
-    if (!hasValidDays) {
-      ErrorMsj('Selecciona al menos un día');
-      return;
-    }
 
     try {
       const response = await FetchData('/api/teacher/classes', {
         email: session?.userEmail,
-        classes: data
+        classData: data
       }, 'PUT');
       SuccessMsj(response.message || 'Clase creada exitosamente');
       reset();

@@ -4,7 +4,7 @@ import { ClassFormData } from "@/interfaces";
 
 export async function PUT(request: Request) {
     try {
-        const { email, classes }: { email: string; classes: ClassFormData[] } = await request.json();
+        const { email, classData }: { email: string; classData: ClassFormData } = await request.json();
         
         if (!email) {
             return NextResponse.json({ error: 'Email es requerido' }, { status: 400 });
@@ -15,9 +15,9 @@ export async function PUT(request: Request) {
         const updateResult = await collection.updateOne(
             { email: email },
             { 
-                $set: { 
-                    'data.classes': classes
-                } 
+                $push: { 
+                    'data.classes': classData
+                } as any // Necesario temporalmente para el tipado
             }
         );
         
@@ -27,12 +27,12 @@ export async function PUT(request: Request) {
         
         return NextResponse.json({ 
             success: true,
-            message: 'Clases agregadas correctamente',
-            updatedFields: { classes }
+            message: 'Clase agregada correctamente',
+            updatedFields: { classData }
         });
         
     } catch (error) {
-        console.error('Error al agregar las clases:', error);
+        console.error('Error al agregar la clase:', error);
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
