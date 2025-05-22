@@ -103,6 +103,20 @@ export default function TeacherClasses() {
     return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
   };
 
+  const getTeacherSubjectOptions = () => {
+    return teacherSubjects.map(teacherSubj => {
+      const matchedSubject = allSubjects.find(subj => 
+        subj.category === teacherSubj.category && 
+        subj.code === teacherSubj.code
+      );
+      
+      return {
+        value: `${teacherSubj.category}-${teacherSubj.code}`,
+        label: matchedSubject?.name || `${teacherSubj.category}-${teacherSubj.code}`
+      };
+    });
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <ToastContainer />
@@ -129,10 +143,7 @@ export default function TeacherClasses() {
                       error={errors.subject?.message}
                       options={[
                         { value: '', label: 'Seleccionar materia' },
-                        ...allSubjects.map(subject => ({
-                          value: subject._id.toString(),
-                          label: subject.name
-                        }))
+                        ...getTeacherSubjectOptions()
                       ]}
                     />
                   )}
