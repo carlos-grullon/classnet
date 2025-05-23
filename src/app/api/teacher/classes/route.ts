@@ -1,23 +1,24 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
 import { ClassFormData } from "@/interfaces";
+import { getSession } from "@/utils/Session";
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
     try {
-        const { email, classData }: { email: string; classData: ClassFormData } = await request.json();
-        
-        if (!email) {
-            return NextResponse.json({ error: 'Email es requerido' }, { status: 400 });
-        }
+        const IdSession = request.cookies.get('IdSession')!.value;
+        const userData = await getSession(IdSession);
+        console.log(userData);
+        return NextResponse.json({ error: 'No se encontro una sesion' }, { status: 401 });
+        const { classData }: { classData: ClassFormData } = await request.json();
         
         const collection = await getCollection("users");
         
         const updateResult = await collection.updateOne(
-            { email: email },
+            { idSession: IdSession },
             { 
                 $push: { 
                     'data.classes': classData
-                } as any // Necesario temporalmente para el tipado
+                } as any
             }
         );
         

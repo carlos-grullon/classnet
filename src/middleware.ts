@@ -4,9 +4,10 @@ import type { NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
     
-    // Páginas públicas que no requieren autenticación
+    // Rutas públicas
     const publicPaths = [
-        '/login', 
+        '/',
+        '/login',
         '/register', 
         '/api/login',
         '/api/register',
@@ -15,34 +16,15 @@ export async function middleware(request: NextRequest) {
         '/api/session',
     ];
     
-    // Si la ruta es pública, continuar sin verificar autenticación
     if (publicPaths.some(path => pathname.startsWith(path))) {
         return NextResponse.next();
     }
     
-    // Redirigir a login si no hay sesión autenticada
-    const loginRedirect = NextResponse.redirect(new URL('/login', request.url));
+    const IdSession = request.cookies.get('IdSession')?.value;
     
-    const sessionId = request.cookies.get('sessionId');
-    if (!sessionId) {
-        return loginRedirect;
+    if (!IdSession) {
+        return NextResponse.redirect(new URL('/login', request.url));
     }
-    
-    // Redireccionar a diferentes dashboards dependiendo del rol del usuario
-    // if (pathname === '/') {
-    //     const userIsStudent = token.userIsStudent;
-    //     const userIsTeacher = token.userIsTeacher;
-        
-    //     if (userIsStudent && userIsTeacher) {
-    //         return NextResponse.redirect(new URL('/', request.url));
-    //     }
-    //     if (userIsStudent) {
-    //         return NextResponse.redirect(new URL('/student/dashboard', request.url));
-    //     }
-    //     if (userIsTeacher) {
-    //         return NextResponse.redirect(new URL('/teacher/dashboard', request.url));
-    //     }
-    // }
 
     return NextResponse.next();
 }

@@ -3,7 +3,6 @@
 
 // Definir la interfaz para la sesión
 export interface GlobalSession {
-  idSession: string;
   userIsStudent?: boolean;
   userIsTeacher?: boolean;
   userEmail?: string;

@@ -61,7 +61,6 @@ export default function LoginPage() {
 
       // Crear y guardar la sesión global
       setGlobalSession({
-        idSession: data.idSession,
         userIsStudent: data.userIsStudent,
         userIsTeacher: data.userIsTeacher,
         userEmail: formData.email,

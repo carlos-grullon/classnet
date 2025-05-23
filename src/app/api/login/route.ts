@@ -17,10 +17,9 @@ export async function POST(request: Request) {
             userEmail: user.email,
             userImage: user.data?.image_path || ''
         };
-        const idSession = await createSession('', userSession);
+        const IdSession = await createSession('', userSession);
         
         const response = NextResponse.json({
-            idSession: idSession,
             twoAccountsFound: user.user_is_student && user.user_is_teacher,
             userIsStudent: user.user_is_student,
             userIsTeacher: user.user_is_teacher,
@@ -29,13 +28,16 @@ export async function POST(request: Request) {
 
         // Set the session cookie
         response.cookies.set({
-            name: 'sessionId',
-            value: idSession,
+            name: 'IdSession',
+            value: IdSession,
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            sameSite: 'strict',
             path: '/',
-            maxAge: 60 * 60 * 24 * 7 // 1 week
+            maxAge: 60 * 60 * 24 * 7, // 1 week
+            ...(process.env.NODE_ENV === 'production' && { 
+                domain: 'classnet.org' // Ajustar según tu dominio
+            })
         });
 
         return response;
