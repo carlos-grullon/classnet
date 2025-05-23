@@ -7,14 +7,20 @@ import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
-import { Subject, TeacherProfileProps } from '@/interfaces';
+import { Subject } from '@/interfaces';
+
+export interface TeacherProfileProps {
+  name: string;
+  image: string;
+  description: string;
+  subjects: Array<{ category: string; code: string }>;
+}
 
 export default function TeacherProfile() {
   
   const [initialData, setInitialData] = useState<TeacherProfileProps | null>(null);
   const [formData, setFormData] = useState<TeacherProfileProps>({
     name: '',
-    email: '',
     image: '',
     description: '',
     subjects: []
@@ -38,7 +44,6 @@ export default function TeacherProfile() {
       if (profileRes && subjectsRes) {
         const datos = {
           name: profileRes.name,
-          email: profileRes.email,
           image: profileRes.image,
           description: profileRes.description || '',
           subjects: profileRes.subjects || []
@@ -61,7 +66,6 @@ export default function TeacherProfile() {
     try {
       const data = await FetchData('/api/teacher/profile', {
         name: formData.name,
-        email: formData.email,
         description: formData.description,
         subjects: formData.subjects
       }, 'PUT');
@@ -69,7 +73,6 @@ export default function TeacherProfile() {
       if (data.success) {
         const updatedData = {
           name: formData.name,
-          email: formData.email,
           image: formData.image,
           description: formData.description,
           subjects: formData.subjects
@@ -139,7 +142,6 @@ export default function TeacherProfile() {
                 Foto de perfil
               </label>
               <ProfilePictureUploader
-                email={formData.email}
                 currentImageUrl={formData.image}
                 onUploadSuccess={(url) => {
                   setFormData(prev => ({...prev, image: url}));
@@ -167,20 +169,6 @@ export default function TeacherProfile() {
                 value={formData.name}
                 onChange={handleLocalInputChange}
                 placeholder="Tu nombre completo"
-                disabled={!editMode}
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                label="Correo electrónico"
-                value={formData.email}
-                onChange={handleLocalInputChange}
-                placeholder="Tu correo electrónico"
                 disabled={!editMode}
               />
             </div>

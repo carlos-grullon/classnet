@@ -1,11 +1,13 @@
 // src/app/api/upload-profile-picture/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 import { promises as fsPromises } from 'fs';
 import path from 'path'; 
 import { getCollection } from '@/utils/MongoDB';
+import { ObjectId } from 'mongodb';
+import { getUserId } from '@/utils/Tools.ts';
 
 // ** MUY IMPORTANTE **
 // Esta configuración deshabilita el body parser por defecto de Next.js para esta ruta.
@@ -30,17 +32,12 @@ cloudinary.config({
 
 // Helper para procesar la subida del archivo con modern Request API
 // Devuelve una promesa con los campos de texto y los archivos parseados.
-const uploadFile = async (req: Request): Promise<{ fields: any, files: any }> => {
+const uploadFile = async (req: NextRequest): Promise<{ fields: any, files: any }> => {
   const formData = await req.formData();
   const file = formData.get('profilePicture') as File;
-  const email = formData.get('email') as string;
   
   if (!file) {
     throw new Error('No file uploaded');
-  }
-  
-  if (!email) {
-    throw new Error('No email provided');
   }
 
   // Create temporary file path
@@ -56,7 +53,7 @@ const uploadFile = async (req: Request): Promise<{ fields: any, files: any }> =>
   await fsPromises.writeFile(filePath, buffer);
   
   return {
-    fields: { email: [email] },
+    fields: {},
     files: {
       profilePicture: {
         filepath: filePath,
@@ -69,23 +66,17 @@ const uploadFile = async (req: Request): Promise<{ fields: any, files: any }> =>
 };
 
 // Manejador de la solicitud POST (cuando el frontend envía el archivo)
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let uploadResult;
   let profilePictureFile;
   
   try {
-    // 1. Verificar método HTTP
-    if (request.method !== 'POST') {
-      return NextResponse.json(
-        { error: 'Method not allowed' },
-        { status: 405 }
-      );
-    }
-
+    // 1. Obtener userId del token
+    const userId = await getUserId(request);
+    
     // 2. Procesar el archivo entrante
     const { fields, files } = await uploadFile(request);
     profilePictureFile = files.profilePicture;
-    const userEmail = fields.email?.[0];
 
     // 3. Validar que los datos esperados están presentes
     if (!profilePictureFile) {
@@ -94,13 +85,6 @@ export async function POST(request: Request) {
            await fsPromises.unlink(profilePictureFile.filepath).catch(console.error);
        }
       return NextResponse.json({ message: 'No se recibió ningún archivo de imagen.' }, { status: 400 });
-    }
-    if (!userEmail) {
-        // Limpiar temporal si existe
-        if (profilePictureFile.filepath) {
-             await fsPromises.unlink(profilePictureFile.filepath).catch(console.error);
-        }
-        return NextResponse.json({ message: 'Email del usuario no proporcionado en la solicitud.' }, { status: 400 });
     }
 
     // Validaciones adicionales del archivo
@@ -134,23 +118,16 @@ export async function POST(request: Request) {
     // 6. Obtener la colección de usuarios
     const usersCollection = await getCollection('users');
 
-    // 7. Actualizar el documento del usuario
-    let updateResult;
-    try {
-      updateResult = await usersCollection.updateOne(
-        { email: userEmail }, // Buscar por email
+    // 7. Actualizar el documento del usuario usando ObjectId
+    const updateResult = await usersCollection.updateOne(
+        { _id: new ObjectId(userId) }, // Buscar por ID
         { $set: { data: { image_path: uploadResult.secure_url } } }
-      );
+    );
 
-      // 8. Verificar si el usuario fue encontrado y actualizado
-      if (updateResult.matchedCount === 0) {
-         await cloudinary.uploader.destroy(uploadResult.public_id).catch(console.error);
-         return NextResponse.json({ message: 'Usuario no encontrado.' }, { status: 404 });
-      }
-    } catch (e) {
-       // Limpiar imagen de Cloudinary si el ID era inválido después de subirla
+    // 8. Verificar si el usuario fue encontrado y actualizado
+    if (updateResult.matchedCount === 0) {
         await cloudinary.uploader.destroy(uploadResult.public_id).catch(console.error);
-       return NextResponse.json({ message: 'Error al actualizar el perfil del usuario.' }, { status: 400 });
+        return NextResponse.json({ message: 'Usuario no encontrado.' }, { status: 404 });
     }
 
     // 9. Devolver la respuesta de éxito al frontend

@@ -9,7 +9,6 @@ interface UploadResponse {
 }
 
 interface ProfilePictureUploaderProps {
-  email: string | undefined;
   currentImageUrl?: string;
   onUploadSuccess?: (url: string) => void;
   className?: string;
@@ -18,7 +17,6 @@ interface ProfilePictureUploaderProps {
 }
 
 export function ProfilePictureUploader({
-  email,
   currentImageUrl,
   onUploadSuccess,
   className = '',
@@ -69,7 +67,7 @@ export function ProfilePictureUploader({
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !email) return;
+    if (!selectedFile) return;
     
     setUploading(true);
     setMessage('Subiendo imagen...');
@@ -77,7 +75,6 @@ export function ProfilePictureUploader({
     try {
       const formData = new FormData();
       formData.append('profilePicture', selectedFile);
-      formData.append('email', email);
       
       const res = await fetch('/api/uploadpicture', {
         method: 'POST',
