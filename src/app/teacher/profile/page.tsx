@@ -7,21 +7,15 @@ import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
-import { Subject } from '@/interfaces';
+import { Subject, TeacherProfileProps } from '@/interfaces';
 
 export default function TeacherProfile() {
   
-  const [initialData, setInitialData] = useState<{
-    name: string;
-    description: string;
-    subjects: Array<{ category: string; code: string }>;
-  } | null>(null);
-  const [formData, setFormData] = useState<{
-    name: string;
-    description: string;
-    subjects: Array<{ category: string; code: string }>;
-  }>({
+  const [initialData, setInitialData] = useState<TeacherProfileProps | null>(null);
+  const [formData, setFormData] = useState<TeacherProfileProps>({
     name: '',
+    email: '',
+    image: '',
     description: '',
     subjects: []
   });
@@ -43,14 +37,16 @@ export default function TeacherProfile() {
       
       if (profileRes && subjectsRes) {
         const datos = {
-            name: profileRes.name,
-            description: profileRes.data.description || '',
-            subjects: profileRes.data.subjects || []
-          };
-          setAllSubjects(subjectsRes.subjects || subjectsRes);
-          setInitialData(datos);
-          setFormData(datos);
-        }
+          name: profileRes.name,
+          email: profileRes.email,
+          image: profileRes.image,
+          description: profileRes.description || '',
+          subjects: profileRes.subjects || []
+        };
+        setAllSubjects(subjectsRes.subjects || subjectsRes);
+        setInitialData(datos);
+        setFormData(datos);
+      }
     } catch (error: any) {
       ErrorMsj('Error al obtener los datos del perfil');
     }
@@ -63,23 +59,26 @@ export default function TeacherProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        const data = await FetchData('/api/teacher/profile', {
+      const data = await FetchData('/api/teacher/profile', {
+        name: formData.name,
+        email: formData.email,
+        description: formData.description,
+        subjects: formData.subjects
+      }, 'PUT');
+
+      if (data.success) {
+        const updatedData = {
           name: formData.name,
+          email: formData.email,
+          image: formData.image,
           description: formData.description,
           subjects: formData.subjects
-        }, 'PUT');
+        };
 
-        if (data.success) {
-          const updatedData = {
-            name: formData.name,
-            description: formData.description,
-            subjects: formData.subjects
-          };
-
-          setInitialData(updatedData);
-          SuccessMsj(data.message);
-          setEditMode(false);
-        }
+        setInitialData(updatedData);
+        SuccessMsj(data.message);
+        setEditMode(false);
+      }
     } catch (error: any) {
       ErrorMsj(error.message);
     }
@@ -140,17 +139,18 @@ export default function TeacherProfile() {
                 Foto de perfil
               </label>
               <ProfilePictureUploader
-                  email={session.userEmail}
-                  currentImageUrl={session.userImage}
-                  onUploadSuccess={(url) => {
-                    SuccessMsj('Foto de perfil actualizada correctamente');
-                  }}
-                  editMode={editMode}
-                  onImageClick={() => session?.userImage && setIsImageModalOpen(true)}
-                />
+                email={formData.email}
+                currentImageUrl={formData.image}
+                onUploadSuccess={(url) => {
+                  setFormData(prev => ({...prev, image: url}));
+                  SuccessMsj('Foto de perfil actualizada correctamente');
+                }}
+                editMode={editMode}
+                onImageClick={() => formData.image && setIsImageModalOpen(true)}
+              />
               {isImageModalOpen && (
                 <ImageModal
-                  imageUrl={session?.userImage}
+                  imageUrl={formData.image}
                   onClose={() => setIsImageModalOpen(false)}
                   altText="Foto de perfil"
                 />
@@ -167,6 +167,20 @@ export default function TeacherProfile() {
                 value={formData.name}
                 onChange={handleLocalInputChange}
                 placeholder="Tu nombre completo"
+                disabled={!editMode}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                label="Correo electrónico"
+                value={formData.email}
+                onChange={handleLocalInputChange}
+                placeholder="Tu correo electrónico"
                 disabled={!editMode}
               />
             </div>

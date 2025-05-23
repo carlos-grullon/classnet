@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             name: teacher.username,
             email: teacher.email,
-            data: teacher.data
+            image: teacher.data.image_path,
+            description: teacher.data.description,
+            subjects: teacher.data.subjects
         });
     } catch (error) {
         console.error('Error al obtener datos del profesor:', error);
