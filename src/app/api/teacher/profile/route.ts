@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
         }
         return NextResponse.json({
             name: teacher.username,
-            email: teacher.email,
             image: teacher.data.image_path,
             description: teacher.data.description,
             subjects: teacher.data.subjects

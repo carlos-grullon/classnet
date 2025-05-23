@@ -50,12 +50,12 @@ export default function TeacherClasses() {
         
         if (profileRes && subjectsRes) {
           setAllSubjects(subjectsRes.subjects || subjectsRes);
-            if (profileRes.data.subjects?.length > 0) {
-              setTeacherSubjects(profileRes.data.subjects);
+            if (profileRes.subjects?.length > 0) {
+              setTeacherSubjects(profileRes.subjects);
             }
           }
       } catch (error: any) {
-        ErrorMsj('Error al obtener los datos del perfil');
+        ErrorMsj(error.message || 'Error al obtener los datos del perfil');
       }
     };
     GetTeacherData();
@@ -68,9 +68,9 @@ export default function TeacherClasses() {
   const onSubmit = async (data: ClassFormValues) => {
 
     try {
-      const response = await FetchData('/api/teacher/classes', {}, 'PUT');
+      const response = await FetchData('/api/teacher/classes', {data}, 'PUT');
       SuccessMsj(response.message || 'Clase creada exitosamente');
-      // reset();
+      reset();
     } catch (error: any) {
       ErrorMsj(error.message || 'Error al crear la clase');
     }
