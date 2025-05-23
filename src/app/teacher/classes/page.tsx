@@ -28,7 +28,6 @@ export default function TeacherClasses() {
   });
   
   const { 
-    register, 
     handleSubmit, 
     formState: { errors }, 
     setValue,
@@ -66,9 +65,8 @@ export default function TeacherClasses() {
   };
 
   const onSubmit = async (data: ClassFormValues) => {
-
     try {
-      const response = await FetchData('/api/teacher/classes', {data}, 'PUT');
+      const response = await FetchData('/api/teacher/classes', {classData: data}, 'PUT');
       SuccessMsj(response.message || 'Clase creada exitosamente');
       reset();
     } catch (error: any) {

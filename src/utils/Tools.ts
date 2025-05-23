@@ -38,3 +38,40 @@ export async function getUserId(request: NextRequest): Promise<string> {
         throw error;
     }
 }
+
+/**
+ * Convierte un string de hora (24h) a un objeto Date de MongoDB usando época Unix como referencia
+ * @param timeString String en formato HH:MM (ej. "14:30")
+ * @returns Objeto Date con fecha 1970-01-01 y la hora especificada, en UTC
+ */
+export function timeStringToMongoTime(timeString: string): Date {
+    // Validación estricta del formato
+    if (!/^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(timeString)) {
+        throw new Error('Formato de hora inválido. Use HH:MM en 24h (ej. "14:30")');
+    }
+
+    const [hours, minutes] = timeString.split(':').map(Number);
+    
+    // Fecha fija de referencia (época Unix)
+    const timeOnlyDate = new Date(0); // 1970-01-01T00:00:00.000Z
+    timeOnlyDate.setUTCHours(hours, minutes, 0, 0);
+
+    return timeOnlyDate;
+}
+
+/**
+ * Convierte un objeto Date de MongoDB (con fecha Unix) a string de hora 24h
+ * @param date Objeto Date almacenado en MongoDB (debe usar 1970-01-01 como fecha base)
+ * @returns String en formato HH:MM (24h) en UTC
+ */
+export function mongoTimeToTimeString(date: Date): string {
+    if (!(date instanceof Date)) {
+        throw new Error('Se esperaba un objeto Date válido');
+    }
+    
+    // Extrae horas y minutos en UTC
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+}

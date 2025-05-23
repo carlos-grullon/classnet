@@ -24,8 +24,7 @@ export async function Register(
                 subjects: [],
                 image_path: '',
                 reviews: [],
-                rating: 0,
-                classes: []
+                rating: 0
             } : {},
             created_at: new Date(),
             updated_at: new Date()
