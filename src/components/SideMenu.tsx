@@ -3,29 +3,17 @@ import { useState, useEffect } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { FetchData } from '@/utils/Tools.tsx';
-import { clearGlobalSession, isAuthenticated } from '@/utils/GlobalSession';
 import { useRouter, usePathname } from 'next/navigation';
 
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const [auth, setAuth] = useState(false);
   const router = useRouter();
-  const pathname = usePathname();
 
-  // Revisar autenticación al montar y cuando cambia la ruta
-  useEffect(() => {
-    setAuth(isAuthenticated());
-  }, [pathname]);
-
-  if (!auth) {
-    return null;
-  }
 
   const handleLogout = async () => {
     try {
       await FetchData('/api/logout');
       setIsOpen(false);
-      clearGlobalSession();
       router.push('/login');
     } catch (error) {
       console.error('Error al cerrar sesión:', error);

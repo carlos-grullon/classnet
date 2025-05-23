@@ -1,17 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
+import { getUserId } from "@/utils/Tools.ts";
+import { ObjectId } from "mongodb";
 
 interface SubjectRef {
     category: string;
     code: string;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
-        const data = await request.json();
-        const email = data.email;
+        const userId = await getUserId(request);
+
         const collection = await getCollection("users");
-        const teacher = await collection.findOne({ email: email });
+        const teacher = await collection.findOne({ _id: new ObjectId(userId) });
         if (!teacher) {
             return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
         }
@@ -29,18 +31,15 @@ export async function POST(request: Request) {
     }
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
     try {
-        const { email, name, description, subjects }: { email: string; name: string; description: string; subjects: SubjectRef[] } = await request.json();
-        
-        if (!email) {
-            return NextResponse.json({ error: 'Email es requerido' }, { status: 400 });
-        }
+        const userId = await getUserId(request);
+        const { name, description, subjects }: { name: string; description: string; subjects: SubjectRef[] } = await request.json();
         
         const collection = await getCollection("users");
         
         const updateResult = await collection.updateOne(
-            { email: email },
+            { _id: new ObjectId(userId) },
             { 
                 $set: { 
                     username: name,

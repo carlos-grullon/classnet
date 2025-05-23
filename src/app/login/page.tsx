@@ -1,83 +1,50 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { Card, ThemeToggle, Input, Button } from "@/components";
 import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
-import { setGlobalSession } from "@/utils/GlobalSession";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ToastContainer } from "react-toastify";
 import { FiLogIn } from "react-icons/fi";
-
-interface FormData {
-  email: string;
-  password: string;
-}
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { LoginFormSchema, LoginFormValues } from '@/validations/login';
+import { Controller } from 'react-hook-form';
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState<FormData>({
-    email: "",
-    password: "",
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(LoginFormSchema),
+    defaultValues: {
+      email: '',
+      password: ''
+    }
   });
 
+  const { 
+    handleSubmit,
+    formState: { errors },
+    control
+  } = form;
+
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string, password?: string }>({});
-  const [trigger, setTrigger] = useState(0);
 
-  const validateForm = () => {
-    const newErrors: { email?: string, password?: string } = {};
-
-    if (!formData.email) {
-      newErrors.email = "El email es requerido";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "El email no es válido";
-    }
-    if (formData.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setTrigger(prev => prev + 1);
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
-
     try {
-      const data = await FetchData("/api/login", {
-        email: formData.email,
-        password: formData.password,
-      });
-
+      const user = await FetchData("/api/login", data);
       SuccessMsj("Inicio de sesión exitoso");
-
-      // Crear y guardar la sesión global
-      setGlobalSession({
-        userIsStudent: data.userIsStudent,
-        userIsTeacher: data.userIsTeacher,
-        userEmail: formData.email,
-        userImage: data.userImage
-      });
-
-      // Esperar un momento para asegurar que la sesión se guarde antes de redirigir
-      setTimeout(() => {
-        // Redireccionar según el tipo de usuario
-        if (data.twoAccountsFound === true) {
-          router.push("/");
-        } else {
-          data.userIsStudent ? router.push("/student/dashboard") : router.push("/teacher/dashboard");
-        }
-      }, 100);
-    } catch (error: any) {
-      ErrorMsj(error.message);
+      if (user.userIsStudent && user.userIsTeacher) {
+        router.push("/");
+      } else if (user.userIsStudent) {
+        router.push("/student");
+      } else if (user.userIsTeacher) {
+        router.push("/teacher");
+      }
+    } catch (error) {
+      ErrorMsj("Credenciales incorrectas");
     } finally {
       setIsLoading(false);
     }
@@ -89,27 +56,31 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
           <ToastContainer/>
-          <form onSubmit={handleSubmit}>
-            <Input
-              id="email"
-              label="Email"
-              value={formData.email}
-              trigger={trigger}
-              error={errors.email}
-              onChange={(e) => {
-                setFormData({ ...formData, email: e.target.value });
-              }}
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  id="email"
+                  label="Email"
+                  error={errors.email?.message}
+                />
+              )}
             />
-            <Input
-              id="password"
-              label="Contraseña"
-              type="password"
-              value={formData.password}
-              trigger={trigger}
-              error={errors.password}
-              onChange={(e) => {
-                setFormData({ ...formData, password: e.target.value })
-              }}
+            
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Contraseña"
+                  type="password"
+                  error={errors.password?.message}
+                />
+              )}
             />
             <div className="flex items-center">
               <Button type="submit" variant="primary" fullWidth isLoading={isLoading}

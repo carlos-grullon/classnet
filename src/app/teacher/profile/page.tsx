@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
-import { getGlobalSession } from '@/utils/GlobalSession';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
@@ -12,7 +11,6 @@ import { Subject } from '@/interfaces';
 
 export default function TeacherProfile() {
   
-  const session = getGlobalSession();
   const [initialData, setInitialData] = useState<{
     name: string;
     description: string;
@@ -38,14 +36,13 @@ export default function TeacherProfile() {
 
   async function GetTeacherData() {
     try {
-      if (session) {
-        const [profileRes, subjectsRes] = await Promise.all([
-          FetchData('/api/teacher/profile', { email: session.userEmail }),
-          FetchData('/api/subjects', {}, 'GET')
-        ]);
-        
-        if (profileRes && subjectsRes) {
-          const datos = {
+      const [profileRes, subjectsRes] = await Promise.all([
+        FetchData('/api/teacher/profile', {}),
+        FetchData('/api/subjects', {}, 'GET')
+      ]);
+      
+      if (profileRes && subjectsRes) {
+        const datos = {
             name: profileRes.name,
             description: profileRes.data.description || '',
             subjects: profileRes.data.subjects || []
@@ -54,7 +51,6 @@ export default function TeacherProfile() {
           setInitialData(datos);
           setFormData(datos);
         }
-      }
     } catch (error: any) {
       ErrorMsj('Error al obtener los datos del perfil');
     }
@@ -67,9 +63,7 @@ export default function TeacherProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (session) {
         const data = await FetchData('/api/teacher/profile', {
-          email: session.userEmail,
           name: formData.name,
           description: formData.description,
           subjects: formData.subjects
@@ -86,7 +80,6 @@ export default function TeacherProfile() {
           SuccessMsj(data.message);
           setEditMode(false);
         }
-      }
     } catch (error: any) {
       ErrorMsj(error.message);
     }
@@ -146,8 +139,7 @@ export default function TeacherProfile() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Foto de perfil
               </label>
-              {session && (
-                <ProfilePictureUploader
+              <ProfilePictureUploader
                   email={session.userEmail}
                   currentImageUrl={session.userImage}
                   onUploadSuccess={(url) => {
@@ -156,7 +148,6 @@ export default function TeacherProfile() {
                   editMode={editMode}
                   onImageClick={() => session?.userImage && setIsImageModalOpen(true)}
                 />
-              )}
               {isImageModalOpen && (
                 <ImageModal
                   imageUrl={session?.userImage}

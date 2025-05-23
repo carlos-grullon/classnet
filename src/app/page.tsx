@@ -3,40 +3,8 @@
 import Link from 'next/link';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { PiStudentFill } from 'react-icons/pi';
-import { getGlobalSession } from '@/utils/GlobalSession';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-
 
 export default function Home() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    const sessionValue = getGlobalSession();
-    
-    if (sessionValue) {
-      if (sessionValue.userIsStudent && sessionValue.userIsTeacher) {
-      } else if (sessionValue.userIsStudent) {
-        router.push('/student/dashboard');
-        return;
-      } else if (sessionValue.userIsTeacher) {
-        router.push('/teacher/dashboard');
-        return;
-      }
-    } else {
-    }
-    
-    setLoading(false);
-  }, [router]);
-  
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

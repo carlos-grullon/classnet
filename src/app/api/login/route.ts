@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Login } from "@/model/Auth";
-import { createSession } from "@/utils/Session";
+import { SignJWT } from 'jose';
 
 export async function POST(request: Request) {
     try {
@@ -9,43 +9,39 @@ export async function POST(request: Request) {
             data.password,
             data.email,
         )
-        const userSession = {
-            userId: user._id,
-            userName: user.username,
+        
+        const response = NextResponse.json({ 
+            userIsStudent: user.user_is_student,
+            userIsTeacher: user.user_is_teacher 
+        });
+
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+        const token = await new SignJWT({
+            userId: user._id.toString(),
             userIsStudent: user.user_is_student,
             userIsTeacher: user.user_is_teacher,
             userEmail: user.email,
             userImage: user.data?.image_path || ''
-        };
-        const IdSession = await createSession('', userSession);
-        
-        const response = NextResponse.json({
-            twoAccountsFound: user.user_is_student && user.user_is_teacher,
-            userIsStudent: user.user_is_student,
-            userIsTeacher: user.user_is_teacher,
-            userImage: user.data?.image_path || ''
-        });
+        })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setExpirationTime('7d')
+        .sign(secret);
 
-        // Set the session cookie
         response.cookies.set({
-            name: 'IdSession',
-            value: IdSession,
+            name: 'AuthToken',
+            value: token,
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
             path: '/',
-            maxAge: 60 * 60 * 24 * 7, // 1 week
-            ...(process.env.NODE_ENV === 'production' && { 
-                domain: 'classnet.org' // Ajustar según tu dominio
-            })
+            maxAge: 60 * 60 * 24 * 7
         });
 
         return response;
-    } catch (error) {
-        if (error instanceof Error) {
-            console.error('Login error:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
-        }
-        return NextResponse.json({ error: 'Unknown error occurred' }, { status: 500 });
+    } catch (error: any) {
+        return NextResponse.json(
+            { success: false, message: error.message },
+            { status: 401 }
+        );
     }
 }

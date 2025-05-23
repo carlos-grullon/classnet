@@ -21,27 +21,6 @@ export async function FetchData(url: string, data: Record<string, any> = {}, met
     return responseJson;
 }
 
-export async function getSession(sessionName: string = ''): Promise<Record<string, any>> {
-    const data = await FetchData("/api/session", {}, "GET");
-    if (sessionName === '') {
-        return data.sessionValue;
-    }
-    return data.sessionValue[sessionName];
-}
-
-export async function createSession(dataToCreate: Record<string, any>): Promise<string> {
-    const data = await FetchData("/api/session", dataToCreate);
-    return data.idSession;
-}
-
-export async function setSession(dataToSet: Record<string, any>): Promise<void> {
-    await FetchData("/api/session", dataToSet, "UPDATE");
-}
-
-export async function deleteSession(): Promise<void> {
-    await FetchData("/api/session", {}, "DELETE");
-}
-
 export function SuccessMsj(message: string) {
     toast.success(message, {
               position: "top-right",

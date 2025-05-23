@@ -9,7 +9,6 @@ import { Card, Input, Select, Button, DaysCheckboxGroup } from '@/components';
 import { CurrencyInput } from '@/components/CurrencyInput';
 import NumericInput from '@/components/NumericInput';
 import { FiPlus, FiX, FiSave, FiBookOpen } from 'react-icons/fi';
-import { getGlobalSession } from '@/utils/GlobalSession';
 import { Subject } from '@/interfaces';
 
 export default function TeacherClasses() {
@@ -40,24 +39,21 @@ export default function TeacherClasses() {
   const [classes, setClasses] = useState<ClassFormValues[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
-  const session = getGlobalSession();
 
   useEffect(() => {
     const GetTeacherData = async () => {
       try {
-        if (session) {
-          const [profileRes, subjectsRes] = await Promise.all([
-            FetchData('/api/teacher/profile', { email: session.userEmail }),
-            FetchData('/api/subjects', {}, 'GET')
-          ]);
-          
-          if (profileRes && subjectsRes) {
-            setAllSubjects(subjectsRes.subjects || subjectsRes);
+        const [profileRes, subjectsRes] = await Promise.all([
+          FetchData('/api/teacher/profile', {}),
+          FetchData('/api/subjects', {}, 'GET')
+        ]);
+        
+        if (profileRes && subjectsRes) {
+          setAllSubjects(subjectsRes.subjects || subjectsRes);
             if (profileRes.data.subjects?.length > 0) {
               setTeacherSubjects(profileRes.data.subjects);
             }
           }
-        }
       } catch (error: any) {
         ErrorMsj('Error al obtener los datos del perfil');
       }
@@ -72,12 +68,9 @@ export default function TeacherClasses() {
   const onSubmit = async (data: ClassFormValues) => {
 
     try {
-      const response = await FetchData('/api/teacher/classes', {
-        email: session?.userEmail,
-        classData: data
-      }, 'PUT');
+      const response = await FetchData('/api/teacher/classes', {}, 'PUT');
       SuccessMsj(response.message || 'Clase creada exitosamente');
-      reset();
+      // reset();
     } catch (error: any) {
       ErrorMsj(error.message || 'Error al crear la clase');
     }

@@ -2,29 +2,21 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-    const pathname = request.nextUrl.pathname;
-    
-    // Rutas públicas
-    const publicPaths = [
-        '/',
-        '/login',
-        '/register', 
-        '/api/login',
-        '/api/register',
-        '/_next/static', 
-        '/favicon.ico',
-        '/api/session',
-    ];
-    
-    if (publicPaths.some(path => pathname.startsWith(path))) {
-        return NextResponse.next();
-    }
-    
-    const IdSession = request.cookies.get('IdSession')?.value;
-    
-    if (!IdSession) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
+  const publicPaths = [
+    '/login',
+    '/register',
+    '/api/login',
+    '/api/register',
+    '/_next/static',
+    '/favicon.ico'
+  ];
 
+  if (publicPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
     return NextResponse.next();
+  }
+
+  const token = request.cookies.get('AuthToken')?.value;
+  if (!token) return NextResponse.redirect(new URL('/login', request.url));
+
+  return NextResponse.next();
 }

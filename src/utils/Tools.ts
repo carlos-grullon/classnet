@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcrypt';
-import { NextRequest, NextResponse } from 'next/server';
-import { RequestCookies } from 'next/dist/server/web/spec-extension/cookies';
+import { jwtVerify } from 'jose';
+import { NextRequest } from 'next/server';
 
 export function GenerarUuid(cantiddad: number = 1): string {
     var uuid = "";
@@ -20,47 +20,21 @@ export async function ComparePassword(password: string, hash: string): Promise<b
     return await bcrypt.compare(password, hash);
 }
 
-export function CrearCookie(name: string, value: string, days: number = 7) {
-    const response = NextResponse.next();
-    const date = new Date();
-    // Set expiration to 7 days from now
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    
-    response.cookies.set({
-        name,
-        value,
-        expires: date,
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true
-    });
-    
-    return response;
-}
-
-export function LeerCookie(request: Request, name: string): string | null {
-    const cookies = request.headers.get('cookie');
-    if (!cookies) return null;
-    
-    const nameEQ = name + '=';
-    const ca = cookies.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i].trim();
-        if (c.indexOf(nameEQ) === 0) {
-            return c.substring(nameEQ.length, c.length);
+export async function getUserId(request: NextRequest): Promise<string> {
+    try {
+        const token = request.cookies.get('AuthToken')?.value;
+        if (!token) throw new Error('No token found');
+        
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+        const { payload } = await jwtVerify(token, secret);
+        
+        if (!payload.userId || typeof payload.userId !== 'string') {
+            throw new Error('Invalid token payload');
         }
+        
+        return payload.userId;
+    } catch (error) {
+        console.error('Error getting user ID from token:', error);
+        throw error;
     }
-    return null;
-}
-
-export function EliminarCookie(name: string) {
-    const response = NextResponse.next();
-    response.cookies.set({
-        name,
-        value: '',
-        expires: new Date(0),
-        path: '/'
-    });
-    return response;
 }
