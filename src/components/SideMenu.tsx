@@ -8,7 +8,12 @@ import { useRouter, usePathname } from 'next/navigation';
 export function SideMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
+  // Ocultar en rutas de login/register
+  if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {

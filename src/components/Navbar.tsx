@@ -10,11 +10,11 @@ export function Navbar() {
   const isStudentRoute = pathname?.startsWith('/student');
   
   const navItems = isTeacherRoute ? [
-    { name: 'Dashboard', path: '/teacher/dashboard' },
+    { name: 'Dashboard', path: '/teacher' },
     { name: 'Perfil', path: '/teacher/profile' },
     { name: 'Clases', path: '/teacher/classes' }
   ] : isStudentRoute ? [
-    { name: 'Dashboard', path: '/student/dashboard' },
+    { name: 'Dashboard', path: '/student' },
     { name: 'Perfil', path: '/student/profile' },
     { name: 'Mis Clases', path: '/student/classes' }
   ] : [];
