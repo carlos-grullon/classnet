@@ -68,8 +68,11 @@ export default function TeacherClasses() {
   const onSubmit = async (data: ClassFormValues) => {
     try {
       const response = await FetchData('/api/teacher/classes', {classData: data}, 'PUT');
-      SuccessMsj(response.message || 'Clase creada exitosamente');
-      reset();
+      if (response.success) {
+        setClasses([...classes, response.classCreated]);
+        SuccessMsj(response.message);
+        reset();
+      }
     } catch (error: any) {
       ErrorMsj(error.message || 'Error al crear la clase');
     }
