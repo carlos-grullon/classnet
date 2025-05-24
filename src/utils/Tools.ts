@@ -75,3 +75,22 @@ export function mongoTimeToTimeString(date: Date): string {
     
     return `${hours}:${minutes}`;
 }
+
+/**
+ * Convierte un objeto Date de MongoDB a string de hora en formato 12h (AM/PM)
+ * @param date Objeto Date almacenado en MongoDB (debe usar 1970-01-01 como fecha base)
+ * @returns String en formato HH:MM AM/PM en UTC
+ */
+export function mongoTimeToTimeString12h(date: Date): string {
+    if (!(date instanceof Date)) {
+        throw new Error('Se esperaba un objeto Date válido');
+    }
+    
+    let hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours || 12; // Convertir 0 a 12
+    
+    return `${hours}:${minutes} ${ampm}`;
+}

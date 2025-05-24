@@ -43,11 +43,12 @@ export default function TeacherClasses() {
     const GetTeacherData = async () => {
       try {
         const [profileRes, subjectsRes] = await Promise.all([
-          FetchData('/api/teacher/profile', {}),
+          FetchData('/api/teacher/profile', {needClasses: true}),
           FetchData('/api/subjects', {}, 'GET')
         ]);
         
         if (profileRes && subjectsRes) {
+          setClasses(profileRes.classes || []);
           setAllSubjects(subjectsRes.subjects || subjectsRes);
             if (profileRes.subjects?.length > 0) {
               setTeacherSubjects(profileRes.subjects);

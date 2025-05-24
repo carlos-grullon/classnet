@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
-import { getUserId } from "@/utils/Tools.ts";
+import { getUserId, mongoTimeToTimeString12h } from "@/utils/Tools.ts";
 import { ObjectId } from "mongodb";
 
 interface SubjectRef {
@@ -10,19 +10,33 @@ interface SubjectRef {
 
 export async function POST(request: NextRequest) {
     try {
+        // Busca los datos del profesor.
         const userId = await getUserId(request);
-
         const collection = await getCollection("users");
         const teacher = await collection.findOne({ _id: new ObjectId(userId) });
         if (!teacher) {
             return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
         }
-        return NextResponse.json({
+        const response: any = {
             name: teacher.username,
             image: teacher.data.image_path,
             description: teacher.data.description,
             subjects: teacher.data.subjects
-        });
+        };
+        // Busca las clases del profesor si se requiere.
+        const { needClasses }: { needClasses: boolean } = await request.json();
+        if (needClasses) {
+            const ClassesCollection = await getCollection("classes");
+            const classes = await ClassesCollection.find({ user_id: new ObjectId(userId) }).toArray();
+            if (classes.length > 0) {
+                response.classes = classes.map(cls => ({
+                    ...cls,
+                    startTime: mongoTimeToTimeString12h(cls.startTime),
+                    endTime: mongoTimeToTimeString12h(cls.endTime)
+                }));
+            }
+        }
+        return NextResponse.json(response);
     } catch (error) {
         console.error('Error al obtener datos del profesor:', error);
         if (error instanceof Error) {
