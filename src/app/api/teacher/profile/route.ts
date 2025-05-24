@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
                 response.classes = classes.map(cls => ({
                     ...cls,
                     startTime: mongoTimeToTimeString12h(cls.startTime),
-                    endTime: mongoTimeToTimeString12h(cls.endTime)
+                    endTime: mongoTimeToTimeString12h(cls.endTime),
+                    selectedDays: cls.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b))
                 }));
             }
         }

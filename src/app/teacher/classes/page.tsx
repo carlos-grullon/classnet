@@ -8,8 +8,8 @@ import { ToastContainer } from 'react-toastify';
 import { Card, Input, Select, Button, DaysCheckboxGroup } from '@/components';
 import { CurrencyInput } from '@/components/CurrencyInput';
 import NumericInput from '@/components/NumericInput';
-import { FiPlus, FiX, FiSave, FiBookOpen } from 'react-icons/fi';
-import { Subject } from '@/interfaces';
+import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
+import { Subject, Class } from '@/interfaces';
 
 export default function TeacherClasses() {
   
@@ -35,7 +35,7 @@ export default function TeacherClasses() {
     control
   } = form;
 
-  const [classes, setClasses] = useState<ClassFormValues[]>([]);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
 
@@ -82,25 +82,35 @@ export default function TeacherClasses() {
       '3': 'Miércoles',
       '4': 'Jueves',
       '5': 'Viernes',
-      '6': 'Sábado',
-      '7': 'Domingo'
+      '6': 'Sábados',
+      '7': 'Domingos'
     };
     
     return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
   };
 
   const getTeacherSubjectOptions = () => {
-    return teacherSubjects.map(teacherSubj => {
-      const matchedSubject = allSubjects.find(subj => 
-        subj.category === teacherSubj.category && 
-        subj.code === teacherSubj.code
-      );
-      
-      return {
-        value: `${teacherSubj.category}-${teacherSubj.code}`,
-        label: matchedSubject?.name || `${teacherSubj.category}-${teacherSubj.code}`
-      };
-    });
+    return teacherSubjects.map(teacherSubj => ({
+      value: `${teacherSubj.category}-${teacherSubj.code}`,
+      label: getSubjectName(`${teacherSubj.category}-${teacherSubj.code}`)
+    }));
+  };
+
+  const getLevelName = (level: string) => {
+    switch(level) {
+      case '1': return 'Principiante';
+      case '2': return 'Intermedio';
+      case '3': return 'Avanzado';
+      default: return level;
+    }
+  };
+
+  const getSubjectName = (fullCode: string) => {
+    const [category, code] = fullCode.split('-');
+    const subject = allSubjects.find(sub => 
+      sub.category === category && sub.code === code
+    );
+    return subject ? subject.name : fullCode;
   };
 
   return (
@@ -264,9 +274,19 @@ export default function TeacherClasses() {
             <div className="space-y-4">
               {classes.map((cls, index) => (
                 <div key={index} className="p-4 border rounded-lg">
-                  <h3 className="font-semibold">{cls.subject}</h3>
-                  <p className="text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <h3 className="font-semibold">
+                      {getSubjectName(cls.subject)} {getLevelName(cls.level)}
+                    </h3>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      Estudiantes ({cls.students.length}/{cls.maxStudents})
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {getDayName(cls.selectedDays)} • {cls.startTime} - {cls.endTime}
+                  </p>
+                  <p className="text-sm font-medium mt-1">
+                    Precio: ${cls.price.toLocaleString()}
                   </p>
                 </div>
               ))}

@@ -1,11 +1,17 @@
-export interface ClassFormData {
-  subject: string;
-  price: number;
-  level: string;
-  selectedDays: string[];
-  startTime: string;
-  endTime: string;
-  maxStudents: number;
+export interface Class {
+    _id: string;
+    user_id: string;
+    subject: string;
+    startTime: string;
+    endTime: string;
+    selectedDays: string[];
+    maxStudents: number;
+    price: number;
+    level: string;
+    students: string[];
+    status: 'A' | 'I' | 'C'; // A=Activo, I=Inactivo, C=Completado
+    created_at: Date;
+    updated_at: Date;
 }
 
 export interface Subject {
