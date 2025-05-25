@@ -3,6 +3,7 @@ export * from './Card';
 export * from './Input';
 export * from './Modal';
 export * from './SubjectSearch';
+export * from './TeacherSearch';
 export * from './Navbar';
 export * from './Select';
 export * from './Textarea';
