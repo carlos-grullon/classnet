@@ -9,7 +9,7 @@ import { Subject } from '@/interfaces';
 interface SubjectSearchProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (subject: { category: string; code: string }) => void;
+  onSelect: (subject: { category: string; code: string; name: string }) => void;
 }
 
 export function SubjectSearch({ isOpen, onClose, onSelect }: SubjectSearchProps) {
@@ -56,10 +56,11 @@ export function SubjectSearch({ isOpen, onClose, onSelect }: SubjectSearchProps)
   });
 
   const handleSelect = (subject: Subject) => {
-    onSelect({
-      category: subject.category,
-      code: subject.code
-    });
+    const subjectName = subjects.find(s => 
+      s.category === subject.category && s.code === subject.code
+    )?.name || `${subject.category}-${subject.code}`;
+
+    onSelect({ ...subject, name: subjectName });
     onClose();
   };
 

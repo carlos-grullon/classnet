@@ -1,58 +1,37 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Class } from '@/interfaces/Class';
 import { Button } from '@/components/';
 import { SubjectSearch } from '@/components';
 import { TeacherSearch } from '@/components';
 import { Subject } from '@/interfaces';
 import { FetchData } from '@/utils/Tools.tsx';
+import { SearchClassData } from '@/interfaces';
 
 
 
 export default function StudentClasses() {
   const [isSubjectModalOpen, setIsSubjectModalOpen] = useState(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedTeacherName, setSelectedTeacherName] = useState<string>('');
-  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
-  const [formData, setFormData] = useState({
-    subject: '',
-    teacher: '',
-    price: '',
-    days: [],
-    level: '',
-  });
+  const [selectedSubjectName, setSelectedSubjectName] = useState('');
+  const [selectedTeacherName, setSelectedTeacherName] = useState('');
   
-  useEffect(() => {
-    // Load all subjects for name lookup
-    const fetchSubjects = async () => {
-      try {
-        const res = await FetchData('/api/subjects', {}, 'GET');
-        setAllSubjects(res.subjects || res);
-      } catch (error) {
-        console.error('Error loading subjects:', error);
-      }
-    };
-    
-    fetchSubjects();
-  }, []);
-
-  const getSubjectName = (fullCode: string) => {
-    if (!fullCode) return '';
-    const [category, code] = fullCode.split('-');
-    const subject = allSubjects.find(sub => 
-      sub.category === category && sub.code === code
-    );
-    return subject ? subject.name : fullCode;
-  };
+  const [formData, setFormData] = useState<SearchClassData>({
+    subject: '',
+    teacher_id: '',
+    minPrice: 0,
+    maxPrice: 0,
+    level: '',
+    days: []
+  });
 
   const handleTeacherSelect = (teacher: {id: string; name: string}) => {
     setSelectedTeacherName(teacher.name);
     setIsTeacherModalOpen(false);
   };
 
-  const handleSubjectSelect = (subject: { category: string; code: string }) => {
-    setSelectedSubject(`${subject.category}-${subject.code}`);
+  const handleSubjectSelect = (subject: { category: string; code: string; name: string }) => {
+    setFormData(prev => ({...prev, subject: `${subject.category}-${subject.code}`}));
+    setSelectedSubjectName(subject.name);
     setIsSubjectModalOpen(false);
   };
 
@@ -77,6 +56,20 @@ export default function StudentClasses() {
     { label: 'Intermedio', value: 'intermediate' },
     { label: 'Avanzado', value: 'advanced' },
   ];
+
+  useEffect(() => {
+    // Load all subjects for name lookup
+    const fetchSubjects = async () => {
+      try {
+        const res = await FetchData('/api/subjects', {}, 'GET');
+        // setAllSubjects(res.subjects || res);
+      } catch (error) {
+        console.error('Error loading subjects:', error);
+      }
+    };
+    
+    fetchSubjects();
+  }, []);
 
   return (
     <div className="container mx-auto py-8">
@@ -114,7 +107,7 @@ export default function StudentClasses() {
           <div className="relative">
             <input
               type="text"
-              value={getSubjectName(selectedSubject)}
+              value={selectedSubjectName || ''}
               readOnly
               className="w-full px-3 py-2 border rounded-md bg-white cursor-pointer"
               onClick={() => setIsSubjectModalOpen(true)}
