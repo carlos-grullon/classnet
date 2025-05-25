@@ -8,6 +8,7 @@ export async function createIndexes(): Promise<void> {
   try {
     console.log('Creando índices en las colecciones...');
 
+    //region Users
     console.log('Creando índices en la colección users...');
     const usersCollection = await getCollection('users');
     try {
@@ -19,7 +20,10 @@ export async function createIndexes(): Promise<void> {
 
     await usersCollection.createIndex({ email: 1 }, { unique: true, name: 'U_Email' });
     await usersCollection.createIndex({ username: 1 }, { unique: false, name: 'Username' });
+    //endregion
 
+    //region Subjects
+    console.log('Creando índices en la colección subjects...');
     const subjectsCollection = await getCollection('subjects');
     subjectsCollection.drop();
     await subjectsCollection.createIndex({ category: 1, code: 1 }, { unique: true });
