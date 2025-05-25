@@ -1,26 +1,34 @@
 import { ObjectId } from "mongodb";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
 import { SearchClassData } from "@/interfaces/Class";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
+        const searchParams = request.nextUrl.searchParams;
+        const page: number = parseInt(searchParams.get('page') || '0');
+        const offset = (page * 20) + 1;
+        const limit = offset + 20;
+
         const data: SearchClassData = await request.json();
         const collection = await getCollection("classes");
         const result = collection.aggregate([
             { $match: {
-                subject: data.subject,
-                user_id: new ObjectId(data.teacher_id),
-                precio: {
+                subject: data.subject == '' ? { $exists: true } : data.subject,
+                user_id: data.teacher_id == '' ? { $exists: true } : new ObjectId(data.teacher_id),
+                price: {
                     $gte: data.minPrice,
                     $lte: data.maxPrice
                 },
                 level: data.level == '' ? { $exists: true } : data.level,
-                days: { $in: data.days }
-            } }
+                selectedDays: { $in: data.days }
+            } },
+            { $skip: offset },
+            { $limit: limit }
         ])
         const classes = await result.toArray();
-        return NextResponse.json({ classes: classes });
+        const totalClasses = classes.length;
+        return NextResponse.json({ classes: classes, totalClasses: totalClasses });
     } catch (error) {
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
