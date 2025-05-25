@@ -10,6 +10,7 @@ export interface InputProps {
   type?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   error?: string;
   placeholder?: string;
   disabled?: boolean;
@@ -38,6 +39,7 @@ export function Input({
   type = 'text',
   value = '',
   onChange = () => {},
+  onKeyUp = () => {},
   error,
   placeholder = '',
   disabled = false,
@@ -64,6 +66,7 @@ export function Input({
           type={inputType}
           value={value}
           onChange={(e) => handleNumericInput(e, onChange)}
+          onKeyUp={onKeyUp}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}

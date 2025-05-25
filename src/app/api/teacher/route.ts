@@ -1,26 +1,27 @@
-import { ObjectId } from "mongodb";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
-import { SearchClassData } from "@/interfaces/Class";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
-        const data: SearchClassData = await request.json();
-        const collection = await getCollection("classes");
-        const result = collection.aggregate([
+        const data = await request.json()
+        const userName: string = data.userName;
+        const collection = await getCollection("users");
+        const onlyNameAndId: boolean = data.onlyNameAndId;
+        const pipeline: any[] = [
             { $match: {
-                subject: data.subject,
-                user_id: new ObjectId(data.teacher_id),
-                precio: {
-                    $gte: data.minPrice,
-                    $lte: data.maxPrice
-                },
-                level: data.level == '' ? { $exists: true } : data.level,
-                days: { $in: data.days }
-            } }
-        ])
-        const classes = await result.toArray();
-        return NextResponse.json({ classes: classes });
+                $or: [
+                    { username: { $regex: '^' + userName }},
+                    { username: { $regex: userName, $options: 'i' }}
+                ]
+            } },
+            { $limit: 50 }
+        ]
+        if (onlyNameAndId) {
+            pipeline.push({ $project: { _id: 1, username: 1 } })
+        }
+        const result = collection.aggregate(pipeline)
+        const teachers = await result.toArray();
+        return NextResponse.json({ teachers: teachers });
     } catch (error) {
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });

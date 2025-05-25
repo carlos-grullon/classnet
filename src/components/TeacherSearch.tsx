@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components';
 import { FiSearch } from 'react-icons/fi';
-import { Button } from '@/components';
+import { FetchData } from '@/utils/Tools.tsx';
 
 interface TeacherSearchProps {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface TeacherSearchProps {
 }
 
 export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps) {
-  const [teachers, setTeachers] = useState<{id: string; name: string}[]>([]);
+  const [teachers, setTeachers] = useState<{_id: string; username: string}[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,19 +26,8 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
   const fetchTeachers = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/teachers');
-      
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      
-      const data = await res.json();
-      // Transform to only include id and name
-      const simplifiedTeachers = (Array.isArray(data?.teachers || data) ? 
-        (data?.teachers || data) : [])
-        .map((teacher: {id: string; name: string}) => ({ id: teacher.id, name: teacher.name }));
-      
-      setTeachers(simplifiedTeachers);
+      const data = await FetchData('/api/teacher', { userName: searchTerm, onlyNameAndId: true }, "POST");
+      setTeachers(data.teachers);
     } catch (error) {
       console.error('Failed to load teachers:', error);
       setTeachers([]);
@@ -48,7 +37,7 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
   };
 
   const filteredTeachers = teachers.filter(teacher => 
-    teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
+    teacher.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -59,7 +48,8 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
             type="text"
             placeholder="Buscar profesor..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.currentTarget.value)}
+            onKeyUp={() => fetchTeachers()}
             className="pl-10"
           />
           <FiSearch className="absolute left-3 top-3 text-gray-400" />
@@ -72,13 +62,13 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
             {filteredTeachers.length > 0 ? (
               <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTeachers.map((teacher) => (
-                  <li key={teacher.id} className="py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <li key={teacher._id} className="py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                     <button
                       type="button"
                       className="w-full text-left"
-                      onClick={() => onSelect(teacher)}
+                      onClick={() => onSelect({ id: teacher._id, name: teacher.username })}
                     >
-                      {teacher.name}
+                      {teacher.username}
                     </button>
                   </li>
                 ))}
