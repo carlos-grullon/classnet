@@ -666,6 +666,7 @@ export async function createIndexes(): Promise<void> {
       }
     ];
     await subjectsCollection.insertMany(subjects);
+    //endregion
 
     console.log('Índices creados correctamente');
   } catch (error) {
