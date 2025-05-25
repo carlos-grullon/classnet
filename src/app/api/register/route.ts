@@ -16,15 +16,15 @@ const RegisterSchema = z.object({
 export async function POST(request: Request) {
     try {
         const data = await request.json();
-            const { confirmPassword, ...validatedData } = RegisterSchema.parse(data);
+        const { confirmPassword, ...validatedData } = RegisterSchema.parse(data);
             
-            await Register(
-                validatedData.username,
-                validatedData.password,
-                validatedData.user_type,
-                validatedData.email
+        await Register(
+            validatedData.username,
+            validatedData.password,
+            validatedData.user_type,
+            validatedData.email
         )
-            return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ message: error.errors[0]?.message || 'Validación fallida' }, { status: 400 });

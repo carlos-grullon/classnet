@@ -18,13 +18,17 @@ export async function Register(
             user_is_teacher: user_type === 'P',
             email: email,
             status: 'A',
+            country: '',
             data: user_type === 'P' ? {
                 description: '',
                 subjects: [],
                 image_path: '',
                 reviews: [],
-                rating: 0
-            } : {},
+                rating: 0,
+            } : {
+                description: '',
+                image_path: ''
+            },
             created_at: new Date(),
             updated_at: new Date()
         });
