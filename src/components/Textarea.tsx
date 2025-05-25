@@ -34,7 +34,7 @@ export function Textarea({
         disabled={disabled}
         className={`w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600 
               text-gray-900 dark:text-white focus:outline-none focus:ring-2 dark:focus:ring-blue-400/50 resize-none
-            ${disabled ? `cursor-not-allowed dark:bg-gray-700` : `bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700`}`}
+            ${disabled ? `cursor-not-allowed bg-gray-100 dark:bg-gray-700` : `bg-white dark:bg-gray-800`}`}
       />
     </div>
   );
