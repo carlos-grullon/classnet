@@ -1,170 +1,150 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { Card, Input, Select, Button, ThemeToggle } from '@/components';
-import { FetchData, ErrorMsj, handleInputChange, SuccessMsj } from '@/utils/Tools.tsx';
+import React from 'react';
+import { Card, Input, Button } from '@/components';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { RegisterFormSchema, RegisterFormValues } from '@/validations/register';
+import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
-import { FiUserPlus } from 'react-icons/fi';
+import { FiUserPlus, FiUser, FiBook } from 'react-icons/fi';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useState } from 'react';
 
-interface FormData {
-  name: string;
-  email: string;
-  password: string;
-  userType: 'E' | 'P';
-}
-
-interface FormErrors {
-  name?: string;
-  email?: string;
-  password?: string;
-  userType?: string;
-  general?: string;
-}
-
-function RegisterForm() {
+export default function RegisterForm() {
   const router = useRouter();
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    password: '',
-    userType: 'P',
+  const [isLoading, setIsLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(RegisterFormSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      user_type: 'E'
+    }
   });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [trigger, setTrigger] = useState(0);
 
-  const onInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    if (e.target.tagName.toLowerCase() === 'select') {
-      setErrors(prev => ({ ...prev, [e.target.name]: undefined }));
-    }
-    handleInputChange(e, formData, setFormData);
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido.';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'El correo es requerido.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'El correo no es válido.';
-    }
-    if (!formData.password.trim()) {
-      newErrors.password = 'La contraseña es requerida.';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres.';
-    }
-    if (!formData.userType) {
-      newErrors.userType = 'Debes seleccionar un tipo de usuario.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault();
-    setTrigger(prev => prev + 1);
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: RegisterFormValues) => {
     setIsLoading(true);
-
     try {
-      const data = await FetchData("/api/register", {
-        username: formData.name,
-        email: formData.email,
-        password: formData.password,
-        user_type: formData.userType
-      });
-
-      setFormData({ name: '', email: '', password: '', userType: 'P' });
-      SuccessMsj('¡Registro exitoso!');
-      // Redirigir después de un breve delay
-      setTimeout(() => {
-        router.push('/login');
-      }, 1000);
-
-    } catch (error: any) {
-      ErrorMsj(error.message);
+      await FetchData('/api/register', data);
+      SuccessMsj('Registro exitoso');
+      router.push('/login');
+    } catch (error) {
+      const err = error as Error;
+      ErrorMsj(err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <ThemeToggle className="fixed top-4 right-4 hover:scale-110 p-1 transition-all duration-200 cursor-pointer hover:bg-gray-400 dark:hover:bg-gray-700 rounded-full" />
-      <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
-        <Card title="Registro" icon={<FiUserPlus className="text-blue-500" />}>
-          <ToastContainer />
-          <form onSubmit={handleSubmit}>
-            <Input
-              id="name"
-              label="Nombre"
-              value={formData.name}
-              onChange={onInputChange}
-              error={errors.name}
-              trigger={trigger}
-            />
-            <Input
-              id="email"
-              label="Correo Electrónico"
-              value={formData.email}
-              onChange={onInputChange}
-              error={errors.email}
-              trigger={trigger}
-            />
-            <Input
-              id="password"
-              label="Contraseña"
-              type="password"
-              value={formData.password}
-              onChange={onInputChange}
-              error={errors.password}
-              trigger={trigger}
-            />
-            <Select
-              id="userType"
-              label="Tipo de Usuario"
-              value={formData.userType}
-              onChange={onInputChange}
-              error={errors.userType}
-              placeholder="Selecciona una opción"
-              options={[
-                { value: 'P', label: 'Profesor' },
-                { value: 'E', label: 'Estudiante' }
-              ]}
-              trigger={trigger}
-            />
+    <div className="flex justify-center">
+      <ThemeToggle className="fixed top-4 right-4" />
+      <Card title="Registro" icon={<FiUserPlus />}>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Controller
+            name="username"
+            control={control}
+            render={({ field }) => (
+              <Input
+                label="Nombre completo"
+                error={errors.username?.message}
+                {...field}
+              />
+            )}
+          />
 
-            <div className="flex items-center">
-              <Button 
-                type="submit" 
-                variant="primary" 
-                fullWidth 
-                isLoading={isLoading}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Registrando...' : 'Registrarse'}
-              </Button>
-            </div>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            ¿Ya tienes cuenta? 
-            <Link href="/login" className="text-blue-500 hover:text-blue-700 ml-1">
-              Inicia sesión aquí
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="email"
+                label="Email"
+                error={errors.email?.message}
+                {...field}
+              />
+            )}
+          />
+
+          <Controller
+            name="password"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="password"
+                label="Contraseña"
+                error={errors.password?.message}
+                {...field}
+              />
+            )}
+          />
+
+          <Controller
+            name="confirmPassword"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="password"
+                label="Confirmar contraseña"
+                error={errors.confirmPassword?.message}
+                {...field}
+              />
+            )}
+          />
+
+          <Controller
+            name="user_type"
+            control={control}
+            render={({ field }) => (
+              <div className="flex gap-4 mb-4">
+                <button
+                  type="button"
+                  className={`flex flex-col items-center justify-center p-3 
+                    rounded-lg border-2 w-full transition-all 
+                    ${field.value === 'E' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}
+                  onClick={() => field.onChange('E')}
+                >
+                  <FiUser className="w-8 h-8 mb-2 text-blue-500" />
+                  <span className="font-medium">Estudiante</span>
+                </button>
+                <button
+                  type="button"
+                  className={`flex flex-col items-center justify-center p-3 
+                    rounded-lg border-2 w-full transition-all 
+                    ${field.value === 'P' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}
+                  onClick={() => field.onChange('P')}
+                >
+                  <FiBook className="w-8 h-8 mb-2 text-blue-500" />
+                  <span className="font-medium">Profesor</span>
+                </button>
+              </div>
+            )}
+          />
+
+          <div className="flex items-center">
+            <Button type="submit" variant="primary" fullWidth isLoading={isLoading}
+              disabled={isLoading}>
+              {isLoading ? "Registrando..." : "Registrarse"}
+            </Button>
+          </div>
+
+          <div className="text-center mt-4">
+            <Link href="/login" className="text-sm text-blue-600 hover:underline">
+              ¿Ya tienes cuenta? Inicia sesión
             </Link>
           </div>
-        </Card>
-      </div>
-    </>
+        </form>
+        <ToastContainer />
+      </Card>
+    </div>
   );
-};
-
-export default RegisterForm;
+}

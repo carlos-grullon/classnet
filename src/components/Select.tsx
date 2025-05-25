@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 
 interface SelectProps {
-  id: string;
+  id?: string;
   name?: string;
   label: string;
   value: string;
@@ -16,7 +16,7 @@ interface SelectProps {
 
 export function Select({
   id,
-  name = id,
+  name,
   label,
   value,
   onChange,
@@ -45,8 +45,8 @@ export function Select({
       </label>
       <div className="relative">
         <select
-          id={id}
-          name={name}
+          id={id || ''}
+          name={name || ''}
           value={value}
           onChange={onChange}
           className={`

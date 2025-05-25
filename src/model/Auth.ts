@@ -8,12 +8,11 @@ export async function Register(
     email: string,
 ) {
     const usersCollection = await getCollection('users');
-    const user = await usersCollection.findOne({
-        email: email
-    })
+    const user = await usersCollection.findOne({ email });
+    
     if (!user) {
         await usersCollection.insertOne({
-            username: username,
+            username,
             password: await HashPassword(password),
             user_is_student: user_type === 'E',
             user_is_teacher: user_type === 'P',
@@ -28,7 +27,7 @@ export async function Register(
             } : {},
             created_at: new Date(),
             updated_at: new Date()
-        })
+        });
     } else {
         if (user.user_is_student && user_type === 'P') {
             await usersCollection.updateOne({
