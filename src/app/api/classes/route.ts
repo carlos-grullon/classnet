@@ -10,13 +10,13 @@ export async function POST(request: Request) {
         const result = collection.aggregate([
             { $match: {
                 subject: data.subject,
-                profesor: data.profesor,
+                user_id: data.profesor,
                 precio: {
-                    $gte: data.priceMin,
-                    $lte: data.priceMax
+                    $gte: data.minPrice,
+                    $lte: data.maxPrice
                 },
-                nivel: data.level == '' ? { $exists: true } : data.level,
-                dias: { $in: data.days }
+                level: data.level == '' ? { $exists: true } : data.level,
+                days: { $in: data.days }
             } }
         ])
         const classes = await result.toArray();

@@ -25,7 +25,7 @@ export interface Subject {
 
 export interface SearchClassData {
     subject: string,
-    profesor: ObjectId,
+    teacher_id: ObjectId,
     minPrice: number,
     maxPrice: number,
     level: "" | "1" | "2" | "3",
