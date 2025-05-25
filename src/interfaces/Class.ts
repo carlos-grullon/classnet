@@ -26,8 +26,8 @@ export interface Subject {
 export interface SearchClassData {
     subject: string,
     profesor: ObjectId,
-    precioInicial: number,
-    precioFinal: number,
-    nivel: "" | "1" | "2" | "3",
-    dias: string[]
+    minPrice: number,
+    maxPrice: number,
+    level: "" | "1" | "2" | "3",
+    days: string[]
 }

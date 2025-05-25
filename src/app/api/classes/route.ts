@@ -12,11 +12,11 @@ export async function POST(request: Request) {
                 subject: data.subject,
                 profesor: data.profesor,
                 precio: {
-                    $gte: data.precioInicial,
-                    $lte: data.precioFinal
+                    $gte: data.priceMin,
+                    $lte: data.priceMax
                 },
-                nivel: data.nivel == '' ? { $exists: true } : data.nivel,
-                dias: { $in: data.dias }
+                nivel: data.level == '' ? { $exists: true } : data.level,
+                dias: { $in: data.days }
             } }
         ])
         const classes = await result.toArray();
