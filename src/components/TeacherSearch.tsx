@@ -13,9 +13,8 @@ interface TeacherSearchProps {
 }
 
 export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps) {
-  const [teachers, setTeachers] = useState<{_id: string; username: string}[]>([]);
+  const [teachers, setTeachers] = useState<{ _id: string; username: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,18 +24,15 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
 
   const fetchTeachers = async () => {
     try {
-      setIsLoading(true);
       const data = await FetchData('/api/teacher', { userName: searchTerm, onlyNameAndId: true }, "POST");
       setTeachers(data.teachers);
     } catch (error) {
       console.error('Failed to load teachers:', error);
       setTeachers([]);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const filteredTeachers = teachers.filter(teacher => 
+  const filteredTeachers = teachers.filter(teacher =>
     teacher.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -55,31 +51,27 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
           <FiSearch className="absolute left-3 top-3 text-gray-400" />
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-4">Cargando profesores...</div>
-        ) : (
-          <div className="max-h-96 overflow-y-auto">
-            {filteredTeachers.length > 0 ? (
-              <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredTeachers.map((teacher) => (
-                  <li key={teacher._id} className="py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                    <button
-                      type="button"
-                      className="w-full text-left"
-                      onClick={() => onSelect({ id: teacher._id, name: teacher.username })}
-                    >
-                      {teacher.username}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                {searchTerm ? 'No se encontraron profesores' : 'No hay profesores disponibles'}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="max-h-96 overflow-y-auto">
+          {filteredTeachers.length > 0 ? (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+              {filteredTeachers.map((teacher) => (
+                <li key={teacher._id} className="py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => onSelect({ id: teacher._id, name: teacher.username })}
+                  >
+                    {teacher.username}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              {searchTerm ? 'No se encontraron profesores' : 'No hay profesores disponibles'}
+            </div>
+          )}
+        </div>
       </div>
     </Modal>
   );
