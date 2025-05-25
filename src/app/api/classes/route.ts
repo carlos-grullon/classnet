@@ -10,7 +10,7 @@ export async function POST(request: Request) {
         const result = collection.aggregate([
             { $match: {
                 subject: data.subject,
-                user_id: data.teacher_id,
+                user_id: new ObjectId(data.teacher_id),
                 precio: {
                     $gte: data.minPrice,
                     $lte: data.maxPrice
