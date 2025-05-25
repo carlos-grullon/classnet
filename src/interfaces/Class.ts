@@ -23,7 +23,7 @@ export interface Subject {
   name: string;
 }
 
-export interface SearchFormData {
+export interface SearchClassData {
     subject: string,
     profesor: ObjectId,
     precioInicial: number,

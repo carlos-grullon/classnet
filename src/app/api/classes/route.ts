@@ -1,11 +1,11 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
-import { SearchFormData } from "@/interfaces/Class";
+import { SearchClassData } from "@/interfaces/Class";
 
 export async function POST(request: Request) {
     try {
-        const data: SearchFormData = await request.json();
+        const data: SearchClassData = await request.json();
         const collection = await getCollection("classes");
         const result = collection.aggregate([
             { $match: {
