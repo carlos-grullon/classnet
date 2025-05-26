@@ -11,6 +11,13 @@ export async function POST(request: NextRequest) {
         const limit = offset + 20;
 
         const data: SearchClassData = await request.json();
+        const minPrice = data.minPrice;
+        const maxPrice = data.maxPrice;
+
+        if (minPrice > maxPrice) {
+            return NextResponse.json({ error: "El precio minimo no puede ser mayor al precio maximo" }, { status: 400 });
+        }
+
         const collection = await getCollection("classes");
         const result = collection.aggregate([
             { $match: {
