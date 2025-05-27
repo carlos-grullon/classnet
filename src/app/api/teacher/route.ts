@@ -9,6 +9,7 @@ export async function POST(request: NextRequest) {
         const onlyNameAndId: boolean = data.onlyNameAndId;
         const pipeline: any[] = [
             { $match: {
+                user_is_teacher: true,
                 $or: [
                     { username: { $regex: '^' + userName }},
                     { username: { $regex: userName, $options: 'i' }}

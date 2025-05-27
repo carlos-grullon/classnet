@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch } from '@/components';
 import { ToastContainer } from 'react-toastify/unstyled';
-import { FiFilter } from 'react-icons/fi';
+import { FiFilter, FiCalendar } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
-import { FetchData } from '@/utils/Tools.tsx';
+import { FetchData, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { Class } from '@/interfaces/Class';
 
 export default function StudentClasses() {
@@ -196,61 +196,85 @@ export default function StudentClasses() {
             </div>
           </form>
         </Card>
-      </div>
-      {classes.length > 0 && (
-        <div className="flex items-center justify-between mt-4">
-          <Button
-            disabled={pagination.page === 0 || isLoading}
-            onClick={() => fetchClasses(getValues(), pagination.page - 1)}
-          >
-            Anterior
-          </Button>
 
-          <span>
-            Página {pagination.page + 1} de {pagination.totalPages}
-          </span>
-
-          <Button
-            disabled={pagination.page >= pagination.totalPages - 1 || isLoading}
-            onClick={() => fetchClasses(getValues(), pagination.page + 1)}
-          >
-            Siguiente
-          </Button>
-        </div>
-      )}
-      {classes.length > 0 && (
-        <div className="mt-8 space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {pagination.total} clases encontradas
-          </h2>
-          
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {classes.map((classItem) => (
-              <Card key={classItem._id} className="p-4">
-                <div className="space-y-2">
-                  <h3 className="font-medium text-lg dark:text-white">
-                    {classItem.subject}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Días: {classItem.selectedDays.join(', ')}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Horario: {classItem.startTime} - {classItem.endTime}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300">
-                    Precio: ${classItem.price}
-                  </p>
-                  <div className="pt-2">
-                    <Button size="sm" onClick={() => {/* Lógica de inscripción */}}>
-                      Inscribirse
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-700 dark:border-primary-400 mb-4"></div>
+            <p className="text-gray-500 dark:text-gray-400">Buscando clases...</p>
           </div>
-        </div>
-      )}
+        ) : (
+          <>
+            {classes.length > 0 && (
+              <div className="flex items-center justify-center gap-10 mt-4">
+                <Button
+                  disabled={pagination.page === 0 || isLoading}
+                  onClick={() => fetchClasses(getValues(), pagination.page - 1)}
+                >
+                  Anterior
+                </Button>
+
+                <span>
+                  Página {pagination.page + 1} de {pagination.totalPages}
+                </span>
+
+                <Button
+                  disabled={pagination.page >= pagination.totalPages - 1 || isLoading}
+                  onClick={() => fetchClasses(getValues(), pagination.page + 1)}
+                >
+                  Siguiente
+                </Button>
+              </div>
+            )}
+            {classes.length > 0  ? (
+              <div className="mt-8 space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {pagination.total} clases encontradas
+                </h2>
+
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {classes.map((classItem) => (
+                    <Card key={classItem._id} className="p-4">
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-lg dark:text-white">
+                          {classItem.subject} - {getLevelName(classItem.level)}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Profesor/a: <span className='font-bold'>{classItem.teacher}</span>
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Días: <span className='font-bold'>{getDayName(classItem.selectedDays)}</span>
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Horario: <span className='font-bold'>{classItem.startTime} - {classItem.endTime}</span>
+                        </p>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Precio: <span className='font-bold'>${classItem.price}</span>
+                        </p>
+                        <div className="pt-2">
+                          <Button size="sm" onClick={() => {/* Lógica de inscripción */ }}>
+                            Inscribirse
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                <div className="text-gray-500 dark:text-gray-400 mb-4">
+                  <FiCalendar className="w-12 h-12" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay clases disponibles</h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  No se encontraron clases con los filtros seleccionados.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      {/* Teacher Search Modal */}
       <TeacherSearch
         isOpen={isTeacherSearchOpen}
         onClose={() => setIsTeacherSearchOpen(false)}
@@ -260,6 +284,7 @@ export default function StudentClasses() {
           setIsTeacherSearchOpen(false);
         }}
       />
+      {/* Subject Search Modal */}
       <SubjectSearch
         isOpen={subjectModalOpen}
         onClose={() => setSubjectModalOpen(false)}

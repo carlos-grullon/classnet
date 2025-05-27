@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
+import { FetchData, SuccessMsj, ErrorMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { ClassFormValues, ClassFormSchema } from '@/validations/class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -77,34 +77,11 @@ export default function TeacherClasses() {
     }
   };
 
-  const getDayName = (days: string[]): string => {
-    const daysMap = {
-      '1': 'Lunes',
-      '2': 'Martes',
-      '3': 'Miércoles',
-      '4': 'Jueves',
-      '5': 'Viernes',
-      '6': 'Sábados',
-      '7': 'Domingos'
-    };
-    
-    return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
-  };
-
   const getTeacherSubjectOptions = () => {
     return teacherSubjects.map(teacherSubj => ({
       value: `${teacherSubj.category}-${teacherSubj.code}`,
       label: getSubjectName(`${teacherSubj.category}-${teacherSubj.code}`)
     }));
-  };
-
-  const getLevelName = (level: string) => {
-    switch(level) {
-      case '1': return 'Principiante';
-      case '2': return 'Intermedio';
-      case '3': return 'Avanzado';
-      default: return level;
-    }
   };
 
   const getSubjectName = (fullCode: string) => {

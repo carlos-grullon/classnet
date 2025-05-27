@@ -52,3 +52,26 @@ export const handleInputChange = <T extends Record<string, any>>(
   const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
   setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
 };
+
+export const getDayName = (days: string[]): string => {
+  const daysMap = {
+    '1': 'Lunes',
+    '2': 'Martes',
+    '3': 'Miércoles',
+    '4': 'Jueves',
+    '5': 'Viernes',
+    '6': 'Sábados',
+    '7': 'Domingos'
+  };
+  
+  return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
+};
+
+export const getLevelName = (level: string) => {
+  switch(level) {
+    case '1': return 'Principiante';
+    case '2': return 'Intermedio';
+    case '3': return 'Avanzado';
+    default: return level;
+  }
+};
