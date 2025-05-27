@@ -7,19 +7,28 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
 import { FetchData } from '@/utils/Tools.tsx';
+import { Class } from '@/interfaces/Class';
 
 export default function StudentClasses() {
   const [subjectModalOpen, setSubjectModalOpen] = useState(false);
   const [isTeacherSearchOpen, setIsTeacherSearchOpen] = useState(false);
   const [selectedSubjectName, setSelectedSubjectName] = useState('');
   const [selectedTeacherName, setSelectedTeacherName] = useState('');
+  const [pagination, setPagination] = useState({
+    page: 0,
+    total: 0,
+    totalPages: 0
+  });
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
-    setValue
+    setValue,
+    getValues
   } = useForm<SearchClassValues>({
     resolver: zodResolver(SearchClassSchema),
     defaultValues: {
@@ -32,13 +41,29 @@ export default function StudentClasses() {
     }
   });
 
-  const onSubmit = async (data: SearchClassValues) => {
-    const response = await FetchData('/api/classes', data);
-    console.log(response);
+  const fetchClasses = async (data: SearchClassValues, page: number = 0) => {
+    setIsLoading(true);
+    try {
+      const response = await FetchData('/api/classes', { ...data, page });
+      setClasses(response.classes);
+      setPagination({
+        page: response.page,
+        total: response.total,
+        totalPages: response.totalPages
+      });
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const onSubmit = (data: SearchClassValues) => fetchClasses(data);
 
   const handleReset = () => {
     reset();
+    setClasses([]);
+    setPagination({ page: 0, total: 0, totalPages: 0 });
   };
 
   return (
@@ -60,7 +85,7 @@ export default function StudentClasses() {
                   name="teacher_id"
                   control={control}
                   render={({ field }) => (
-                    <InputReadOnly 
+                    <InputReadOnly
                       label="Profesor"
                       value={field.value ? `${selectedTeacherName}` : ''}
                       placeholder="Seleccionar profesor..."
@@ -76,7 +101,7 @@ export default function StudentClasses() {
                   name="subject"
                   control={control}
                   render={({ field }) => (
-                    <InputReadOnly 
+                    <InputReadOnly
                       label="Materia"
                       value={field.value ? `${selectedSubjectName}` : ''}
                       placeholder="Seleccionar materia..."
@@ -172,6 +197,60 @@ export default function StudentClasses() {
           </form>
         </Card>
       </div>
+      {classes.length > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <Button
+            disabled={pagination.page === 0 || isLoading}
+            onClick={() => fetchClasses(getValues(), pagination.page - 1)}
+          >
+            Anterior
+          </Button>
+
+          <span>
+            Página {pagination.page + 1} de {pagination.totalPages}
+          </span>
+
+          <Button
+            disabled={pagination.page >= pagination.totalPages - 1 || isLoading}
+            onClick={() => fetchClasses(getValues(), pagination.page + 1)}
+          >
+            Siguiente
+          </Button>
+        </div>
+      )}
+      {classes.length > 0 && (
+        <div className="mt-8 space-y-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {pagination.total} clases encontradas
+          </h2>
+          
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {classes.map((classItem) => (
+              <Card key={classItem._id} className="p-4">
+                <div className="space-y-2">
+                  <h3 className="font-medium text-lg dark:text-white">
+                    {classItem.subject}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Días: {classItem.selectedDays.join(', ')}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Horario: {classItem.startTime} - {classItem.endTime}
+                  </p>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Precio: ${classItem.price}
+                  </p>
+                  <div className="pt-2">
+                    <Button size="sm" onClick={() => {/* Lógica de inscripción */}}>
+                      Inscribirse
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
       <TeacherSearch
         isOpen={isTeacherSearchOpen}
         onClose={() => setIsTeacherSearchOpen(false)}
