@@ -6,6 +6,7 @@ import { FiFilter } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
+import { FetchData } from '@/utils/Tools.tsx';
 
 export default function StudentClasses() {
   const [subjectModalOpen, setSubjectModalOpen] = useState(false);
@@ -31,8 +32,9 @@ export default function StudentClasses() {
     }
   });
 
-  const onSubmit = (data: SearchClassValues) => {
-    console.log(data);
+  const onSubmit = async (data: SearchClassValues) => {
+    const response = await FetchData('/api/classes', data);
+    console.log(response);
   };
 
   const handleReset = () => {
