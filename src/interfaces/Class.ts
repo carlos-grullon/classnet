@@ -22,12 +22,3 @@ export interface Subject {
   code: string;
   name: string;
 }
-
-export interface SearchClassData {
-    subject: string,
-    teacher_id: string,
-    minPrice: number,
-    maxPrice: number,
-    level: "" | "1" | "2" | "3",
-    days: string[]
-}

@@ -21,6 +21,9 @@ export async function POST(request: NextRequest) {
         }
         const result = collection.aggregate(pipeline)
         const teachers = await result.toArray();
+        teachers.forEach((teacher: any) => {
+            teacher._id = teacher._id.toString();
+        })
         return NextResponse.json({ teachers: teachers });
     } catch (error) {
         if (error instanceof Error) {

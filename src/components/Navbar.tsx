@@ -16,7 +16,8 @@ export function Navbar() {
   ] : isStudentRoute ? [
     { name: 'Dashboard', path: '/student' },
     { name: 'Perfil', path: '/student/profile' },
-    { name: 'Mis Clases', path: '/student/classes' }
+    { name: 'Mis Clases', path: '/student/classes' },
+    { name: 'Buscar Clases', path: '/student/searchclasses' }
   ] : [];
 
   if (!navItems.length) return null;

@@ -18,6 +18,9 @@ export interface InputProps {
   step?: string;
   className?: string;
   autoFocus?: boolean;
+  readOnly?: boolean;
+  icon?: React.ReactNode;
+  onClick?: () => void;
 }
 
 const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void) => {
@@ -46,7 +49,10 @@ export function Input({
   autoFocus = false,
   min = '',
   step = '',
-  className = ''
+  className = '',
+  readOnly = false,
+  icon,
+  onClick,
 }: InputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -55,7 +61,7 @@ export function Input({
   return (
     <div className="flex flex-col gap-1 mb-4">
       {label && (
-        <label htmlFor={id} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label htmlFor={id} className="block text-sm font-medium mb-1.5">
           {label}
         </label>
       )}
@@ -70,6 +76,7 @@ export function Input({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
+          readOnly={readOnly}
           autoFocus={autoFocus}
           placeholder={placeholder}
           min={min}
@@ -90,6 +97,15 @@ export function Input({
             onClick={() => setShowPassword(!showPassword)}
           >
             {showPassword ? <FiEyeOff /> : <FiEye />}
+          </button>
+        )}
+        {icon && (
+          <button
+            type="button"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500"
+            onClick={onClick}
+          >
+            {icon}
           </button>
         )}
       </div>

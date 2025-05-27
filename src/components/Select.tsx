@@ -18,7 +18,7 @@ export function Select({
   id,
   name,
   label,
-  value,
+  value = '',
   onChange,
   options,
   error,

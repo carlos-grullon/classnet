@@ -5,9 +5,8 @@ import { ClassFormValues, ClassFormSchema } from '@/validations/class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { ToastContainer } from 'react-toastify';
-import { Card, Input, Select, Button, DaysCheckboxGroup } from '@/components';
+import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput } from '@/components';
 import { CurrencyInput } from '@/components/CurrencyInput';
-import NumericInput from '@/components/NumericInput';
 import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { Subject, Class } from '@/interfaces';
 
