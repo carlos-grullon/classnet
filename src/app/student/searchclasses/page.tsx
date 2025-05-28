@@ -289,7 +289,7 @@ export default function StudentClasses() {
         isOpen={subjectModalOpen}
         onClose={() => setSubjectModalOpen(false)}
         onSelect={(subject) => {
-          setValue('subject', subject.name);
+          setValue('subject', subject.catCode);
           setSelectedSubjectName(subject.name);
           setSubjectModalOpen(false);
         }}
