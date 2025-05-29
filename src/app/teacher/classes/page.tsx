@@ -5,14 +5,12 @@ import { ClassFormValues, ClassFormSchema } from '@/validations/class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { ToastContainer } from 'react-toastify';
-import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput, SubjectSelect } from '@/components';
-import { CurrencyInput } from '@/components/CurrencyInput';
+import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput, SubjectSelect, CurrencyInput } from '@/components';
 import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { Class } from '@/interfaces';
 
 export default function TeacherClasses() {
   
-
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(ClassFormSchema),
     defaultValues: {
