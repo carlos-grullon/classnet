@@ -112,7 +112,7 @@ export default function TeacherProfile() {
     }));
   };
   return (
-    <div className="grid grid-cols-3">
+    <div className="grid md:grid-cols-3">
       <div></div>
       <div className="min-h-screen flex pt-3 ">
         <ToastContainer />
@@ -209,7 +209,7 @@ export default function TeacherProfile() {
                   />
                 </Suspense>
               ) : (
-                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10">
+                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10 cursor-not-allowed">
                   {formData.country ? (
                     <>
                       <span className="text-lg">
