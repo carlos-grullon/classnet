@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
 import { ToastContainer } from 'react-toastify';
 import { Card, Input, Textarea, Button } from '@/components';
@@ -8,12 +8,17 @@ import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
 import { Subject } from '@/interfaces';
+import { useCountries } from '@/providers';
+
+// Lazy load CountrySelector
+const CountrySelector = lazy(() => import('@/components').then(mod => ({ default: mod.CountrySelector })));
 
 export interface TeacherProfileProps {
   name: string;
   image: string;
   description: string;
   subjects: Array<{ category: string; code: string }>;
+  country: string;
 }
 
 export default function TeacherProfile() {
@@ -23,39 +28,46 @@ export default function TeacherProfile() {
     name: '',
     image: '',
     description: '',
-    subjects: []
+    subjects: [],
+    country: ''
   });
   const [editMode, setEditMode] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isSubjectSearchOpen, setIsSubjectSearchOpen] = useState(false);
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const { getCountryByCode } = useCountries();
 
   useEffect(() => {
-    GetTeacherData();
+    const loadProfile = async () => {
+      try {
+        const data = await FetchData('/api/teacher/profile');
+        setInitialData(data);
+        setFormData({
+          name: data.name,
+          image: data.image,
+          description: data.description,
+          subjects: data.subjects || [],
+          country: data.country || ''
+        });
+      } catch (error) {
+        ErrorMsj('Error cargando perfil');
+      }
+    };
+    loadProfile();
   }, []);
 
-  async function GetTeacherData() {
-    try {
-      const [profileRes, subjectsRes] = await Promise.all([
-        FetchData('/api/teacher/profile', {}),
-        FetchData('/api/subjects', {}, 'GET')
-      ]);
-      
-      if (profileRes && subjectsRes) {
-        const datos = {
-          name: profileRes.name,
-          image: profileRes.image,
-          description: profileRes.description || '',
-          subjects: profileRes.subjects || []
-        };
-        setAllSubjects(subjectsRes.subjects || subjectsRes);
-        setInitialData(datos);
-        setFormData(datos);
-      }
-    } catch (error: any) {
-      ErrorMsj('Error al obtener los datos del perfil');
+  const handleCancel = () => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name,
+        image: initialData.image,
+        description: initialData.description,
+        subjects: initialData.subjects || [],
+        country: initialData.country || ''
+      });
     }
-  }
+    setEditMode(false);
+  };
 
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     handleInputChange(e, formData, setFormData);
@@ -67,7 +79,8 @@ export default function TeacherProfile() {
       const data = await FetchData('/api/teacher/profile', {
         name: formData.name,
         description: formData.description,
-        subjects: formData.subjects
+        subjects: formData.subjects,
+        country: formData.country
       }, 'PUT');
 
       if (data.success) {
@@ -75,23 +88,21 @@ export default function TeacherProfile() {
           name: formData.name,
           image: formData.image,
           description: formData.description,
-          subjects: formData.subjects
+          subjects: formData.subjects,
+          country: formData.country
         };
 
         setInitialData(updatedData);
         SuccessMsj(data.message);
         setEditMode(false);
       }
-    } catch (error: any) {
-      ErrorMsj(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        ErrorMsj(error.message);
+      } else {
+        ErrorMsj('Error al actualizar el perfil');
+      }
     }
-  };
-
-  const handleCancel = () => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-    setEditMode(false);
   };
 
   const removeSubject = (index: number) => {
@@ -100,7 +111,6 @@ export default function TeacherProfile() {
       subjects: prev.subjects.filter((_, i) => i !== index)
     }));
   };
-
   return (
     <div className="grid grid-cols-3">
       <div></div>
@@ -184,6 +194,35 @@ export default function TeacherProfile() {
               rows={4}
               disabled={!editMode}
             />
+
+            {/* País */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                País
+              </label>
+              {editMode ? (
+                <Suspense fallback={<div className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800">Loading country selector...</div>}>
+                  <CountrySelector
+                    value={formData.country || ''}
+                    onChange={(countryCode: string) => setFormData({...formData, country: countryCode})}
+                    className="w-full"
+                  />
+                </Suspense>
+              ) : (
+                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10">
+                  {formData.country ? (
+                    <>
+                      <span className="text-lg">
+                        {getCountryByCode(formData.country)?.flag}
+                      </span>
+                      <span>{getCountryByCode(formData.country)?.name.common}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400">No especificado</span>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Materias */}
             <div className="space-y-2">

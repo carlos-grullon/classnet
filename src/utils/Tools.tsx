@@ -16,7 +16,7 @@ export async function FetchData(url: string, data: Record<string, any> = {}, met
     const responseJson = await response.json();
 
     if (!response.ok) {
-        throw new Error(responseJson.error || "Error al iniciar sesión");
+        throw new Error(responseJson.error || "Error al obtener datos");
     }
     return responseJson;
 }

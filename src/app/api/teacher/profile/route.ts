@@ -19,9 +19,10 @@ export async function POST(request: NextRequest) {
         }
         const response: any = {
             name: teacher.username,
-            image: teacher.data.image_path,
-            description: teacher.data.description,
-            subjects: teacher.data.subjects
+            image: teacher.image_path,
+            description: teacher.description,
+            subjects: teacher.data.subjects,
+            country: teacher.country
         };
         // Busca las clases del profesor si se requiere.
         const { needClasses }: { needClasses: boolean } = await request.json();
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const userId = await getUserId(request);
-        const { name, description, subjects }: { name: string; description: string; subjects: SubjectRef[] } = await request.json();
+        const { name, description, subjects, country }: { name: string; description: string; subjects: SubjectRef[]; country: string } = await request.json();
         
         const collection = await getCollection("users");
         
@@ -59,8 +60,11 @@ export async function PUT(request: NextRequest) {
             { 
                 $set: { 
                     username: name,
-                    'data.description': description,
-                    'data.subjects': subjects
+                    data: {
+                        description : description,
+                        subjects: subjects
+                    },
+                    country: country
                 } 
             }
         );
@@ -72,7 +76,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ 
             success: true,
             message: 'Perfil actualizado correctamente',
-            updatedFields: { name, description, subjects }
+            updatedFields: { name, description, subjects, country }
         });
         
     } catch (error) {

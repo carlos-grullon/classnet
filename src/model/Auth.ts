@@ -19,16 +19,13 @@ export async function Register(
             email: email,
             status: 'A',
             country: '',
+            image_path: '',
+            description: '',
             data: user_type === 'P' ? {
-                description: '',
                 subjects: [],
-                image_path: '',
                 reviews: [],
                 rating: 0,
-            } : {
-                description: '',
-                image_path: ''
-            },
+            } : {},
             created_at: new Date(),
             updated_at: new Date()
         });
