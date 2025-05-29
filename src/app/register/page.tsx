@@ -8,7 +8,6 @@ import { RegisterFormSchema, RegisterFormValues } from '@/validations/register';
 import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ToastContainer } from 'react-toastify';
 import { FiUserPlus, FiUser, FiBook } from 'react-icons/fi';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useState } from 'react';
@@ -143,7 +142,6 @@ export default function RegisterForm() {
             </Link>
           </div>
         </form>
-        <ToastContainer />
       </Card>
     </div>
   );

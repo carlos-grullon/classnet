@@ -4,6 +4,7 @@ import "./globals.css";
 import { SideMenu, Navbar } from "@/components";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CountryProvider } from '@/providers';
+import { ToastContainer } from 'react-toastify';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
             <main>
               <Navbar />
               <SideMenu />
+              <ToastContainer />
               <div className="min-h-screen mt-16">
                 {children}
               </div>

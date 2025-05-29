@@ -1,7 +1,6 @@
 'use client'
 import React, { useState } from 'react';
 import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch } from '@/components';
-import { ToastContainer } from 'react-toastify';
 import { FiFilter, FiCalendar } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -85,7 +84,6 @@ export default function StudentClasses() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
-      <ToastContainer style={{ zIndex: 9999 }} />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Búsqueda Clases</h1>
         <Card

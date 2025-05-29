@@ -4,7 +4,6 @@ import { FetchData, SuccessMsj, ErrorMsj, getDayName, getLevelName } from '@/uti
 import { ClassFormValues, ClassFormSchema } from '@/validations/class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { ToastContainer } from 'react-toastify';
 import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput, SubjectSelect, CurrencyInput } from '@/components';
 import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { Class } from '@/interfaces';
@@ -78,7 +77,6 @@ export default function TeacherClasses() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
-      <ToastContainer />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Gestión de Clases</h1>
 

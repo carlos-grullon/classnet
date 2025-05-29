@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
-import { ToastContainer } from 'react-toastify';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
@@ -121,7 +120,6 @@ export default function TeacherProfile() {
     <div className="grid md:grid-cols-3">
       <div></div>
       <div className="min-h-screen flex pt-3 ">
-        <ToastContainer />
         <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
           {!editMode && (
             <div className="flex gap-2 mb-4">

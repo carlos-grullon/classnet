@@ -5,7 +5,6 @@ import { Card, ThemeToggle, Input, Button } from "@/components";
 import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ToastContainer } from "react-toastify";
 import { FiLogIn } from "react-icons/fi";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -55,7 +54,6 @@ export default function LoginPage() {
       <ThemeToggle className="fixed top-4 right-4" />
       <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
-          <ToastContainer/>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Controller
               name="email"
