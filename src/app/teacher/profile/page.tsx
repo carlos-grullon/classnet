@@ -7,7 +7,6 @@ import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
-import { Subject } from '@/interfaces';
 import { useCountries } from '@/providers';
 
 // Lazy load CountrySelector

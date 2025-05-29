@@ -9,9 +9,8 @@ interface StudentUpdate {
     country: string
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
-        // Busca los datos del estudiante.
         const userId = await getUserId(request);
         const collection = await getCollection("users");
         const student = await collection.findOne({ _id: new ObjectId(userId) });
@@ -20,8 +19,8 @@ export async function POST(request: NextRequest) {
         }
         const response: any = {
             name: student.username,
-            image: student.data.image_path,
-            description: student.data.description,
+            image: student.image_path,
+            description: student.description,
             country: student.country
         };
         return NextResponse.json(response);
@@ -46,8 +45,9 @@ export async function PUT(request: NextRequest) {
             { 
                 $set: { 
                     username: name,
-                    'data.description': description,
-                    country: country
+                    description: description,
+                    country: country,
+                    updated_at: new Date()
                 } 
             }
         );

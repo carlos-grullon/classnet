@@ -60,11 +60,12 @@ export async function PUT(request: NextRequest) {
             { 
                 $set: { 
                     username: name,
+                    description : description,
                     data: {
-                        description : description,
                         subjects: subjects
                     },
-                    country: country
+                    country: country,
+                    updated_at: new Date()
                 } 
             }
         );
