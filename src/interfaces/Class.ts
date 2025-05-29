@@ -1,38 +1,34 @@
 import { ObjectId } from "mongodb";
 
-export interface Class {
-  _id: string;
-  user_id: string;
-  subject: string;
+interface BaseClass {
   subjectName: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | Date;
+  endTime: string | Date;
   selectedDays: string[];
   maxStudents: number;
   price: number;
   level: string;
-  teacherName: string;
   students: string[];
-  status: 'A' | 'I' | 'C'; // A=Activo, I=Inactivo, C=Completado
+  status: 'A' | 'I' | 'C';
   created_at: Date;
   updated_at: Date;
-  teacher: string;
 }
 
-export interface ClassDatabase {
+export interface Class extends BaseClass {
+  _id: string;
+  teacher_id: string;
+  subject_id: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface ClassDatabase extends BaseClass {
   _id: ObjectId;
-  user_id: ObjectId;
-  subject: string;
+  teacher_id: ObjectId;
+  subject_id: ObjectId;
+  teacherName: string;
   startTime: Date;
   endTime: Date;
-  selectedDays: string[];
-  maxStudents: number;
-  price: number;
-  level: string;
-  students: string[];
-  status: 'A' | 'I' | 'C'; // A=Activo, I=Inactivo, C=Completado
-  created_at: Date;
-  updated_at: Date;
 }
 
 export interface Subject {

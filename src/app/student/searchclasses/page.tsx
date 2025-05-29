@@ -44,7 +44,18 @@ export default function StudentClasses() {
   const fetchClasses = async (data: SearchClassValues, page: number = 0) => {
     setIsLoading(true);
     try {
-      const response = await FetchData('/api/classes', { ...data, page });
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, v));
+        } else if (value !== '' && value !== null && value !== undefined) {
+          params.append(key, String(value));
+        }
+      });
+      params.append('page', String(page));
+
+      const response = await FetchData(`/api/classes?${params}`);
+      
       setClasses(response.classes);
       setPagination({
         page: response.page,

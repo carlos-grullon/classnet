@@ -5,10 +5,10 @@ import { ClassFormValues, ClassFormSchema } from '@/validations/class';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { ToastContainer } from 'react-toastify';
-import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput } from '@/components';
+import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput, SubjectSelect } from '@/components';
 import { CurrencyInput } from '@/components/CurrencyInput';
 import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
-import { Subject, Class } from '@/interfaces';
+import { Class } from '@/interfaces';
 
 export default function TeacherClasses() {
   
@@ -16,7 +16,7 @@ export default function TeacherClasses() {
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(ClassFormSchema),
     defaultValues: {
-      subject: '', 
+      subject: {},
       price: 0, 
       level: '', 
       selectedDays: [], 
@@ -35,22 +35,16 @@ export default function TeacherClasses() {
   } = form;
 
   const [classes, setClasses] = useState<Class[]>([]);
-  const [teacherSubjects, setTeacherSubjects] = useState<{ category: string; code: string }[]>([]);
-  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
+  const [teacherSubjects, setTeacherSubjects] = useState<{ _id: string; name: string }[]>([]);
 
   useEffect(() => {
     const GetTeacherData = async () => {
       try {
-        const [profileRes, subjectsRes] = await Promise.all([
-          FetchData('/api/teacher/profile', {needClasses: true}),
-          FetchData('/api/subjects', {}, 'GET')
-        ]);
-        
-        if (profileRes && subjectsRes) {
-          setClasses(profileRes.classes || []);
-          setAllSubjects(subjectsRes.subjects || subjectsRes);
-            if (profileRes.subjects?.length > 0) {
-              setTeacherSubjects(profileRes.subjects);
+        const data = await FetchData('/api/teacher/profile', {needClasses: true});
+        if (data) {
+          setClasses(data.classes || []);
+            if (data.subjects.length > 0) {
+              setTeacherSubjects(data.subjects);
             }
           }
       } catch (error: any) {
@@ -66,7 +60,7 @@ export default function TeacherClasses() {
 
   const onSubmit = async (data: ClassFormValues) => {
     try {
-      const response = await FetchData('/api/teacher/classes', {classData: data}, 'PUT');
+      const response = await FetchData('/api/classes', {classData: data}, 'POST');
       if (response.success) {
         setClasses([...classes, response.classCreated]);
         SuccessMsj(response.message);
@@ -78,18 +72,10 @@ export default function TeacherClasses() {
   };
 
   const getTeacherSubjectOptions = () => {
-    return teacherSubjects.map(teacherSubj => ({
-      value: `${teacherSubj.category}-${teacherSubj.code}`,
-      label: getSubjectName(`${teacherSubj.category}-${teacherSubj.code}`)
+    return teacherSubjects.map(subject => ({
+      value: subject,
+      label: subject.name
     }));
-  };
-
-  const getSubjectName = (fullCode: string) => {
-    const [category, code] = fullCode.split('-');
-    const subject = allSubjects.find(sub => 
-      sub.category === category && sub.code === code
-    );
-    return subject ? subject.name : fullCode;
   };
 
   return (
@@ -111,13 +97,15 @@ export default function TeacherClasses() {
                   name="subject"
                   control={control}
                   render={({ field }) => (
-                    <Select
+                    <SubjectSelect
                       {...field}
-                      id="subject"
                       label="Materia"
                       error={errors.subject?.message}
                       options={[
-                        { value: '', label: 'Seleccionar materia' },
+                        { 
+                          value: { _id: '', name: '' }, 
+                          label: 'Seleccionar materia' 
+                        },
                         ...getTeacherSubjectOptions()
                       ]}
                     />
@@ -255,7 +243,7 @@ export default function TeacherClasses() {
                 <div key={index} className="p-4 border rounded-lg">
                   <div className="flex justify-between">
                     <h3 className="font-semibold">
-                      {getSubjectName(cls.subject)} {getLevelName(cls.level)}
+                      {cls.subjectName} {getLevelName(cls.level)}
                     </h3>
                     <span className="text-sm text-gray-600 dark:text-gray-300">
                       Estudiantes ({cls.students.length}/{cls.maxStudents})
