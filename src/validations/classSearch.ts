@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const SearchClassSchema = z.object({
-  subject: z.string(),
+  subject_id: z.string(),
   teacher_id: z.string(),
   minPrice: z.number().min(0),
   maxPrice: z.number().min(0),

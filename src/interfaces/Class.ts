@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 
 interface BaseClass {
   subjectName: string;
+  teacherName: string;
   startTime: string | Date;
   endTime: string | Date;
   selectedDays: string[];
@@ -26,7 +27,6 @@ export interface ClassDatabase extends BaseClass {
   _id: ObjectId;
   teacher_id: ObjectId;
   subject_id: ObjectId;
-  teacherName: string;
   startTime: Date;
   endTime: Date;
 }

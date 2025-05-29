@@ -1,12 +1,12 @@
 'use client'
 import React, { useState } from 'react';
 import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch } from '@/components';
-import { ToastContainer } from 'react-toastify/unstyled';
+import { ToastContainer } from 'react-toastify';
 import { FiFilter, FiCalendar } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
-import { FetchData, getDayName, getLevelName } from '@/utils/Tools.tsx';
+import { FetchData, getDayName, getLevelName, ErrorMsj } from '@/utils/Tools.tsx';
 import { Class } from '@/interfaces/Class';
 
 export default function StudentClasses() {
@@ -36,7 +36,7 @@ export default function StudentClasses() {
       maxPrice: 0,
       days: [],
       level: '',
-      subject: '',
+      subject_id: '',
       teacher_id: ''
     }
   });
@@ -53,17 +53,17 @@ export default function StudentClasses() {
         }
       });
       params.append('page', String(page));
-
-      const response = await FetchData(`/api/classes?${params}`);
-      
+      console.log(params.toString());
+      const response = await FetchData(`/api/classes?${params}`, {}, 'GET');
       setClasses(response.classes);
       setPagination({
         page: response.page,
         total: response.total,
         totalPages: response.totalPages
       });
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (error: unknown) {
+      console.log('estamos esntrando aqui');
+      ErrorMsj('Error al buscar las clases');
     } finally {
       setIsLoading(false);
     }
@@ -77,9 +77,15 @@ export default function StudentClasses() {
     setPagination({ page: 0, total: 0, totalPages: 0 });
   };
 
+  const handleSubjectSelect = (subject: { _id: string; name: string }) => {
+    setValue('subject_id', subject._id);
+    setSelectedSubjectName(subject.name);
+    setSubjectModalOpen(false);
+  };
+
   return (
     <div className="min-h-screen p-4 md:p-8">
-      <ToastContainer />
+      <ToastContainer style={{ zIndex: 9999 }} />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Búsqueda Clases</h1>
         <Card
@@ -109,7 +115,7 @@ export default function StudentClasses() {
               {/* Subject filter */}
               <div className="md:col-span-4">
                 <Controller
-                  name="subject"
+                  name="subject_id"
                   control={control}
                   render={({ field }) => (
                     <InputReadOnly
@@ -247,10 +253,10 @@ export default function StudentClasses() {
                     <Card key={classItem._id} className="p-4">
                       <div className="space-y-2">
                         <h3 className="font-medium text-lg dark:text-white">
-                          {classItem.subject} - {getLevelName(classItem.level)}
+                          {classItem.subjectName} - {getLevelName(classItem.level)}
                         </h3>
                         <p className="text-gray-600 dark:text-gray-300">
-                          Profesor/a: <span className='font-bold'>{classItem.teacher}</span>
+                          Profesor/a: <span className='font-bold'>{classItem.teacherName}</span>
                         </p>
                         <p className="text-gray-600 dark:text-gray-300">
                           Días: <span className='font-bold'>{getDayName(classItem.selectedDays)}</span>
@@ -299,11 +305,7 @@ export default function StudentClasses() {
       <SubjectSearch
         isOpen={subjectModalOpen}
         onClose={() => setSubjectModalOpen(false)}
-        onSelect={(subject) => {
-          setValue('subject', subject.catCode);
-          setSelectedSubjectName(subject.name);
-          setSubjectModalOpen(false);
-        }}
+        onSelect={handleSubjectSelect}
       />
     </div>
   );
