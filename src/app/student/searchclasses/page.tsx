@@ -52,7 +52,6 @@ export default function StudentClasses() {
         }
       });
       params.append('page', String(page));
-      console.log(params.toString());
       const response = await FetchData(`/api/classes?${params}`, {}, 'GET');
       setClasses(response.classes);
       setPagination({
@@ -61,7 +60,6 @@ export default function StudentClasses() {
         totalPages: response.totalPages
       });
     } catch (error: unknown) {
-      console.log('estamos esntrando aqui');
       ErrorMsj('Error al buscar las clases');
     } finally {
       setIsLoading(false);
@@ -69,7 +67,6 @@ export default function StudentClasses() {
   };
 
   const onSubmit = (data: SearchClassValues) => {
-    console.log(data);
     fetchClasses(data, 0); // Siempre empieza en página 0 al hacer submit
     setPagination(prev => ({...prev, page: 0})); // Resetear estado de paginación
   };
