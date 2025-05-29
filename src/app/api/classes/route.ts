@@ -14,31 +14,31 @@ export async function GET(request: NextRequest) {
         const searchParams = request.nextUrl.searchParams;
         
         const rawData = {
-            subject: searchParams.get('subject') || '',
+            subject_id: searchParams.get('subject_id') || '',
             teacher_id: searchParams.get('teacher_id') || '',
             minPrice: searchParams.get('minPrice') || '0',
             maxPrice: searchParams.get('maxPrice') || '0',
             level: searchParams.get('level') || '',
             days: searchParams.getAll('days'),
-            page: searchParams.get('page') || '0'
         };
+
+        const page = Number(searchParams.get('page') || '0');
 
         const validatedData = SearchClassSchema.parse({
             ...rawData,
             minPrice: Number(rawData.minPrice),
-            maxPrice: Number(rawData.maxPrice),
-            page: Number(rawData.page)
+            maxPrice: Number(rawData.maxPrice)
         });
 
-        const offset = validatedData.page * 20;
+        const offset = page * 20;
         const limit = 20;
 
         const collection = await getCollection("classes");
 
         const result = await collection.aggregate([
             { $match: {
-                subject: validatedData.subject === '' ? { $exists: true } : validatedData.subject,
-                user_id: validatedData.teacher_id === '' ? { $exists: true } : new ObjectId(validatedData.teacher_id),
+                subject_id: validatedData.subject_id === '' ? { $exists: true } : new ObjectId(validatedData.subject_id),
+                teacher_id: validatedData.teacher_id === '' ? { $exists: true } : new ObjectId(validatedData.teacher_id),
                 price: { 
                     $gte: validatedData.minPrice,
                     $lte: validatedData.maxPrice === 0 ? Infinity : validatedData.maxPrice
@@ -59,37 +59,24 @@ export async function GET(request: NextRequest) {
         const total = result[0]?.total[0]?.count || 0;
         const totalPages = Math.ceil(total / limit);
 
-        // Conseguir el nommbre de las materias y del profesor
-        const userCollection = await getCollection("users");
-        const subjectCollection = await getCollection("subjects");
-
         // Convertir a formato legible para el front
         const formattedClasses = await Promise.all(classes.map(async (classItem: ClassDatabase) => {
-            const [teacher, subject] = await Promise.all([
-                userCollection.findOne({ _id: classItem.user_id }, { projection: { username: 1 } }).then(res => res?.username),
-                (async () => {
-                    const [category, code] = classItem.subject.split('-');
-                    const subjectDoc = await subjectCollection.findOne({ category, code }, { projection: { name: 1 } });
-                    return subjectDoc?.name;
-                })()
-            ]);
-
             return {
                 ...classItem,
                 _id: classItem._id.toString(),
-                user_id: classItem.user_id.toString(),
+                teacher_id: classItem.teacher_id.toString(),
                 selectedDays: classItem.selectedDays.sort((a, b) => parseInt(a) - parseInt(b)),
                 startTime: mongoTimeToTimeString12h(classItem.startTime),
                 endTime: mongoTimeToTimeString12h(classItem.endTime),
-                teacher: teacher || 'Profesor no disponible',
-                subject: subject || classItem.subject
+                teacherName: classItem.teacherName || 'Profesor no disponible',
+                subjectName: classItem.subjectName || 'Materia no disponible'
             };
         }));
         
         return NextResponse.json({ 
             classes: formattedClasses,
             total,
-            page: validatedData.page,
+            page,
             totalPages
         });
     } catch (error) {

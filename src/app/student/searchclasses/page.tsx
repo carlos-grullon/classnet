@@ -68,7 +68,11 @@ export default function StudentClasses() {
     }
   };
 
-  const onSubmit = (data: SearchClassValues) => fetchClasses(data);
+  const onSubmit = (data: SearchClassValues) => {
+    console.log(data);
+    fetchClasses(data, 0); // Siempre empieza en página 0 al hacer submit
+    setPagination(prev => ({...prev, page: 0})); // Resetear estado de paginación
+  };
 
   const handleReset = () => {
     reset();
