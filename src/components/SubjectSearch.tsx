@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Input } from '@/components';
-import { Modal } from '@/components';
+import { Input, Modal } from '@/components';
 import { FiSearch } from 'react-icons/fi';
 import { Subject } from '@/interfaces';
 
 interface SubjectSearchProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (subject: { category: string; code: string; name: string; catCode: string }) => void;
+  onSelect: (subject: { _id: string; name: string }) => void;
 }
 
 export function SubjectSearch({ isOpen, onClose, onSelect }: SubjectSearchProps) {
@@ -50,20 +49,14 @@ export function SubjectSearch({ isOpen, onClose, onSelect }: SubjectSearchProps)
     
     return (
       (subject.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
-      (subject.code?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
       (subject.category?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false)
     );
   });
 
   const handleSelect = (subject: Subject) => {
-    const subjectName = subjects.find(s => 
-      s.category === subject.category && s.code === subject.code
-    )?.name || `${subject.category}-${subject.code}`;
-
-    onSelect({ 
-      ...subject, 
-      name: subjectName,
-      catCode: `${subject.category}-${subject.code}`
+    onSelect({
+      _id: subject._id,
+      name: subject.name
     });
     onClose();
   };
@@ -101,9 +94,6 @@ export function SubjectSearch({ isOpen, onClose, onSelect }: SubjectSearchProps)
                       className="w-full text-left"
                     >
                       <div className="font-medium">{subject.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {subject.category} - {subject.code}
-                      </div>
                     </button>
                   </li>
                 ))}

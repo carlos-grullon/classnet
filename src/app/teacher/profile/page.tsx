@@ -17,7 +17,7 @@ export interface TeacherProfileProps {
   name: string;
   image: string;
   description: string;
-  subjects: Array<{ category: string; code: string }>;
+  subjects: Array<{ _id: string; name: string }>;
   country: string;
 }
 
@@ -111,6 +111,14 @@ export default function TeacherProfile() {
       subjects: prev.subjects.filter((_, i) => i !== index)
     }));
   };
+
+  const handleSubjectSelect = (subject: { _id: string; name: string }) => {
+    setFormData({
+      ...formData,
+      subjects: [...formData.subjects, { _id: subject._id, name: subject.name }]
+    });
+  };
+
   return (
     <div className="grid md:grid-cols-3">
       <div></div>
@@ -246,30 +254,23 @@ export default function TeacherProfile() {
                 {formData.subjects.length === 0 ? (
                   <span className="text-sm text-gray-500">No hay materias asignadas</span>
                 ) : (
-                  formData.subjects.map((subject, index) => {
-                    const fullSubject = allSubjects.find(s => 
-                      s.category === subject.category && 
-                      s.code === subject.code
-                    );
-                    
-                    return (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                        title={`${subject.category} - ${subject.code}`}
-                      >
-                        {fullSubject?.name || `${subject.category}-${subject.code}`}
-                        {editMode && (
-                          <button 
-                            onClick={() => removeSubject(index)}
-                            className="ml-1 text-blue-500 hover:text-blue-700"
-                          >
-                            <FiX size={14} />
-                          </button>
-                        )}
-                      </span>
-                    );
-                  })
+                  formData.subjects.map((subject, index) => (
+                    <span 
+                      key={index}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                      title={subject.name}
+                    >
+                      {subject.name}
+                      {editMode && (
+                        <button 
+                          onClick={() => removeSubject(index)}
+                          className="ml-1 text-blue-500 hover:text-blue-700"
+                        >
+                          <FiX size={14} />
+                        </button>
+                      )}
+                    </span>
+                  ))
                 )}
               </div>
             </div>
@@ -280,21 +281,7 @@ export default function TeacherProfile() {
       <SubjectSearch 
         isOpen={isSubjectSearchOpen}
         onClose={() => setIsSubjectSearchOpen(false)}
-        onSelect={(subject) => {
-          // Verificar si ya existe
-          const exists = formData.subjects.some(
-            s => s.category === subject.category && s.code === subject.code
-          );
-          
-          if (!exists) {
-            setFormData(prev => ({
-              ...prev,
-              subjects: [...prev.subjects, subject]
-            }));
-          } else {
-            alert('Esta materia ya fue agregada');
-          }
-        }}
+        onSelect={handleSubjectSelect}
       />
     </div>
   );

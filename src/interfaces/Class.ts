@@ -38,6 +38,5 @@ export interface ClassDatabase {
 export interface Subject {
   _id: string;
   category: string;
-  code: string;
   name: string;
 }
