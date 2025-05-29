@@ -16,7 +16,7 @@ export interface StudentProfileProps {
   country: string;
 }
 
-export default function TeacherProfile() {
+export default function StudentProfile() {
   
   const [initialData, setInitialData] = useState<StudentProfileProps | null>(null);
   const [formData, setFormData] = useState<StudentProfileProps>({
@@ -29,26 +29,25 @@ export default function TeacherProfile() {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   useEffect(() => {
+    async function GetStudentData() {
+      try {
+        const profileRes = await FetchData('/api/student/profile', {}, 'GET')
+        if (profileRes) {
+          const datos = {
+            name: profileRes.name,
+            image: profileRes.image,
+            description: profileRes.description || '',
+            country: profileRes.country
+          };
+          setInitialData(datos);
+          setFormData(datos);
+        }
+      } catch (error: any) {
+        ErrorMsj('Error al obtener los datos del perfil');
+      }
+    }
     GetStudentData();
   }, []);
-
-  async function GetStudentData() {
-    try {
-      const profileRes = await FetchData('/api/student/profile', {})
-      if (profileRes) {
-        const datos = {
-          name: profileRes.name,
-          image: profileRes.image,
-          description: profileRes.description || '',
-          country: profileRes.country
-        };
-        setInitialData(datos);
-        setFormData(datos);
-      }
-    } catch (error: any) {
-      ErrorMsj('Error al obtener los datos del perfil');
-    }
-  }
 
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     handleInputChange(e, formData, setFormData);

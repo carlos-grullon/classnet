@@ -34,13 +34,12 @@ export default function TeacherProfile() {
   const [editMode, setEditMode] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isSubjectSearchOpen, setIsSubjectSearchOpen] = useState(false);
-  const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const { getCountryByCode } = useCountries();
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await FetchData('/api/teacher/profile');
+        const data = await FetchData('/api/teacher/profile', {}, 'GET');
         setInitialData(data);
         setFormData({
           name: data.name,

@@ -38,7 +38,7 @@ export default function TeacherClasses() {
   useEffect(() => {
     const GetTeacherData = async () => {
       try {
-        const data = await FetchData('/api/teacher/profile', {needClasses: true});
+        const data = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
         if (data) {
           setClasses(data.classes || []);
             if (data.subjects.length > 0) {

@@ -8,7 +8,7 @@ interface SubjectRef {
     code: string;
 }
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         // Busca los datos del profesor.
         const userId = await getUserId(request);
@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
             subjects: teacher.data.subjects,
             country: teacher.country
         };
-        // Busca las clases del profesor si se requiere.
-        const { needClasses }: { needClasses: boolean } = await request.json();
+        const { searchParams } = new URL(request.url);
+        const needClasses = searchParams.get('needClasses') === 'true';
         if (needClasses) {
             const ClassesCollection = await getCollection("classes");
-            const classes = await ClassesCollection.find({ user_id: new ObjectId(userId) }).toArray();
+            const classes = await ClassesCollection.find({ teacher_id: new ObjectId(userId) }).toArray();
             if (classes.length > 0) {
                 response.classes = classes.map(cls => ({
                     ...cls,
