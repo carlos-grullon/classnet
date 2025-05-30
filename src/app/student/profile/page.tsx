@@ -40,7 +40,6 @@ export default function StudentProfile() {
             description: profileRes.description || '',
             country: profileRes.country
           };
-          console.log(datos);
           setInitialData(datos);
           setFormData(datos);
         }

@@ -3,45 +3,8 @@
 import Link from 'next/link';
 import { FaChalkboardTeacher } from 'react-icons/fa';
 import { PiStudentFill } from 'react-icons/pi';
-import { useEffect, useState } from 'react';
-import { FetchData } from '@/utils/Tools.tsx';
-import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchUserType = async () => {
-      try {
-        const user = await FetchData('/api/usertype');
-        if (user.isTeacher && user.isStudent) {
-          setIsLoading(false);
-          return;
-        }
-        if (user.isTeacher) {
-          router.push('/teacher');
-        } else if (user.isStudent) {
-          router.push('/student');
-        }
-      } catch (error) {
-        console.error('Error al obtener tipo de usuario:', error);
-      }
-    };
-    fetchUserType();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Cargando...</h1>
-          <div className="animate-spin w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="text-center">
