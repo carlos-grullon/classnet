@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
     '/favicon.ico'
   ];
   const token = request.cookies.get('AuthToken')?.value;
+  const tokenCached = request.cookies.get('TokenCached')?.value;
   const pathname = request.nextUrl.pathname;
 
   if (publicPaths.some(path => pathname.startsWith(path))) {
@@ -24,10 +25,24 @@ export async function middleware(request: NextRequest) {
 
   if (!token) return NextResponse.redirect(new URL('/login', request.url));
 
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
-  const { payload } = await jwtVerify(token, secret);
+  let payload;
+  if (tokenCached === token) {
+    payload = JSON.parse(request.cookies.get('TokenPayload')?.value || '{}');
+  } else {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+    const { payload: verifiedPayload } = await jwtVerify(token, secret);
+    payload = verifiedPayload;
+    
+    const response = NextResponse.next();
+    response.cookies.set('TokenCached', token, { httpOnly: true, sameSite: 'strict' });
+    response.cookies.set('TokenPayload', JSON.stringify(payload), { httpOnly: true, sameSite: 'strict' });
+    return response;
+  }
 
-  if (!payload.userId || typeof payload.userId !== 'string') {
+  if (!payload.userId || !payload.userIsStudent || !payload.userIsTeacher) {
+    request.cookies.delete('TokenCached');
+    request.cookies.delete('TokenPayload');
+    request.cookies.delete('AuthToken');
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
