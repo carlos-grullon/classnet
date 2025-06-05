@@ -6,6 +6,7 @@ import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiLogIn } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormSchema, LoginFormValues } from '@/validations/login';
@@ -87,6 +88,29 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 transition-colors duration-200 bg-white dark:bg-gray-800 text-gray-500 dark:text-white">O continúa con</span>
+              </div>
+            </div>
+            
+            <div className="mt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                fullWidth 
+                onClick={() => window.location.href = '/api/auth/google'}
+                className="flex items-center justify-center gap-2"
+              >
+                <FcGoogle size={20} className="mr-2" />  Iniciar sesión con Google
+              </Button>
+            </div>
+          </div>
+          
           <div className="mt-4 text-center text-sm">
             ¿No tienes cuenta?
             <Link href="/register" className="text-blue-500 hover:text-blue-700 ml-1">
