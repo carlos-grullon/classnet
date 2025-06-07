@@ -43,6 +43,18 @@ export function ErrorMsj(message: string) {
             });
 }
 
+// Función para formatear fechas
+export function formatDate(date: Date): string {
+    return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
 export const handleInputChange = <T extends Record<string, any>>(
   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   formData: T,

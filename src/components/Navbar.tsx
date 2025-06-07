@@ -8,6 +8,7 @@ export function Navbar() {
   
   const isTeacherRoute = pathname?.startsWith('/teacher');
   const isStudentRoute = pathname?.startsWith('/student');
+  const isAdminRoute = pathname?.startsWith('/admin');
   
   const navItems = isTeacherRoute ? [
     { name: 'Dashboard', path: '/teacher' },
@@ -17,7 +18,13 @@ export function Navbar() {
     { name: 'Dashboard', path: '/student' },
     { name: 'Perfil', path: '/student/profile' },
     { name: 'Mis Clases', path: '/student/classes' },
-    { name: 'Buscar Clases', path: '/student/searchclasses' }
+    { name: 'Buscar Clases', path: '/student/searchclasses' },
+    { name: 'Inscripciones', path: '/student/enrollments' }
+  ] : isAdminRoute ? [
+    { name: 'Dashboard', path: '/admin' },
+    { name: 'Usuarios', path: '/admin/users' },
+    { name: 'Clases', path: '/admin/classes' },
+    { name: 'Inscripciones', path: '/admin/enrollments' }
   ] : [];
 
   if (!navItems.length) return null;

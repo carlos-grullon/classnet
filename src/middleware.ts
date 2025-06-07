@@ -14,7 +14,9 @@ export async function middleware(request: NextRequest) {
     '/api/auth/google/callback',
     '/api/auth/google/register',
     '/_next',
-    '/favicon.ico'
+    '/favicon.ico',
+    '/images',
+    '/uploads/payment-proofs'
   ];
 
   const pathname = request.nextUrl.pathname;
@@ -60,7 +62,10 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
       pathname.endsWith('.css') ||
-      pathname.endsWith('.js')) {
+      pathname.endsWith('.js') ||
+      pathname.endsWith('.png') ||
+      pathname.endsWith('.jpg') ||
+      pathname.endsWith('.svg')) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL('/student', request.url));
@@ -71,7 +76,10 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
       pathname.endsWith('.css') ||
-      pathname.endsWith('.js')) {
+      pathname.endsWith('.js') ||
+      pathname.endsWith('.png') ||
+      pathname.endsWith('.jpg') ||
+      pathname.endsWith('.svg')) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL('/teacher', request.url));

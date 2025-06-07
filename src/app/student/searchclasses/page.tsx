@@ -1,14 +1,16 @@
 'use client'
 import React, { useState } from 'react';
-import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch } from '@/components';
-import { FiFilter, FiCalendar } from 'react-icons/fi';
+import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch, Modal } from '@/components';
+import { FiFilter, FiCalendar, FiCheckCircle, FiDollarSign, FiClock } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
-import { FetchData, getDayName, getLevelName, ErrorMsj } from '@/utils/Tools.tsx';
+import { FetchData, getDayName, getLevelName, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { Class } from '@/interfaces/Class';
+import { useRouter } from 'next/navigation';
 
 export default function StudentClasses() {
+  const router = useRouter();
   const [subjectModalOpen, setSubjectModalOpen] = useState(false);
   const [isTeacherSearchOpen, setIsTeacherSearchOpen] = useState(false);
   const [selectedSubjectName, setSelectedSubjectName] = useState('');
@@ -20,6 +22,13 @@ export default function StudentClasses() {
   });
   const [classes, setClasses] = useState<Class[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [enrollmentLoading, setEnrollmentLoading] = useState(false);
+  
+  // Estado para el modal de confirmación de inscripción
+  const [enrollmentModal, setEnrollmentModal] = useState({
+    isOpen: false,
+    classItem: null as Class | null
+  });
 
   const {
     control,
@@ -81,6 +90,45 @@ export default function StudentClasses() {
     setValue('subject_id', subject._id);
     setSelectedSubjectName(subject.name);
     setSubjectModalOpen(false);
+  };
+  
+  // Manejador para abrir el modal de confirmación de inscripción
+  const handleEnrollmentClick = (classItem: Class) => {
+    setEnrollmentModal({
+      isOpen: true,
+      classItem
+    });
+  };
+  
+  // Manejador para confirmar la inscripción
+  const handleConfirmEnrollment = async () => {
+    if (!enrollmentModal.classItem) return;
+    
+    setEnrollmentLoading(true);
+    try {
+      const response = await FetchData('/api/student/enrollments', {
+        classId: enrollmentModal.classItem._id
+      }, 'POST');
+      
+      if (response.success) {
+        SuccessMsj('Inscripción iniciada correctamente');
+        setEnrollmentModal({ isOpen: false, classItem: null });
+        // Redirigir a la página de detalles de inscripción
+        router.push(`/student/enrollments/${response.enrollmentId}`);
+      } else {
+        // Si ya existe una inscripción, redirigir a ella
+        if (response.enrollmentId) {
+          SuccessMsj('Ya tienes una inscripción para esta clase');
+          router.push(`/student/enrollments/${response.enrollmentId}`);
+        } else {
+          ErrorMsj(response.error || 'Error al procesar la inscripción');
+        }
+      }
+    } catch (error: any) {
+      ErrorMsj(error.message || 'Error al procesar la inscripción');
+    } finally {
+      setEnrollmentLoading(false);
+    }
   };
 
   return (
@@ -267,7 +315,11 @@ export default function StudentClasses() {
                           Precio: <span className='font-bold'>${classItem.price}</span>
                         </p>
                         <div className="pt-2">
-                          <Button size="sm" onClick={() => {/* Lógica de inscripción */ }}>
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleEnrollmentClick(classItem)}
+                            isLoading={enrollmentLoading && enrollmentModal.classItem?._id === classItem._id}
+                          >
                             Inscribirse
                           </Button>
                         </div>
@@ -306,6 +358,64 @@ export default function StudentClasses() {
         onClose={() => setSubjectModalOpen(false)}
         onSelect={handleSubjectSelect}
       />
+      
+      {/* Modal de confirmación de inscripción */}
+      <Modal
+        isOpen={enrollmentModal.isOpen}
+        onClose={() => setEnrollmentModal({ isOpen: false, classItem: null })}
+        title="Confirmar Inscripción"
+      >
+        {enrollmentModal.classItem && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+              <h3 className="font-semibold text-lg mb-2">{enrollmentModal.classItem.subjectName}</h3>
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-2">
+                  <FiCheckCircle className="text-blue-500" />
+                  <span className="font-medium">Nivel:</span> {getLevelName(enrollmentModal.classItem.level)}
+                </p>
+                <p className="flex items-center gap-2">
+                  <FiCheckCircle className="text-blue-500" />
+                  <span className="font-medium">Profesor:</span> {enrollmentModal.classItem.teacherName}
+                </p>
+                <p className="flex items-center gap-2">
+                  <FiCheckCircle className="text-blue-500" />
+                  <span className="font-medium">Días:</span> {getDayName(enrollmentModal.classItem.selectedDays)}
+                </p>
+                <p className="flex items-center gap-2">
+                  <FiClock className="text-blue-500" />
+                  <span className="font-medium">Horario:</span> {enrollmentModal.classItem.startTime} - {enrollmentModal.classItem.endTime}
+                </p>
+                <p className="flex items-center gap-2">
+                  <FiDollarSign className="text-blue-500" />
+                  <span className="font-medium">Precio:</span> ${enrollmentModal.classItem.price}
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-100 dark:border-yellow-800">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                Al confirmar, se creará una inscripción pendiente de pago. Tendrás 48 horas para realizar el pago y subir el comprobante.
+              </p>
+            </div>
+            
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setEnrollmentModal({ isOpen: false, classItem: null })}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleConfirmEnrollment}
+                isLoading={enrollmentLoading}
+              >
+                Confirmar Inscripción
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
