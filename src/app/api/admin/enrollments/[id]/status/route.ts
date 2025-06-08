@@ -3,7 +3,30 @@ import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import path from 'path';
 import { unlink } from 'fs/promises';
+import { mongoTimeToTimeString12h } from '@/utils/Tools.ts';
+import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
 
+const getDayName = (days: string[]): string => {
+  const daysMap = {
+    '1': 'Lunes',
+    '2': 'Martes',
+    '3': 'Miércoles',
+    '4': 'Jueves',
+    '5': 'Viernes',
+    '6': 'Sábados',
+    '7': 'Domingos'
+  };
+  
+  return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
+};
+const getLevel = (level: string): string => {
+  switch(level) {
+    case '1': return 'Principiante';
+    case '2': return 'Intermedio';
+    case '3': return 'Avanzado';
+    default: return level;
+  }
+};
 // PATCH /api/admin/enrollments/[id]/status - Actualizar estado de inscripción
 export async function PATCH(
   req: NextRequest,
@@ -30,7 +53,7 @@ export async function PATCH(
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
     }
-    
+
     // Obtener datos del estudiante para el correo
     const usersCollection = await getCollection('users');
     const student = await usersCollection.findOne({ _id: new ObjectId(enrollment.student_id) });
@@ -42,7 +65,7 @@ export async function PATCH(
     // Si se está aprobando el pago (cambiando a 'enrolled')
     if (status === 'enrolled' && enrollment.status === 'proof_submitted') {
       // Enviar correo de confirmación de pago
-      await sendEnrollmentConfirmationEmail(student, classData, enrollment);
+      await sendConfirmationEmailToStudent(student, classData);
       
       // Eliminar el archivo de comprobante de pago (ya no es necesario)
       if (enrollment.paymentProof && enrollment.paymentProof.startsWith('/uploads/payment-proofs/')) {
@@ -60,7 +83,7 @@ export async function PATCH(
     // Si se está rechazando el comprobante
     if (status === 'proof_rejected' && enrollment.status === 'proof_submitted') {
       // Enviar correo de rechazo de comprobante
-      await sendPaymentRejectionEmail(student, classData, enrollment, notes);
+      await sendRejectionEmailToStudent(student, classData, notes);
     }
     
     // Actualizar inscripción
@@ -98,40 +121,44 @@ export async function PATCH(
 }
 
 // Función para enviar correo de confirmación de inscripción
-async function sendEnrollmentConfirmationEmail(student: any, classData: any, enrollment: any) {
-  // Aquí implementarías el envío de correo real
-  // Por ahora solo registramos en consola
-  console.log('Enviando correo de confirmación de inscripción a:', student.email);
-  console.log('Asunto: ¡Inscripción Confirmada! - ClassNet');
-  console.log(`Contenido: Hola ${student.name}, tu inscripción a la clase ${classData.name} ha sido confirmada.`);
-  
-  // En una implementación real, usarías un servicio como SendGrid, Mailgun, etc.
-  // Ejemplo con SendGrid (requeriría instalar @sendgrid/mail):
-  /*
-  const sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  
-  const msg = {
-    to: student.email,
-    from: 'noreply@classnet.com',
-    subject: '¡Inscripción Confirmada! - ClassNet',
-    text: `Hola ${student.name}, tu inscripción a la clase ${classData.name} ha sido confirmada.`,
-    html: `<p>Hola <strong>${student.name}</strong>,</p><p>Tu inscripción a la clase <strong>${classData.name}</strong> ha sido confirmada.</p>`,
-  };
-  
-  await sgMail.send(msg);
-  */
+async function sendConfirmationEmailToStudent(student: any, classData: any) {
+  try {
+    // Usar el nuevo servicio de correo electrónico
+    await sendEnrollmentConfirmationEmail(
+      student.email,
+      student.name || student.username || 'Estudiante',
+      classData.name || classData.subjectName || 'la clase',
+      getLevel(classData.level),
+      {
+        teacherName: classData.teacherName,
+        schedule: `${getDayName(classData.selectedDays)} ${mongoTimeToTimeString12h(classData.startTime)} - ${mongoTimeToTimeString12h(classData.endTime)}`,
+        startDate: classData.startDate ? new Date(classData.startDate).toLocaleDateString() : undefined,
+        price: classData.price
+      }
+    );
+    console.log(`Correo de confirmación enviado a ${student.email}`);
+    return true;
+  } catch (error) {
+    console.error('Error al enviar correo de confirmación:', error);
+    return false;
+  }
 }
 
 // Función para enviar correo de rechazo de comprobante
-async function sendPaymentRejectionEmail(student: any, classData: any, enrollment: any, notes: string) {
-  // Aquí implementarías el envío de correo real
-  // Por ahora solo registramos en consola
-  console.log('Enviando correo de rechazo de comprobante a:', student.email);
-  console.log('Asunto: Acción Requerida: Comprobante de Pago Rechazado - ClassNet');
-  console.log(`Contenido: Hola ${student.name}, tu comprobante de pago para la clase ${classData.name} ha sido rechazado.`);
-  console.log(`Motivo: ${notes || 'No se especificó un motivo'}`);
-  
-  // En una implementación real, usarías un servicio como SendGrid, Mailgun, etc.
-  // Similar al ejemplo anterior
+async function sendRejectionEmailToStudent(student: any, classData: any, notes: string) {
+  try {
+    // Usar el nuevo servicio de correo electrónico
+    await sendPaymentRejectionEmail(
+      student.email,
+      student.name || student.username || 'Estudiante',
+      classData.name || classData.subjectName || 'la clase',
+      getLevel(classData.level),
+      notes || 'El comprobante no cumple con los requisitos necesarios.'
+    );
+    console.log(`Correo de rechazo enviado a ${student.email}`);
+    return true;
+  } catch (error) {
+    console.error('Error al enviar correo de rechazo:', error);
+    return false;
+  }
 }
