@@ -38,6 +38,17 @@ export async function POST(req: NextRequest) {
       }, { status: 409 });
     }
     
+    // Verificar el máximo de estudiantes
+    const maxStudents = classData.maxStudents;
+    const enrolledStudents = await enrollmentsCollection.countDocuments({
+      class_id: new ObjectId(classId),
+      status: 'enrolled'
+    });
+
+    if (enrolledStudents >= maxStudents) {
+      return NextResponse.json({ error: 'El número máximo de estudiantes para esta clase ha sido alcanzado' }, { status: 409 });
+    }
+
     // Calcular fecha de expiración (48 horas)
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 48);

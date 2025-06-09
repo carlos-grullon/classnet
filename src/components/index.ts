@@ -17,4 +17,7 @@ export * from './CurrencyInput';
 export * from './InputReadOnly';
 export * from './CountrySelector';
 export * from './SubjectSelect';
+export * from './Badge';
+export * from './MonthlyPaymentSection';
+export * from './PaymentModal';
 

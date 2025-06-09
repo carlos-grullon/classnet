@@ -9,7 +9,6 @@ interface BaseClass {
   maxStudents: number;
   price: number;
   level: string;
-  students: string[];
   status: 'A' | 'I' | 'C';
   created_at: Date;
   updated_at: Date;
@@ -21,6 +20,7 @@ export interface Class extends BaseClass {
   subject_id: string;
   startTime: string;
   endTime: string;
+  students_enrolled: number;
 }
 
 export interface ClassDatabase extends BaseClass {

@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import path from 'path';
 import { unlink } from 'fs/promises';
 import { mongoTimeToTimeString12h } from '@/utils/Tools.ts';
+import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
 
 const getDayName = (days: string[]): string => {
@@ -19,14 +20,7 @@ const getDayName = (days: string[]): string => {
   
   return days.map(day => daysMap[day as keyof typeof daysMap]).join(', ');
 };
-const getLevel = (level: string): string => {
-  switch(level) {
-    case '1': return 'Principiante';
-    case '2': return 'Intermedio';
-    case '3': return 'Avanzado';
-    default: return level;
-  }
-};
+
 // PATCH /api/admin/enrollments/[id]/status - Actualizar estado de inscripción
 export async function PATCH(
   req: NextRequest,
@@ -126,13 +120,13 @@ async function sendConfirmationEmailToStudent(student: any, classData: any) {
     // Usar el nuevo servicio de correo electrónico
     await sendEnrollmentConfirmationEmail(
       student.email,
-      student.name || student.username || 'Estudiante',
-      classData.name || classData.subjectName || 'la clase',
-      getLevel(classData.level),
+      student.username || 'Estudiante',
+      classData.subjectName || 'la clase',
+      classData.level,
       {
         teacherName: classData.teacherName,
         schedule: `${getDayName(classData.selectedDays)} ${mongoTimeToTimeString12h(classData.startTime)} - ${mongoTimeToTimeString12h(classData.endTime)}`,
-        startDate: classData.startDate ? new Date(classData.startDate).toLocaleDateString() : undefined,
+        startDate: classData.startDate ? formatDateLong(new Date(classData.startDate)) : undefined,
         price: classData.price
       }
     );
@@ -150,9 +144,9 @@ async function sendRejectionEmailToStudent(student: any, classData: any, notes: 
     // Usar el nuevo servicio de correo electrónico
     await sendPaymentRejectionEmail(
       student.email,
-      student.name || student.username || 'Estudiante',
-      classData.name || classData.subjectName || 'la clase',
-      getLevel(classData.level),
+      student.username || 'Estudiante',
+      classData.subjectName || 'la clase',
+      classData.level,
       notes || 'El comprobante no cumple con los requisitos necesarios.'
     );
     console.log(`Correo de rechazo enviado a ${student.email}`);

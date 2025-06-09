@@ -2,12 +2,11 @@ import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
 import { SearchClassSchema } from '@/validations/classSearch';
-import { ClassDatabase } from '@/interfaces/Class';
 import { z } from 'zod';
 import { mongoTimeToTimeString12h } from "@/utils/Tools.ts";
 import { getUserId } from "@/utils/Tools.ts";
-import { ClassFormValues } from "@/validations/class";
 import { timeStringToMongoTime } from "@/utils/Tools.ts";
+import { ClassSchema, ClassFormValues } from "@/types/Class";
 
 export async function GET(request: NextRequest) {
     try {
@@ -60,12 +59,12 @@ export async function GET(request: NextRequest) {
         const totalPages = Math.ceil(total / limit);
 
         // Convertir a formato legible para el front
-        const formattedClasses = await Promise.all(classes.map(async (classItem: ClassDatabase) => {
+        const formattedClasses = await Promise.all(classes.map(async (classItem: any) => {
             return {
                 ...classItem,
                 _id: classItem._id.toString(),
                 teacher_id: classItem.teacher_id.toString(),
-                selectedDays: classItem.selectedDays.sort((a, b) => parseInt(a) - parseInt(b)),
+                selectedDays: classItem.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b)),
                 startTime: mongoTimeToTimeString12h(classItem.startTime),
                 endTime: mongoTimeToTimeString12h(classItem.endTime),
                 teacherName: classItem.teacherName || 'Profesor no disponible',
@@ -112,10 +111,13 @@ export async function POST(request: NextRequest) {
             maxStudents: classData.maxStudents,
             price: classData.price,
             level: classData.level,
-            students: [],
-            status: 'A',
+            status: 'ready_to_start',
             created_at: new Date(),
-            updated_at: new Date()
+            updated_at: new Date(),
+            currency: classData.currency,
+            paymentFrequency: classData.paymentFrequency,
+            paymentDay: classData.paymentDay,
+            enrollmentFee: classData.enrollmentFee
         });
         
         if (!insertedClass.insertedId) {

@@ -1,262 +1,352 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { FetchData, SuccessMsj, ErrorMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
-import { ClassFormValues, ClassFormSchema } from '@/validations/class';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
-import { Card, Input, Select, Button, DaysCheckboxGroup, NumericInput, SubjectSelect, CurrencyInput } from '@/components';
-import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
-import { Class } from '@/interfaces';
 
-export default function TeacherClasses() {
-  
-  const form = useForm<ClassFormValues>({
-    resolver: zodResolver(ClassFormSchema),
-    defaultValues: {
-      subject: {},
-      price: 0, 
-      level: '', 
-      selectedDays: [], 
-      startTime: '', 
-      endTime: '', 
-      maxStudents: 30
-    }
-  });
-  
-  const { 
-    handleSubmit, 
-    formState: { errors }, 
-    setValue,
-    reset,
-    control
-  } = form;
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Modal, Badge } from '@/components';
+import { FiClock, FiCheckCircle, FiXCircle, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { FetchData, ErrorMsj, SuccessMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
+import { useRouter } from 'next/navigation';
 
+// Interfaces para tipar los datos
+interface Class {
+  _id: string;
+  subjectName: string;
+  level: string;
+  teacherName: string;
+  startTime: string;
+  endTime: string;
+  selectedDays: string[];
+  maxStudents: number;
+  price: number;
+  status: 'ready_to_start' | 'in_progress' | 'completed' | 'cancelled';
+  startDate?: string;
+  students_enrolled: number;
+  currency: string;
+  paymentFrequency: string;
+  paymentDay: number;
+}
+
+interface Student {
+  _id: string;
+  username: string;
+  email: string;
+  profilePicture?: string;
+}
+
+export default function MisClases() {
+  const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
-  const [teacherSubjects, setTeacherSubjects] = useState<{ _id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [classStudents, setClassStudents] = useState<Student[]>([]);
+  const [showStudentsModal, setShowStudentsModal] = useState<boolean>(false);
+  const [startingClass, setStartingClass] = useState<boolean>(false);
+  const [startClassId, setStartClassId] = useState<string | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
-  useEffect(() => {
-    const GetTeacherData = async () => {
-      try {
-        const data = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
-        if (data) {
-          setClasses(data.classes || []);
-            if (data.subjects.length > 0) {
-              setTeacherSubjects(data.subjects);
-            }
-          }
-      } catch (error: any) {
-        ErrorMsj(error.message || 'Error al obtener los datos del perfil');
+  // Función para obtener las clases del profesor
+  const fetchClasses = async () => {
+    setLoading(true);
+    try {
+      const response = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
+      if (response.classes) {
+        setClasses(response.classes);
       }
-    };
-    GetTeacherData();
+      setError(null);
+    } catch (err: any) {
+      setError(err.message || 'Error al cargar las clases');
+      ErrorMsj('Error al cargar las clases');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Función para obtener los estudiantes de una clase
+  const fetchClassStudents = async (classId: string) => {
+    try {
+      const response = await FetchData(`/api/teacher/classes/${classId}/students`, {}, 'GET');
+      if (response.students) {
+        setClassStudents(response.students);
+      }
+      return response.students || [];
+    } catch (err: any) {
+      ErrorMsj('Error al cargar los estudiantes');
+      return [];
+    }
+  };
+
+  // Función para iniciar una clase
+  const startClass = async (classId: string) => {
+    setStartingClass(true);
+    setStartClassId(classId);
+    
+    try {
+      console.log('entramos a inicar la clase');
+      const response = await FetchData(`/api/teacher/classes/${classId}/start`, {}, 'POST');
+      if (response.success) {
+        SuccessMsj('Clase iniciada correctamente');
+        fetchClasses(); // Recargar las clases para actualizar el estado
+      }
+    } catch (err: any) {
+      ErrorMsj(err.message || 'Error al iniciar la clase');
+    } finally {
+      setStartingClass(false);
+      setStartClassId(null);
+      setShowConfirmModal(false);
+    }
+  };
+
+  // Cargar las clases al montar el componente
+  useEffect(() => {
+    fetchClasses();
   }, []);
 
-  const handleDaysChange = (days: string[]) => {
-    setValue('selectedDays', days, { shouldValidate: true });
+  // Filtrar las clases según el estado seleccionado
+  const filteredClasses = statusFilter === 'all' 
+    ? classes 
+    : classes.filter(cls => cls.status === statusFilter);
+
+  // Función para mostrar los detalles de los estudiantes
+  const showStudents = async (classItem: Class) => {
+    setSelectedClass(classItem);
+    await fetchClassStudents(classItem._id);
+    setShowStudentsModal(true);
   };
 
-  const onSubmit = async (data: ClassFormValues) => {
-    try {
-      const response = await FetchData('/api/classes', {classData: data}, 'POST');
-      if (response.success) {
-        setClasses([...classes, response.classCreated]);
-        SuccessMsj(response.message);
-        reset();
-      }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error al crear la clase');
+  // Función para confirmar el inicio de una clase
+  const confirmStartClass = (classId: string) => {
+    setStartClassId(classId);
+    setShowConfirmModal(true);
+  };
+
+  // Función para obtener el color de la insignia según el estado
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'ready_to_start': return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-purple-100 text-purple-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getTeacherSubjectOptions = () => {
-    return teacherSubjects.map(subject => ({
-      value: subject,
-      label: subject.name
-    }));
+  // Función para obtener el texto del estado en español
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'ready_to_start': return 'Lista para iniciar';
+      case 'in_progress': return 'En progreso';
+      case 'completed': return 'Completada';
+      case 'cancelled': return 'Cancelada';
+      default: return status;
+    }
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Gestión de Clases</h1>
-
-        <Card 
-          title="Crear Nueva Clase" 
-          icon={<FiBookOpen className="text-blue-500" />}
-          className="mb-8"
-          fullWidth = {true}
-        >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid md:grid-cols-12 gap-6">
-              <div className="md:col-span-6">
-                <Controller
-                  name="subject"
-                  control={control}
-                  render={({ field }) => (
-                    <SubjectSelect
-                      {...field}
-                      label="Materia"
-                      error={errors.subject?.message}
-                      options={[
-                        { 
-                          value: { _id: '', name: '' }, 
-                          label: 'Seleccionar materia' 
-                        },
-                        ...getTeacherSubjectOptions()
-                      ]}
-                    />
-                  )}
-                />
-              </div>
-
-              <div className="grid md:col-span-6 md:grid-cols-2 gap-4">
-                <div>
-                  <Controller
-                    name="level"
-                    control={control}
-                    render={({ field }) => (
-                      <Select
-                        {...field}
-                        id="level"
-                        label="Nivel"
-                        error={errors.level?.message}
-                        options={[
-                          { value: '', label: 'Seleccionar nivel' },
-                          { value: '1', label: 'Principiante' },
-                          { value: '2', label: 'Intermedio' },
-                          { value: '3', label: 'Avanzado' }
-                        ]}
-                      />
-                    )}
-                  />
-                </div>
-                <div>
-                  <Controller
-                    name="price"
-                    control={control}
-                    render={({ field }) => (
-                      <CurrencyInput
-                        {...field}
-                        id="price"
-                        label="Precio"
-                        error={errors.price?.message}
-                        onChange={(value: number) => field.onChange(value)}
-                      />
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="md:col-span-4">
-                <DaysCheckboxGroup 
-                  selectedDays={form.getValues('selectedDays')} 
-                  onChange={handleDaysChange} 
-                />
-                {errors.selectedDays?.message && <p className="text-red-500 text-sm">{errors.selectedDays.message}</p>}
-              </div>
-
-              <div className="grid md:grid-cols-2 md:col-span-6 gap-4">
-                <div>
-                  <Controller
-                    name="startTime"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="startTime"
-                        label="Hora de Inicio"
-                        type="time"
-                        error={errors.startTime?.message}
-                        className="w-full"
-                      />
-                    )}
-                  />
-                </div>
-                <div>
-                  <Controller
-                    name="endTime"
-                    control={control}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        id="endTime"
-                        label="Hora de Fin"
-                        type="time"
-                        error={errors.endTime?.message}
-                        className="w-full"
-                      />
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="md:col-span-2">
-                <Controller
-                  name="maxStudents"
-                  control={control}
-                  render={({ field }) => (
-                    <NumericInput
-                      {...field}
-                      id="maxStudents"
-                      label="Límite de Estudiantes"
-                      error={errors.maxStudents?.message}
-                      className="w-full"
-                      value={field.value}
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                type="button"
-                onClick={() => reset()}
-                variant="outline"
-                icon={<FiX />}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                icon={<FiSave />}
-              >
-                Guardar Clase
-              </Button>
-            </div>
-          </form>
-        </Card>
-
-        <Card title="Clases Existentes" fullWidth = {true}>
-          {classes.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
-              No hay clases registradas. Crea tu primera clase.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {classes.map((cls, index) => (
-                <div key={index} className="p-4 border rounded-lg">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold">
-                      {cls.subjectName} {getLevelName(cls.level)}
-                    </h3>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      Estudiantes ({cls.students.length}/{cls.maxStudents})
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {getDayName(cls.selectedDays)} • {cls.startTime} - {cls.endTime}
-                  </p>
-                  <p className="text-sm font-medium mt-1">
-                    Precio: ${cls.price.toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Mis Clases</h1>
+        
+        {/* Filtro de estado */}
+        <div className="flex items-center space-x-2">
+          <FiFilter className="text-gray-600 dark:text-gray-300" />
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="ready_to_start">Listas para iniciar</option>
+            <option value="in_progress">En progreso</option>
+            <option value="completed">Completadas</option>
+            <option value="cancelled">Canceladas</option>
+          </select>
+        </div>
       </div>
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      ) : error ? (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+          <p>{error}</p>
+        </div>
+      ) : filteredClasses.length === 0 ? (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <FiInfo className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                No tienes clases {statusFilter !== 'all' ? `con estado "${getStatusText(statusFilter)}"` : ''}.
+                {statusFilter !== 'all' ? (
+                  <button 
+                    onClick={() => setStatusFilter('all')} 
+                    className="font-medium underline ml-1 focus:outline-none"
+                  >
+                    Ver todas las clases
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => router.push('/teacher/classes/create')} 
+                    className="font-medium underline ml-1 focus:outline-none"
+                  >
+                    Crear una nueva clase
+                  </button>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredClasses.map((classItem) => (
+            <Card key={classItem._id} className="overflow-hidden">
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
+                    {classItem.subjectName}
+                  </h3>
+                  <Badge className={getStatusBadgeColor(classItem.status)}>
+                    {getStatusText(classItem.status)}
+                  </Badge>
+                </div>
+                
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  <span className="font-medium">Nivel:</span> {getLevelName(classItem.level)}
+                </p>
+                
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  <FiCalendar className="mr-2" />
+                  <span>
+                    {getDayName(classItem.selectedDays)}
+                  </span>
+                </div>
+                
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  <FiClock className="mr-2" />
+                  <span>{classItem.startTime} - {classItem.endTime}</span>
+                </div>
+                
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  <FiUsers className="mr-2" />
+                  <span>{classItem.students_enrolled}/{classItem.maxStudents} estudiantes</span>
+                </div>
+                
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-4">
+                  <FiDollarSign className="mr-2" />
+                  <span>{classItem.price} {classItem.currency}</span>
+                </div>
+                
+                <div className="flex justify-between mt-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => showStudents(classItem)}
+                    className="flex items-center"
+                  >
+                    <FiUsers className="mr-2" />
+                    Estudiantes
+                  </Button>
+                  
+                  {classItem.status === 'ready_to_start' && (
+                    <Button 
+                      onClick={() => confirmStartClass(classItem._id)}
+                      className="flex items-center bg-green-500 hover:bg-green-600 text-white"
+                      disabled={startingClass && startClassId === classItem._id}
+                    >
+                      {startingClass && startClassId === classItem._id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                          Iniciando...
+                        </>
+                      ) : (
+                        <>
+                          <FiPlay className="mr-2" />
+                          Iniciar Clase
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Modal para mostrar los estudiantes */}
+      {selectedClass && (
+        <Modal
+          isOpen={showStudentsModal}
+          onClose={() => setShowStudentsModal(false)}
+          title={`Estudiantes de ${selectedClass.subjectName}`}
+        >
+          <div className="p-4">
+            {classStudents.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-300 text-center py-4">
+                No hay estudiantes inscritos en esta clase.
+              </p>
+            ) : (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {classStudents.map((student) => (
+                  <div 
+                    key={student._id} 
+                    className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3">
+                      {student.profilePicture ? (
+                        <img 
+                          src={student.profilePicture} 
+                          alt={student.username} 
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-lg font-semibold text-gray-600 dark:text-gray-300">
+                          {student.username.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 dark:text-white">{student.username}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{student.email}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal de confirmación para iniciar clase */}
+      <Modal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        title="Confirmar inicio de clase"
+      >
+        <div className="p-4">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            ¿Estás seguro de que deseas iniciar esta clase? Esta acción no se puede deshacer y activará el sistema de pagos mensuales para todos los estudiantes inscritos.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowConfirmModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => startClassId && startClass(startClassId)}
+              className="bg-green-500 hover:bg-green-600 text-white"
+              disabled={startingClass}
+            >
+              {startingClass ? 'Iniciando...' : 'Iniciar Clase'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

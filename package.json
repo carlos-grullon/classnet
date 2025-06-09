@@ -15,6 +15,7 @@
     "@types/nodemailer": "^6.4.17",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.6.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.11.0",

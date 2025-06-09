@@ -28,14 +28,25 @@ export async function GET(request: NextRequest) {
         const needClasses = searchParams.get('needClasses') === 'true';
         if (needClasses) {
             const ClassesCollection = await getCollection("classes");
+            const EnrollmentsCollection = await getCollection("enrollments");
             const classes = await ClassesCollection.find({ teacher_id: new ObjectId(userId) }).toArray();
             if (classes.length > 0) {
-                response.classes = classes.map(cls => ({
-                    ...cls,
-                    startTime: mongoTimeToTimeString12h(cls.startTime),
-                    endTime: mongoTimeToTimeString12h(cls.endTime),
-                    selectedDays: cls.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b))
+                const classesWithEnrollments = await Promise.all(classes.map(async (cls) => {
+                    const enrollments = await EnrollmentsCollection.find({ 
+                        class_id: new ObjectId(cls._id),
+                        status: 'enrolled'
+                    }).toArray();
+                    
+                    return {
+                        ...cls,
+                        startTime: mongoTimeToTimeString12h(cls.startTime),
+                        endTime: mongoTimeToTimeString12h(cls.endTime),
+                        selectedDays: cls.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b)),
+                        students_enrolled: enrollments.length
+                    };
                 }));
+                
+                response.classes = classesWithEnrollments;
             }
         }
         return NextResponse.json(response);

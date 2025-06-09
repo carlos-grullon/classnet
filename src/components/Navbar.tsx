@@ -13,7 +13,8 @@ export function Navbar() {
   const navItems = isTeacherRoute ? [
     { name: 'Dashboard', path: '/teacher' },
     { name: 'Perfil', path: '/teacher/profile' },
-    { name: 'Clases', path: '/teacher/classes' }
+    { name: 'Mis Clases', path: '/teacher/classes' },
+    { name: 'Crear Clase', path: '/teacher/classes/create' }
   ] : isStudentRoute ? [
     { name: 'Dashboard', path: '/student' },
     { name: 'Perfil', path: '/student/profile' },
@@ -24,7 +25,8 @@ export function Navbar() {
     { name: 'Dashboard', path: '/admin' },
     { name: 'Usuarios', path: '/admin/users' },
     { name: 'Clases', path: '/admin/classes' },
-    { name: 'Inscripciones', path: '/admin/enrollments' }
+    { name: 'Inscripciones', path: '/admin/enrollments' },
+    { name: 'Pagos Mensuales', path: '/admin/monthly-payments' }
   ] : [];
 
   if (!navItems.length) return null;

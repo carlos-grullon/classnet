@@ -39,6 +39,31 @@ export async function getUserId(request: NextRequest): Promise<string> {
     }
 }
 
+export async function getSession(request: NextRequest): Promise<{ userId: string, userIsStudent: boolean, userIsTeacher: boolean, userEmail: string, userImage: string }> {
+    try {
+        const token = request.cookies.get('AuthToken')?.value;
+        if (!token) throw new Error('No token found');
+        
+        const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+        const { payload } = await jwtVerify(token, secret);
+        
+        if (!payload.userId || typeof payload.userId !== 'string' || typeof payload.userIsStudent !== 'boolean' || typeof payload.userIsTeacher !== 'boolean' || typeof payload.userEmail !== 'string' || typeof payload.userImage !== 'string') {
+            throw new Error('Invalid token payload');
+        }
+        
+        return {
+            userId: payload.userId,
+            userIsStudent: payload.userIsStudent,
+            userIsTeacher: payload.userIsTeacher,
+            userEmail: payload.userEmail,
+            userImage: payload.userImage
+        };
+    } catch (error) {
+        console.error('Error getting user ID from token:', error);
+        throw error;
+    }
+}
+
 /**
  * Convierte un string de hora (24h) a un objeto Date de MongoDB usando época Unix como referencia
  * @param timeString String en formato HH:MM (ej. "14:30")
