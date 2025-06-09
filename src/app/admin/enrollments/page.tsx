@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Modal, Input, Textarea } from '@/components';
-import { FiFilter, FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj, formatDate, getLevelName } from '@/utils/Tools.tsx';
+import { Card, Button, Modal } from '@/components';
+import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye } from 'react-icons/fi';
+import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx';
 import Image from 'next/image';
 
 // Interfaz para las inscripciones

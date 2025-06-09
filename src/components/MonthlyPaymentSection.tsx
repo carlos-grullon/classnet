@@ -32,17 +32,6 @@ interface PaymentInfo {
   status: string;
 }
 
-// Interfaz para los detalles bancarios
-interface BankDetail {
-  id: string;
-  name: string;
-  accountName: string;
-  accountNumber: string;
-  accountType: string;
-  logo_path: string;
-  reference: string;
-}
-
 interface MonthlyPaymentSectionProps {
   enrollmentId: string;
   onOpenPaymentModal?: () => void;

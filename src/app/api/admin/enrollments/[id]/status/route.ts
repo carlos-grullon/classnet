@@ -6,6 +6,8 @@ import { unlink } from 'fs/promises';
 import { mongoTimeToTimeString12h } from '@/utils/Tools.ts';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
+import { addMonths } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 
 const getDayName = (days: string[]): string => {
   const daysMap = {
@@ -80,18 +82,47 @@ export async function PATCH(
       await sendRejectionEmailToStudent(student, classData, notes);
     }
     
+    // Preparar datos de actualización
+    const updateData: any = { 
+      status, 
+      updatedAt: new Date()
+    };
+    
+    // Agregar notas si existen
+    if (notes) updateData.notes = notes;
+    
+    // Si se aprueba el pago, eliminar la referencia al comprobante
+    if (status === 'enrolled') updateData.paymentProof = null;
+    
+    // Si se aprueba el pago y la clase está en progreso, configurar datos de facturación
+    if (status === 'enrolled' && classData?.status === 'in_progress') {
+      const now = new Date();
+      updateData.billingStartDate = now;
+      updateData.nextPaymentDueDate = addMonths(now, 1);
+      updateData.priceAtEnrollment = classData.price;
+      updateData.lastPaymentDate = now;
+      updateData.paymentsMade = [{
+        _id: uuidv4(),
+        amount: classData.price,
+        date: now,
+        status: 'paid',
+        notes: 'Pago inicial de inscripción'
+      }];
+    }
+    
+    // Si se rechaza el comprobante, asegurarse de que no tenga datos de facturación
+    if (status === 'proof_rejected') {
+      // Eliminar cualquier dato de facturación si existiera
+      updateData.billingStartDate = null;
+      updateData.nextPaymentDueDate = null;
+      updateData.lastPaymentDate = null;
+      // Mantener el comprobante para que el estudiante pueda ver qué fue rechazado
+    }
+    
     // Actualizar inscripción
     await enrollmentsCollection.updateOne(
       { _id: new ObjectId(enrollmentId) },
-      { 
-        $set: { 
-          status: status, 
-          ...(notes ? { notes: notes } : {}),
-          updatedAt: new Date(),
-          // Si se aprueba el pago, eliminar la referencia al comprobante
-          ...(status === 'enrolled' ? { paymentProof: null } : {})
-        } 
-      }
+      { $set: updateData }
     );
     
     return NextResponse.json({

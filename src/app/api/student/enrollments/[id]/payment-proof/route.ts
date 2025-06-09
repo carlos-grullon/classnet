@@ -123,7 +123,7 @@ export async function POST(
       await enrollmentsCollection.updateOne(
         { _id: new ObjectId(enrollmentId) },
         { 
-          $push: { 
+          $push: {
             paymentsMade: {
               _id: paymentId, // Usar el ID único generado
               amount: enrollment.monthlyPaymentAmount || enrollment.paymentAmount,
@@ -172,7 +172,8 @@ export async function GET(
     // Obtener la inscripción
     const enrollmentsCollection = await getCollection('enrollments');
     const enrollment = await enrollmentsCollection.findOne({ 
-      _id: new ObjectId(enrollmentId)
+      _id: new ObjectId(enrollmentId),
+      student_id: new ObjectId(userId)
     });
 
     if (!enrollment) {
