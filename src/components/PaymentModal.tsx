@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import { Button, Modal } from '@/components';
-import { FiDollarSign, FiUpload } from 'react-icons/fi';
+import { FiDollarSign, FiUpload, FiCopy, FiCheck } from 'react-icons/fi';
 import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { formatCurrency } from '@/utils/GeneralTools';
 import Image from 'next/image';
@@ -43,9 +43,23 @@ export function PaymentModal({
   const [paymentProofUrl, setPaymentProofUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   
   // Referencia al input de archivo
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Función para copiar el número de cuenta al portapapeles
+  const copyAccountNumber = (accountNumber: string) => {
+    navigator.clipboard.writeText(accountNumber)
+      .then(() => {
+        setCopySuccess(true);
+        SuccessMsj('Número de cuenta copiado');
+        setTimeout(() => setCopySuccess(false), 2000);
+      })
+      .catch(() => {
+        ErrorMsj('No se pudo copiar el número de cuenta');
+      });
+  };
 
   // Manejar la subida de archivos
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -171,7 +185,18 @@ export function PaymentModal({
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Número de cuenta</p>
-                    <p className="font-medium">{bank.accountNumber}</p>
+                    <div className="flex items-center">
+                      <p className="font-medium">{bank.accountNumber}</p>
+                      <button 
+                        onClick={() => copyAccountNumber(bank.accountNumber)}
+                        className="ml-2 text-gray-500 hover:text-blue-600 focus:outline-none transition-colors"
+                        title="Copiar número de cuenta"
+                      >
+                        {copySuccess ? 
+                          <FiCheck className="text-green-500" /> : 
+                          <FiCopy size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 dark:border-gray-700">

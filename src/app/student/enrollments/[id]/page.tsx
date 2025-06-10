@@ -46,7 +46,7 @@ const bankDetails = [
     id: "reservas",
     name: "BanReservas",
     accountName: "ClassNet Educación",
-    accountNumber: "2400056789",
+    accountNumber: "9608415786",
     accountType: "Cuenta Corriente",
     logo_path: "/images/banreservas-logo.png",
     reference: "Pago de clase"
