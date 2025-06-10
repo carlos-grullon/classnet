@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
+import { formatDateLong } from '@/utils/GeneralTools';
 
 interface ClassInfo {
   _id: string;
@@ -15,32 +16,7 @@ export async function GET(req: NextRequest) {
     // Obtener colecciones
     const enrollmentsCollection = await getCollection('enrollments');
     const classesCollection = await getCollection('classes');
-    
-    // Obtener todas las clases disponibles
-    const allClasses = await classesCollection.find({}).toArray();
-    
-    // Preparar información de clases
-    const classes: ClassInfo[] = await Promise.all(
-      allClasses.map(async (classData: any) => {
-        // Obtener información del profesor si está disponible
-        let teacherName = '';
-        if (classData.teacher_id) {
-          const usersCollection = await getCollection('users');
-          const teacher = await usersCollection.findOne({ _id: classData.teacher_id });
-          if (teacher) {
-            teacherName = `${teacher.firstName} ${teacher.lastName}`;
-          }
-        }
-        
-        return {
-          _id: classData._id.toString(),
-          name: classData.name || 'Clase sin nombre',
-          level: classData.level || '',
-          teacher_id: classData.teacher_id?.toString(),
-          teacherName
-        };
-      })
-    );
+    const usersCollection = await getCollection('users');
     
     // Buscar inscripciones con pagos pendientes
     const enrollments = await enrollmentsCollection.find({
@@ -49,6 +25,7 @@ export async function GET(req: NextRequest) {
     
     // Preparar datos para la respuesta
     const pendingPayments = [];
+    const allClasses = [];
     
     for (const enrollment of enrollments) {
       // Filtrar solo los pagos pendientes
@@ -59,34 +36,29 @@ export async function GET(req: NextRequest) {
       if (pendingPaymentsForEnrollment.length > 0) {
         // Obtener información de la clase
         const classData = await classesCollection.findOne({ _id: enrollment.class_id });
-        
+        allClasses.push(classData);
+
         // Obtener información del estudiante
-        const usersCollection = await getCollection('users');
         const student = await usersCollection.findOne({ _id: enrollment.student_id });
         
+        if (!student || !classData) {
+          throw new Error('Falta info del estudiante o la clase');
+        }
         // Agregar información a la lista de pagos pendientes
         for (const payment of pendingPaymentsForEnrollment) {
-          // Preparar nombre del estudiante con validación
-          let studentName = 'Estudiante';
-          if (student && student.firstName && student.lastName) {
-            studentName = `${student.firstName} ${student.lastName}`;
-          } else if (student && student.firstName) {
-            studentName = student.firstName;
-          } else if (student && student.lastName) {
-            studentName = student.lastName;
-          }
           
           pendingPayments.push({
             paymentId: payment._id,
             enrollmentId: enrollment._id.toString(),
             classId: enrollment.class_id.toString(),
-            studentName,
-            studentEmail: student?.email || '',
-            className: classData?.name || 'Clase',
-            classLevel: classData?.level || '',
+            studentName: student.username,
+            studentEmail: student.email,
+            className: classData.subjectName,
+            classLevel: classData.level,
             amount: payment.amount,
-            currency: classData?.currency || 'DOP',
-            date: payment.date,
+            currency: classData.currency || 'DOP',
+            paymentDate: payment.date,
+            paymentDueDate: formatDateLong(enrollment.nextPaymentDueDate),
             proofUrl: payment.proofUrl,
             notes: payment.notes || '',
             submittedAt: payment.submittedAt
@@ -94,6 +66,20 @@ export async function GET(req: NextRequest) {
         }
       }
     }
+
+    // Preparar información de clases
+    const classes: ClassInfo[] = await Promise.all(
+      allClasses.map(async (classData: any) => {
+        
+        return {
+          _id: classData._id.toString(),
+          name: classData.subjectName || 'Clase sin nombre',
+          level: classData.level || '',
+          teacher_id: classData.teacher_id?.toString(),
+          teacherName: classData.teacherName || ''
+        };
+      })
+    );
     
     return NextResponse.json({
       success: true,

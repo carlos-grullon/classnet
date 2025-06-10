@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal } from '@/components';
 import { FiCheckCircle, FiXCircle, FiEye, FiCalendar, FiFilter, FiRefreshCw } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx';
 import { formatDateLong, formatCurrency } from '@/utils/GeneralTools.ts';
 import Image from 'next/image';
 
@@ -27,7 +27,8 @@ interface PendingPayment {
   classLevel?: string;
   amount: number;
   currency: string;
-  date: string;
+  paymentDate: string;
+  paymentDueDate: string;
   proofUrl: string;
   notes: string;
   submittedAt: string;
@@ -67,6 +68,7 @@ export default function MonthlyPaymentsPage() {
       const response = await FetchData('/api/admin/monthly-payments/pending', {}, 'GET');
       if (response && response.success) {
         setAllPayments(response.pendingPayments || []);
+        console.log(response.pendingPayments);
         setPendingPayments(response.pendingPayments || []);
         setClasses(response.classes || []);
       } else {
@@ -136,7 +138,7 @@ export default function MonthlyPaymentsPage() {
               const count = allPayments.filter(payment => payment.classId === classItem._id).length;
               return (
                 <option key={classItem._id} value={classItem._id}>
-                  {classItem.name} {classItem.level ? `- ${classItem.level}` : ''} ({count})
+                  {classItem.name} {classItem.level ? `- ${getLevelName(classItem.level)}` : ''} ({count})
                 </option>
               );
             })}
@@ -168,57 +170,61 @@ export default function MonthlyPaymentsPage() {
           <p className="text-lg">No hay pagos mensuales pendientes de revisión</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid md:grid-cols-2 gap-2">
           {pendingPayments.map((payment) => (
-            <Card key={payment.paymentId} className="p-6">
-              <div className="flex flex-col lg:flex-row lg:justify-between gap-4">
-                <div className="flex-grow">
+            <Card key={payment.paymentId} fullWidth size="sm">
+              <div className="grid md:grid-cols-12 gap-4">
+                <div className="col-span-4">
                   <h2 className="text-xl font-semibold">
                     {payment.studentName !== 'undefined undefined' ? payment.studentName : 'Estudiante'}
                   </h2>
                   <p className="text-sm text-muted-foreground">{payment.studentEmail || 'Sin correo'}</p>
                   <p className="mt-2">
-                    <span className="font-medium">Clase:</span> {payment.className || 'Sin nombre'}
+                    <span className="font-medium">Clase:</span> {payment.className || 'Sin nombre'} {payment.classLevel ? `(${getLevelName(payment.classLevel)})` : ''}
                   </p>
                   <p className="mt-1">
                     <span className="font-medium">Monto:</span> {formatCurrency(payment.amount, payment.currency)}
                   </p>
                   <div className="flex items-center mt-1">
                     <FiCalendar className="mr-1" />
-                    <span className="font-medium">Fecha:</span> {formatDateLong(new Date(payment.date))}
+                    <span className="font-medium">Fecha:</span> {formatDateLong(new Date(payment.paymentDate))}
                   </div>
-                  {payment.notes && (
-                    <p className="mt-2">
-                      <span className="font-medium">Notas del estudiante:</span> {payment.notes}
-                    </p>
-                  )}
                 </div>
-
-                <div className="flex flex-wrap gap-2 justify-end">
-                  <Button
-                    onClick={() => handleViewProof(payment.proofUrl)}
-                    variant="outline"
-                    icon={<FiEye />}
-                    className="w-full sm:w-auto"
-                  >
-                    Ver Comprobante
-                  </Button>
-                  <Button
-                    onClick={() => handleReviewPayment(payment, 'approved')}
-                    variant="success"
-                    icon={<FiCheckCircle />}
-                    className="w-full sm:w-auto"
-                  >
-                    Aprobar
-                  </Button>
-                  <Button
-                    onClick={() => handleReviewPayment(payment, 'rejected')}
-                    variant="danger"
-                    icon={<FiXCircle />}
-                    className="w-full sm:w-auto"
-                  >
-                    Rechazar
-                  </Button>
+                <div className="col-span-8">
+                <div className="flex justify-end mt-2">
+                    <Button
+                      onClick={() => handleViewProof(payment.proofUrl)}
+                      variant="outline"
+                      icon={<FiEye />}
+                      className=""
+                    >
+                      Ver Comprobante
+                    </Button>
+                  </div>
+                  <p className="mt-2">
+                    <span className="font-medium">Notas del estudiante:</span> {payment.notes ? payment.notes : 'Sin notas'}
+                  </p>
+                  <p className="mt-1">
+                    <span className="font-medium">Pago correspondiente a:</span> {payment.paymentDueDate}
+                  </p>
+                  <div className="flex justify-between mt-2 gap-2">
+                    <Button
+                      onClick={() => handleReviewPayment(payment, 'approved')}
+                      variant="success"
+                      icon={<FiCheckCircle />}
+                      className="flex-1"
+                    >
+                      Aprobar
+                    </Button>
+                    <Button
+                      onClick={() => handleReviewPayment(payment, 'rejected')}
+                      variant="danger"
+                      icon={<FiXCircle />}
+                      className="flex-1"
+                    >
+                      Rechazar
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
@@ -263,7 +269,7 @@ export default function MonthlyPaymentsPage() {
                 <span className="font-medium">Monto:</span> {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
               </p>
               <p>
-                <span className="font-medium">Fecha:</span> {formatDateLong(new Date(selectedPayment.date))}
+                <span className="font-medium">Fecha:</span> {formatDateLong(new Date(selectedPayment.paymentDate))}
               </p>
             </>
           )}
