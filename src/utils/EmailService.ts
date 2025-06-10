@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { convert } from 'html-to-text';
 
 // Configuración del transportador de correo
 const SMTP_HOST = process.env.SMTP_HOST;
@@ -30,26 +31,129 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * Crea una plantilla de correo electrónico con el logo de ClassNet y un formato estándar
+ * @param bodyContent Contenido HTML del cuerpo del correo
+ * @param title Título del correo (opcional)
+ * @returns String con el HTML completo del correo
+ */
+function createEmailTemplate(bodyContent: string): string {
+  return `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>ClassNet</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.8;
+          color: #000;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #fff;
+          font-size: 16px;
+        }
+        .email-container {
+          border: 1px solid #e0e0e0;
+          border-radius: 5px;
+          padding: 30px;
+          background-color: #fff;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .logo-container {
+          text-align: center;
+          margin-bottom: 25px;
+        }
+        .logo {
+          font-size: 3rem;
+          font-weight: bold;
+          text-align: center;
+          background: linear-gradient(to right, #3b82f6, #8b5cf6);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          padding: 1rem;
+          display: inline-block;
+        }
+        .content {
+          margin-top: 20px;
+          font-size: 17px;
+        }
+        .footer {
+          margin-top: 30px;
+          padding-top: 15px;
+          border-top: 1px solid #e0e0e0;
+          font-size: 1rem;
+          color: #000;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="logo-container">
+          <div class="logo">ClassNet</div>
+        </div>
+        <div class="content">
+          ${bodyContent}
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ClassNet. Todos los derechos reservados.</p>
+          <p style="margin-top: 10px;">
+            <strong>¿Necesitas ayuda?</strong><br>
+            Correo: <a href="mailto:classnet.dom@gmail.com" style="color: #3b82f6; text-decoration: none;">classnet.dom@gmail.com</a><br>
+            WhatsApp: <a href="https://wa.me/18298647008" style="color: #3b82f6; text-decoration: none;">829-864-7008</a>
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+/**
+ * Convierte HTML a texto plano para correos electrónicos
+ * @param html Contenido HTML
+ * @returns Texto plano equivalente
+ */
+function htmlToPlainText(html: string): string {
+  return convert(html, {
+    wordwrap: 80,
+    preserveNewlines: true,
+    selectors: [
+      { selector: 'a', options: { hideLinkHrefIfSameAsText: true } },
+      { selector: 'img', format: 'skip' }
+    ]
+  });
+}
+
+/**
  * Envía un correo electrónico usando Nodemailer
  * @param to Dirección de correo del destinatario
  * @param subject Asunto del correo
- * @param textContent Contenido en texto plano
  * @param htmlContent Contenido en HTML
+ * @param textContent Contenido en texto plano (opcional, se genera automáticamente si no se proporciona)
  * @returns Promise que se resuelve cuando el correo es enviado
  */
 export async function sendEmail(
   to: string,
   subject: string,
-  textContent: string,
-  htmlContent: string
+  htmlContent: string,
+  textContent?: string
 ) {
+  // Extraer el título del asunto para usarlo en la plantilla
+  const formattedHtmlContent = createEmailTemplate(htmlContent);
+  
+  // Generar texto plano a partir del HTML si no se proporciona
+  const plainTextContent = textContent || htmlToPlainText(htmlContent);
 
   const mailOptions = {
     from: FROM_EMAIL,
     to,
     subject,
-    text: textContent,
-    html: htmlContent,
+    text: plainTextContent,
+    html: formattedHtmlContent,
   };
 
   try {
@@ -83,23 +187,6 @@ export async function sendEnrollmentConfirmationEmail(
 ) {
   const subject = '¡Inscripción Confirmada! - ClassNet';
 
-  const textContent = `
-    Hola ${studentName},
-    
-    Tu inscripción a la clase "${className}" ha sido confirmada.
-    
-    Detalles de la clase:
-    - Profesor: ${classDetails.teacherName || 'No especificado'}
-    - Horario: ${classDetails.schedule || 'No especificado'}
-    - Precio: ${classDetails.price || 'No especificado'}
-    - Fecha de inicio: ${classDetails.startDate ? classDetails.startDate : 'No especificada'}
-    
-    Gracias por confiar en ClassNet para tu educación.
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
-
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #4a5568;">¡Inscripción Confirmada!</h2>
@@ -126,7 +213,7 @@ export async function sendEnrollmentConfirmationEmail(
     </div>
   `;
 
-  return sendEmail(studentEmail, subject, textContent, htmlContent);
+  return sendEmail(studentEmail, subject, htmlContent);
 }
 
 /**
@@ -146,26 +233,11 @@ export async function sendPaymentRejectionEmail(
 ) {
   const subject = 'Acción Requerida: Comprobante de Pago Rechazado - ClassNet';
 
-  const textContent = `
-    Hola ${studentName},
-    
-    Tu comprobante de pago para la clase "${className} ${getLevel(classLevel)}" ha sido rechazado.
-    
-    Motivo: ${rejectionReason || 'No se especificó un motivo'}
-    
-    Por favor, sube un nuevo comprobante de pago válido lo antes posible para asegurar tu cupo en la clase.
-    
-    Si tienes alguna pregunta, no dudes en contactarnos.
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
-
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #e53e3e;">Comprobante de Pago Rechazado</h2>
       <p>Hola <strong>${studentName}</strong>,</p>
-      <p>Tu comprobante de pago para la clase <strong>"${className}"</strong> ha sido rechazado.</p>
+      <p>Tu comprobante de pago para la clase <strong>"${className} ${getLevel(classLevel)}"</strong> ha sido rechazado.</p>
       
       <div style="background-color: #fff5f5; padding: 15px; border-left: 4px solid #e53e3e; margin: 20px 0;">
         <p><strong>Motivo del rechazo:</strong> ${rejectionReason || 'No se especificó un motivo'}</p>
@@ -182,7 +254,7 @@ export async function sendPaymentRejectionEmail(
     </div>
   `;
 
-  return await sendEmail(studentEmail, subject, textContent, htmlContent);
+  return await sendEmail(studentEmail, subject, htmlContent);
 }
 
 /**
@@ -199,23 +271,6 @@ export async function sendClassStartNotification(
   }
 ) {
   const subject = '¡Tu clase ha comenzado! - ClassNet';
-
-  const textContent = `
-    Hola ${studentName},
-    
-    ¡Buenas noticias! Tu clase "${className} ${getLevel(classLevel)}" ha comenzado oficialmente el ${details.startDate}.
-    
-    Información importante:
-    - Fecha de inicio: ${details.startDate}
-    - Fecha del próximo pago mensual: ${details.nextPaymentDate}
-    
-    Recuerda que deberás realizar un pago mensual para continuar en la clase. Te enviaremos recordatorios antes de la fecha de vencimiento.
-    
-    ¡Te deseamos mucho éxito en tu aprendizaje!
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -242,7 +297,7 @@ export async function sendClassStartNotification(
     </div>
   `;
 
-  return await sendEmail(studentEmail, subject, textContent, htmlContent);
+  return await sendEmail(studentEmail, subject, htmlContent);
 }
 
 /**
@@ -263,24 +318,6 @@ export async function sendPaymentReminderEmail(
   const subject = details.urgent
     ? 'URGENTE: Tu pago mensual vence mañana - ClassNet'
     : 'Recordatorio de pago mensual - ClassNet';
-
-  const textContent = `
-    Hola ${studentName},
-    
-    Este es un recordatorio de que tu pago mensual para la clase "${className} ${getLevel(classLevel)}" vence el ${details.dueDate}.
-    
-    Detalles del pago:
-    - Monto: ${details.amount} ${details.currency}
-    - Fecha límite: ${details.dueDate}
-    ${details.urgent ? '- ¡URGENTE! Tu pago vence mañana.' : ''}
-    
-    Para realizar el pago, ingresa a tu cuenta de ClassNet y sube tu comprobante de pago en la sección de "Mis Inscripciones".
-    
-    Si ya realizaste el pago, por favor ignora este mensaje.
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -308,7 +345,7 @@ export async function sendPaymentReminderEmail(
     </div>
   `;
 
-  return await sendEmail(studentEmail, subject, textContent, htmlContent);
+  return await sendEmail(studentEmail, subject, htmlContent);
 }
 
 /**
@@ -327,27 +364,6 @@ export async function sendPaymentOverdueEmail(
   }
 ) {
   const subject = 'IMPORTANTE: Pago vencido - ClassNet';
-
-  const textContent = `
-    Hola ${studentName},
-    
-    Notamos que tu pago mensual para la clase "${className} ${getLevel(classLevel)}" está vencido desde el ${details.dueDate}.
-    
-    Detalles del pago:
-    - Monto: ${details.amount} ${details.currency}
-    - Fecha de vencimiento: ${details.dueDate}
-    - Período de gracia: ${details.gracePeriod} días
-    
-    Es importante que regularices tu situación lo antes posible para evitar la suspensión de tu acceso a la clase.
-    Si no realizas el pago dentro del período de gracia, tu inscripción será suspendida temporalmente.
-    
-    Para realizar el pago, ingresa a tu cuenta de ClassNet y sube tu comprobante de pago en la sección de "Mis Inscripciones".
-    
-    Si ya realizaste el pago o crees que esto es un error, por favor contáctanos inmediatamente.
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -378,7 +394,7 @@ export async function sendPaymentOverdueEmail(
     </div>
   `;
 
-  return await sendEmail(studentEmail, subject, textContent, htmlContent);
+  return await sendEmail(studentEmail, subject, htmlContent);
 }
 
 /**
@@ -391,32 +407,13 @@ export async function sendPaymentConfirmationEmail(
   classLevel: string,
   details: {
     paymentDate: string;
+    paymentDueDate: string;
     nextPaymentDate: string;
     amount: number;
     currency: string;
   }
 ) {
   const subject = 'Confirmación de pago mensual - ClassNet';
-
-  const textContent = `
-    Hola ${studentName},
-    
-    ¡Buenas noticias! Tu pago mensual para la clase "${className} ${getLevel(classLevel)}" ha sido confirmado.
-    
-    Detalles del pago:
-    - Monto: ${details.amount} ${details.currency}
-    - Fecha de pago: ${details.paymentDate}
-    - Próximo pago: ${details.nextPaymentDate}
-    
-    Tu inscripción sigue activa y puedes continuar disfrutando de tu clase sin interrupciones.
-    
-    Recuerda que el próximo pago deberá realizarse antes del ${details.nextPaymentDate}. Te enviaremos recordatorios con anticipación.
-    
-    ¡Gracias por tu puntualidad!
-    
-    Saludos,
-    El equipo de ClassNet
-  `;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -427,8 +424,9 @@ export async function sendPaymentConfirmationEmail(
       <div style="background-color: #f0fff4; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="color: #38a169; margin-top: 0;">Detalles del pago:</h3>
         <ul style="padding-left: 20px;">
-          <li><strong>Monto:</strong> ${details.amount} ${details.currency}</li>
           <li><strong>Fecha de pago:</strong> ${details.paymentDate}</li>
+          <li><strong>Monto:</strong> ${details.amount} ${details.currency}</li>
+          <li><strong>Pago correspondiente a:</strong> ${details.paymentDueDate}</li>
           <li><strong>Próximo pago:</strong> ${details.nextPaymentDate}</li>
         </ul>
       </div>
@@ -446,5 +444,5 @@ export async function sendPaymentConfirmationEmail(
     </div>
   `;
 
-  return await sendEmail(studentEmail, subject, textContent, htmlContent);
+  return await sendEmail(studentEmail, subject, htmlContent);
 }
