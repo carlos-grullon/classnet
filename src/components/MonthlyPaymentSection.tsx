@@ -3,7 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Card, Button, Modal } from '@/components';
 import { FiClock, FiCheckCircle, FiUpload, FiAlertTriangle, FiCalendar } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import { formatDateLong, formatCurrency } from '@/utils/GeneralTools.ts';
 import Image from 'next/image';
 
@@ -17,6 +17,7 @@ interface Payment {
   notes?: string;
   approvedAt?: string;
   rejectedAt?: string;
+  paymentDueDate: string;
 }
 
 // Interfaz para la información de pagos
@@ -34,7 +35,7 @@ interface PaymentInfo {
 
 interface MonthlyPaymentSectionProps {
   enrollmentId: string;
-  onOpenPaymentModal?: () => void;
+  onOpenPaymentModal?: (paymentId?: string) => void;
 }
 
 export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: MonthlyPaymentSectionProps) {
@@ -69,6 +70,7 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
 
   // Abrir modal para ver imagen
   const openImageModal = (imageUrl: string) => {
+    console.log('Abriendo imagen:', imageUrl);
     setSelectedPaymentProof(imageUrl);
     setIsImageModalOpen(true);
   };
@@ -124,7 +126,8 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
         {paymentInfo?.nextPaymentDueDate && !isLoading && (
           <div className="ms-auto">
             <Button
-              onClick={onOpenPaymentModal || (() => {})}
+              onClick={() => onOpenPaymentModal && onOpenPaymentModal()}
+              disabled={isLoading}
               icon={<FiUpload />}
             >
               Subir Comprobante de Pago
@@ -168,7 +171,17 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
 
           {/* Historial de pagos */}
           <div>
-            <h3 className="text-lg font-medium mb-3">Historial de Pagos</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="text-lg font-medium">Historial de Pagos</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchPaymentInfo}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Actualizando...' : 'Actualizar'}
+              </Button>
+            </div>
             {paymentInfo.paymentsMade && paymentInfo.paymentsMade.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
@@ -177,7 +190,7 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
                       <th scope="col" className="px-4 py-3">Fecha</th>
                       <th scope="col" className="px-4 py-3">Monto</th>
                       <th scope="col" className="px-4 py-3">Estado</th>
-                      <th scope="col" className="px-4 py-3">Comprobante</th>
+                      <th scope="col" className="px-4 py-3">Pago correspondiente a:</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -192,13 +205,38 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          {payment.proofUrl ? (
-                            <button
-                              onClick={() => openImageModal(payment.proofUrl!)}
-                              className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                            >
-                              Ver comprobante
-                            </button>
+                          {payment.status === 'pending' ? (
+                            <div className="flex space-x-2">
+                              {payment.proofUrl ? (
+                                <>
+                                  <button
+                                    onClick={() => openImageModal(payment.proofUrl!)}
+                                    className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                                  >
+                                    Ver comprobante
+                                  </button>
+                                  <button
+                                    onClick={() => onOpenPaymentModal && onOpenPaymentModal(payment._id)}
+                                    className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 underline"
+                                  >
+                                    Cambiar
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => onOpenPaymentModal && onOpenPaymentModal()}
+                                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                                >
+                                  Subir comprobante
+                                </button>
+                              )}
+                            </div>
+                          ) : payment.status === 'paid' ? (
+                            <div>
+                              <span className="text-gray-700 dark:text-gray-300 text-center w-full block">
+                                {formatDateLong(new Date(payment.paymentDueDate))}
+                              </span>
+                            </div>
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
@@ -215,22 +253,36 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
         </div>
       )}
 
-      {/* Modal para ver imagen */}
-      <Modal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        title="Comprobante de Pago"
-        className="max-w-2xl"
-      >
-        <div className="relative w-full h-96 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-          <Image
-            src={selectedPaymentProof}
-            alt="Comprobante de pago"
-            fill
-            className="object-contain"
-          />
+      {/* Modal simple para ver imagen */}
+      {isImageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg p-4 max-w-4xl w-full max-h-[90vh] overflow-auto">
+            {/* Botón para cerrar */}
+            <button 
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Título */}
+            <h3 className="text-lg font-semibold mb-4 text-center">Comprobante de Pago</h3>
+            
+            {/* Imagen */}
+            <div className="flex justify-center">
+              <a href={selectedPaymentProof} target="_blank" rel="noopener noreferrer">
+                <img 
+                  src={selectedPaymentProof} 
+                  alt="Comprobante de pago" 
+                  className="max-w-full max-h-[70vh] object-contain"
+                />
+              </a>
+            </div>
+          </div>
         </div>
-      </Modal>
+      )}
     </Card>
   );
 }

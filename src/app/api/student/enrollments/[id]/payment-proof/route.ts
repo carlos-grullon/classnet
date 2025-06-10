@@ -36,6 +36,7 @@ export async function POST(
     const paymentProof = formData.get('paymentProof') as File;
     const notes = formData.get('notes') as string || '';
     const paymentType = formData.get('paymentType') as string || 'enrollment'; // 'enrollment' o 'monthly'
+    const paymentId = formData.get('paymentId') as string || ''; // ID del pago a actualizar (si existe)
     
     if (!paymentProof) {
       return NextResponse.json({ error: 'Comprobante de pago requerido' }, { status: 400 });
@@ -116,33 +117,59 @@ export async function POST(
         }, { status: 400 });
       }
 
-      // Crear un nuevo registro de pago mensual con ID único
       const now = new Date();
-      const paymentId = uuidv4(); // Generar ID único con UUID
       
-      await enrollmentsCollection.updateOne(
-        { _id: new ObjectId(enrollmentId) },
-        { 
-          $push: {
-            paymentsMade: {
-              _id: paymentId, // Usar el ID único generado
-              amount: enrollment.monthlyPaymentAmount || enrollment.paymentAmount,
-              date: now,
-              proofUrl: relativePath,
-              status: 'pending',
-              notes: notes,
-              submittedAt: now
+      // Verificar si estamos actualizando un pago existente o creando uno nuevo
+      if (paymentId) {
+        // Actualizar un pago existente
+        await enrollmentsCollection.updateOne(
+          { 
+            _id: new ObjectId(enrollmentId),
+            'paymentsMade._id': paymentId 
+          },
+          { 
+            $set: {
+              'paymentsMade.$.proofUrl': relativePath,
+              'paymentsMade.$.notes': notes,
+              'paymentsMade.$.updatedAt': now
             }
-          } as any
-        }
-      );
+          }
+        );
 
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Comprobante de pago mensual subido correctamente. Un administrador lo revisará pronto.',
-        fileUrl: relativePath,
-        paymentId: paymentId // Incluir el ID del pago creado en la respuesta
-      });
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Comprobante de pago actualizado correctamente. Un administrador lo revisará pronto.',
+          fileUrl: relativePath,
+          paymentId: paymentId
+        });
+      } else {
+        // Crear un nuevo registro de pago mensual con ID único
+        const newPaymentId = uuidv4(); // Generar ID único con UUID
+        
+        await enrollmentsCollection.updateOne(
+          { _id: new ObjectId(enrollmentId) },
+          { 
+            $push: {
+              paymentsMade: {
+                _id: newPaymentId,
+                amount: enrollment.monthlyPaymentAmount || enrollment.paymentAmount,
+                date: now,
+                proofUrl: relativePath,
+                status: 'pending',
+                notes: notes,
+                submittedAt: now
+              }
+            } as any
+          }
+        );
+
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Comprobante de pago mensual subido correctamente. Un administrador lo revisará pronto.',
+          fileUrl: relativePath,
+          paymentId: newPaymentId
+        });
+      }
     }
     
   } catch (error: any) {

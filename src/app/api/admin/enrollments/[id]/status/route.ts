@@ -61,10 +61,10 @@ export async function PATCH(
     // Si se está aprobando el pago (cambiando a 'enrolled')
     if (status === 'enrolled' && enrollment.status === 'proof_submitted') {
       // Enviar correo de confirmación de pago
-      await sendConfirmationEmailToStudent(student, classData);
+      // await sendConfirmationEmailToStudent(student, classData);
       
       // Eliminar el archivo de comprobante de pago (ya no es necesario)
-      if (enrollment.paymentProof && enrollment.paymentProof.startsWith('/uploads/payment-proofs/')) {
+      if (enrollment.paymentProof && enrollment.paymentProof.startsWith('/uploads/payments/')) {
         try {
           const filePath = path.join(process.cwd(), 'public', enrollment.paymentProof);
           await unlink(filePath);
@@ -106,7 +106,8 @@ export async function PATCH(
         amount: classData.price,
         date: now,
         status: 'paid',
-        notes: 'Pago inicial de inscripción'
+        notes: 'Pago inicial de inscripción',
+        paymentDueDate: now
       }];
     }
     

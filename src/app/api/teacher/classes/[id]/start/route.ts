@@ -67,7 +67,8 @@ export async function POST(
               amount: enrollment.paymentAmount || classData.price,
               date: enrollment.updatedAt || new Date(),
               status: 'paid',
-              notes: 'Pago inicial de inscripción'
+              notes: 'Pago inicial de inscripción',
+              paymentDueDate: startDate
             }]
           }
         }

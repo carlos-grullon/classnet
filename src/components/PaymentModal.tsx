@@ -27,6 +27,7 @@ interface PaymentModalProps {
   enrollmentId: string;
   onPaymentSuccess: () => void;
   paymentType: 'enrollment' | 'monthly';
+  paymentId?: string; // ID del pago a actualizar (si existe)
 }
 
 export function PaymentModal({
@@ -37,13 +38,16 @@ export function PaymentModal({
   currency = 'RD$',
   enrollmentId,
   onPaymentSuccess,
-  paymentType
+  paymentType,
+  paymentId
 }: PaymentModalProps) {
   const [selectedBank, setSelectedBank] = useState<string>(bankDetails[0]?.id || '');
   const [paymentProofUrl, setPaymentProofUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewStep, setPreviewStep] = useState(false);
   
   // Referencia al input de archivo
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,8 +65,8 @@ export function PaymentModal({
       });
   };
 
-  // Manejar la subida de archivos
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Manejar la selección de archivos para vista previa
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -80,15 +84,30 @@ export function PaymentModal({
       return;
     }
 
+    // Crear URL para vista previa
+    setPaymentProofUrl(URL.createObjectURL(file));
+    setSelectedFile(file);
+    setPreviewStep(true);
+  };
+
+  // Manejar la subida del archivo al servidor
+  const handleFileUpload = async () => {
+    if (!selectedFile) return;
+
     setIsUploading(true);
     try {
       // Crear FormData para enviar el archivo
       const formData = new FormData();
-      formData.append('paymentProof', file);
+      formData.append('paymentProof', selectedFile);
       formData.append('notes', notes);
 
       // Agregar el tipo de pago al FormData
       formData.append('paymentType', paymentType);
+      
+      // Si estamos actualizando un pago existente, incluir su ID
+      if (paymentId) {
+        formData.append('paymentId', paymentId);
+      }
       
       // Enviar el archivo al servidor usando el endpoint actualizado
       const response = await fetch(`/api/student/enrollments/${enrollmentId}/payment-proof`, {
@@ -99,7 +118,6 @@ export function PaymentModal({
       const data = await response.json();
 
       if (data.success) {
-        setPaymentProofUrl(URL.createObjectURL(file));
         SuccessMsj('Comprobante subido correctamente');
         onPaymentSuccess();
         onClose();
@@ -111,6 +129,13 @@ export function PaymentModal({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  // Cancelar la vista previa y volver a seleccionar archivo
+  const cancelPreview = () => {
+    setPaymentProofUrl('');
+    setSelectedFile(null);
+    setPreviewStep(false);
   };
 
   // Abrir el selector de archivos
@@ -225,7 +250,7 @@ export function PaymentModal({
           </p>
 
           <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center">
-            {paymentProofUrl ? (
+            {paymentProofUrl && previewStep ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-center">
                   <div className="relative w-full h-48 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -237,8 +262,8 @@ export function PaymentModal({
                     />
                   </div>
                 </div>
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  ¡Comprobante cargado correctamente!
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  Vista previa del comprobante. Haz clic en "Enviar" para confirmar.
                 </p>
               </div>
             ) : (
@@ -258,7 +283,7 @@ export function PaymentModal({
                 <input
                   type="file"
                   ref={fileInputRef}
-                  onChange={handleFileUpload}
+                  onChange={handleFileSelect}
                   accept="image/jpeg,image/png,image/gif,application/pdf"
                   className="hidden"
                 />
@@ -281,20 +306,40 @@ export function PaymentModal({
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={isUploading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={triggerFileInput}
-              disabled={isUploading}
-              isLoading={isUploading}
-            >
-              {isUploading ? 'Subiendo...' : 'Subir Comprobante'}
-            </Button>
+            {previewStep ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={cancelPreview}
+                  disabled={isUploading}
+                >
+                  Cambiar imagen
+                </Button>
+                <Button
+                  onClick={handleFileUpload}
+                  disabled={isUploading}
+                  isLoading={isUploading}
+                >
+                  {isUploading ? 'Enviando...' : 'Enviar Comprobante'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isUploading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={triggerFileInput}
+                  disabled={isUploading}
+                >
+                  Seleccionar Archivo
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

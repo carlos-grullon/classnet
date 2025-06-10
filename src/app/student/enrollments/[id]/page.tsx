@@ -69,6 +69,7 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [currentPaymentType, setCurrentPaymentType] = useState<'enrollment' | 'monthly'>('enrollment');
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | undefined>(undefined);
   const enrollmentId = params.id;
 
   useEffect(() => {
@@ -334,9 +335,10 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
             <div className="md:col-span-6">
               <MonthlyPaymentSection 
                 enrollmentId={params.id} 
-                onOpenPaymentModal={() => {
+                onOpenPaymentModal={(paymentId) => {
                   // Abrir el modal de pago para pagos mensuales
                   setCurrentPaymentType('monthly');
+                  setCurrentPaymentId(paymentId); // Guardar el ID del pago si existe
                   setIsPaymentModalOpen(true);
                 }} 
               />
@@ -348,13 +350,17 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
       {/* Modal para realizar pago */}
       <PaymentModal
         isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
+        onClose={() => {
+          setIsPaymentModalOpen(false);
+          setCurrentPaymentId(undefined); // Limpiar el ID del pago al cerrar
+        }}
         bankDetails={bankDetails}
         paymentAmount={enrollment?.paymentAmount || 0}
         currency="RD$"
         enrollmentId={params.id}
         onPaymentSuccess={fetchEnrollmentDetails}
         paymentType={currentPaymentType}
+        paymentId={currentPaymentId} // Pasar el ID del pago si existe
       />
 
       {/* Modal para ver imagen ampliada */}

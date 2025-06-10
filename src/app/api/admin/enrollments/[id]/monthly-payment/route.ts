@@ -151,6 +151,7 @@ export async function PATCH(
       const nextPaymentDate = addMonths(paymentDueDate, 1);
 
       updateData.nextPaymentDueDate = nextPaymentDate;
+      updateData[`paymentsMade.${paymentIndex}.paymentDueDate`] = paymentDueDate;
 
       // Enviar correo de confirmación de pago
       try {
