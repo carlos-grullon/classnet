@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { getUserId } from '@/utils/Tools.ts';
 import { ObjectId } from 'mongodb';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -121,7 +121,35 @@ export async function POST(
       
       // Verificar si estamos actualizando un pago existente o creando uno nuevo
       if (paymentId) {
-        // Actualizar un pago existente
+        // Buscar el pago existente para obtener la URL del comprobante anterior
+        const existingPayment = await enrollmentsCollection.findOne(
+          { 
+            _id: new ObjectId(enrollmentId),
+            'paymentsMade._id': paymentId 
+          },
+          { projection: { 'paymentsMade.$': 1 } }
+        );
+        
+        // Si encontramos el pago y tiene un comprobante, intentamos eliminarlo
+        if (existingPayment && 
+            existingPayment.paymentsMade && 
+            existingPayment.paymentsMade[0] && 
+            existingPayment.paymentsMade[0].proofUrl) {
+          
+          const oldProofUrl = existingPayment.paymentsMade[0].proofUrl;
+          const oldFilePath = path.join(process.cwd(), 'public', oldProofUrl);
+          
+          try {
+            // Intentar eliminar el archivo anterior
+            await unlink(oldFilePath);
+            console.log(`Archivo anterior eliminado: ${oldFilePath}`);
+          } catch (error: any) {
+            // Si hay un error al eliminar (por ejemplo, el archivo no existe), lo registramos pero continuamos
+            console.error(`Error al eliminar archivo anterior: ${error?.message || 'Error desconocido'}`);
+          }
+        }
+        
+        // Actualizar el registro con la nueva URL del comprobante
         await enrollmentsCollection.updateOne(
           { 
             _id: new ObjectId(enrollmentId),
