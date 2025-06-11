@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal } from '@/components';
-import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye } from 'react-icons/fi';
+import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye, FiRefreshCw } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx';
 import Image from 'next/image';
 
@@ -195,7 +195,19 @@ export default function AdminEnrollments() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Gestión de Inscripciones</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Inscripciones</h1>
+          <Button
+            onClick={fetchEnrollments}
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            {isLoading ? 'Actualizando...' : 'Actualizar'}
+            <span className="ml-2">
+            <FiRefreshCw className={isLoading ? 'animate-spin' : ''} />
+            </span>
+          </Button>
+        </div>
         
         {/* Filtros */}
         <div className="mb-6">
