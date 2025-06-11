@@ -76,7 +76,7 @@ export async function POST(
     // Lógica diferente según el tipo de pago
     if (paymentType === 'enrollment') {
       // Verificar que la inscripción esté en estado pendiente de pago o con comprobante enviado
-      if (enrollment.status !== 'pending_payment' && enrollment.status !== 'proof_submitted') {
+      if (enrollment.status !== 'pending_payment' && enrollment.status !== 'proof_submitted' && enrollment.status !== 'proof_rejected') {
         return NextResponse.json({ 
           error: 'La inscripción no está en un estado válido para enviar comprobante',
           status: enrollment.status
@@ -84,7 +84,7 @@ export async function POST(
       }
       
       // Si ya existe un comprobante anterior, intentar eliminarlo
-      if (enrollment.status === 'proof_submitted' && enrollment.paymentProof) {
+      if ((enrollment.status === 'proof_submitted' || enrollment.status === 'proof_rejected') && enrollment.paymentProof) {
         const oldProofUrl = enrollment.paymentProof;
         const oldFilePath = path.join(process.cwd(), 'public', oldProofUrl);
         
