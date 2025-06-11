@@ -159,6 +159,8 @@ export async function POST(
             $set: {
               'paymentsMade.$.proofUrl': relativePath,
               'paymentsMade.$.notes': notes,
+              'paymentsMade.$.status': 'pending',
+              'paymentsMade.$.adminNotes': '',
               'paymentsMade.$.updatedAt': now
             }
           }

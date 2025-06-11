@@ -203,8 +203,8 @@ export async function PATCH(
       { $set: updateData }
     );
 
-    // Eliminar el archivo de comprobante si el pago fue aprobado o rechazado
-    if (status === 'approved' || status === 'rejected') {
+    // Eliminar el archivo de comprobante si el pago fue aprobado
+    if (status === 'approved') {
       await deletePaymentProofFile(proofUrl);
     }
 

@@ -12,9 +12,10 @@ interface Payment {
   _id: string;
   amount: number;
   date: string;
-  status: 'paid' | 'pending' | 'overdue';
+  status: 'paid' | 'pending' | 'overdue' | 'rejected' | 'suspended_due_to_non_payment';
   proofUrl?: string;
   notes?: string;
+  adminNotes?: string; // Notas del administrador (razón de rechazo)
   approvedAt?: string;
   rejectedAt?: string;
   paymentDueDate: string;
@@ -43,7 +44,9 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
   const [isLoading, setIsLoading] = useState(true);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedPaymentProof, setSelectedPaymentProof] = useState('');
-  
+  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('');
+  const [selectedAdminNotes, setSelectedAdminNotes] = useState<string>('');
+
   // Cargar datos de pagos mensuales
   React.useEffect(() => {
     if (enrollmentId) {
@@ -69,9 +72,11 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
   };
 
   // Abrir modal para ver imagen
-  const openImageModal = (imageUrl: string) => {
+  const openImageModal = (imageUrl: string, status: string = '', adminNotes: string = '') => {
     console.log('Abriendo imagen:', imageUrl);
     setSelectedPaymentProof(imageUrl);
+    setSelectedPaymentStatus(status);
+    setSelectedAdminNotes(adminNotes);
     setIsImageModalOpen(true);
   };
 
@@ -83,6 +88,10 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
       case 'pending':
         return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
       case 'overdue':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      case 'rejected':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      case 'suspended_due_to_non_payment':
         return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       default:
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
@@ -98,6 +107,10 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
         return <FiClock className="mr-2" />;
       case 'overdue':
         return <FiAlertTriangle className="mr-2" />;
+      case 'rejected':
+        return <FiAlertTriangle className="mr-2" />;
+      case 'suspended_due_to_non_payment':
+        return <FiAlertTriangle className="mr-2" />;
       default:
         return <FiClock className="mr-2" />;
     }
@@ -112,6 +125,10 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
         return 'Pendiente';
       case 'overdue':
         return 'Vencido';
+      case 'rejected':
+        return 'Rechazado';
+      case 'suspended_due_to_non_payment':
+        return 'Suspuesto por no pago';
       default:
         return 'Desconocido';
     }
@@ -205,12 +222,12 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          {payment.status === 'pending' ? (
+                          {(payment.status === 'pending' || payment.status === 'rejected') ? (
                             <div className="flex space-x-2">
                               {payment.proofUrl ? (
                                 <>
                                   <button
-                                    onClick={() => openImageModal(payment.proofUrl!)}
+                                    onClick={() => openImageModal(payment.proofUrl!, payment.status, payment.adminNotes || '')}
                                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
                                   >
                                     Ver comprobante
@@ -269,6 +286,14 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
             
             {/* Título */}
             <h3 className="text-lg font-semibold mb-4 text-center">Comprobante de Pago</h3>
+            
+            {/* Notas del administrador si el comprobante fue rechazado */}
+            {selectedPaymentStatus === 'rejected' && selectedAdminNotes && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
+                <h4 className="font-medium text-red-700 dark:text-red-400 mb-1">Motivo del rechazo:</h4>
+                <p className="text-red-600 dark:text-red-300">{selectedAdminNotes}</p>
+              </div>
+            )}
             
             {/* Imagen */}
             <div className="flex justify-center">
