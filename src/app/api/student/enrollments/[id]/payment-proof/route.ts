@@ -75,12 +75,27 @@ export async function POST(
     
     // Lógica diferente según el tipo de pago
     if (paymentType === 'enrollment') {
-      // Verificar que la inscripción esté en estado pendiente de pago
-      if (enrollment.status !== 'pending_payment') {
+      // Verificar que la inscripción esté en estado pendiente de pago o con comprobante enviado
+      if (enrollment.status !== 'pending_payment' && enrollment.status !== 'proof_submitted') {
         return NextResponse.json({ 
-          error: 'La inscripción no está en estado pendiente de pago',
+          error: 'La inscripción no está en un estado válido para enviar comprobante',
           status: enrollment.status
         }, { status: 400 });
+      }
+      
+      // Si ya existe un comprobante anterior, intentar eliminarlo
+      if (enrollment.status === 'proof_submitted' && enrollment.paymentProof) {
+        const oldProofUrl = enrollment.paymentProof;
+        const oldFilePath = path.join(process.cwd(), 'public', oldProofUrl);
+        
+        try {
+          // Intentar eliminar el archivo anterior
+          await unlink(oldFilePath);
+          console.log(`Archivo anterior eliminado: ${oldFilePath}`);
+        } catch (error: any) {
+          // Si hay un error al eliminar, lo registramos pero continuamos
+          console.error(`Error al eliminar archivo anterior: ${error?.message || 'Error desconocido'}`);
+        }
       }
 
       // Actualizar inscripción con comprobante de pago

@@ -311,7 +311,23 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
           {/* Comprobante de pago (si existe) */}
           {enrollment.paymentProof && (
             <Card className="p-6 md:col-span-6">
-              <h2 className="text-lg font-semibold mb-4">Comprobante de Pago</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Comprobante de Pago</h2>
+                {enrollment.status === 'proof_submitted' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setCurrentPaymentType('enrollment');
+                      setIsPaymentModalOpen(true);
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <FiUpload className="h-4 w-4" />
+                    Cambiar comprobante
+                  </Button>
+                )}
+              </div>
               <div className="flex flex-col items-center">
                 <div
                   className="relative w-full h-48 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden cursor-pointer"
