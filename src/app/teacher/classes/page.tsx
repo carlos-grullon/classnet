@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Badge } from '@/components';
-import { FiClock, FiCheckCircle, FiXCircle, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { FiClock, FiBookOpen, FiXCircle, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
 
@@ -82,7 +82,6 @@ export default function MisClases() {
     setStartClassId(classId);
     
     try {
-      console.log('entramos a inicar la clase');
       const response = await FetchData(`/api/teacher/classes/${classId}/start`, {}, 'POST');
       if (response.success) {
         SuccessMsj('Clase iniciada correctamente');
@@ -267,6 +266,17 @@ export default function MisClases() {
                           Iniciar Clase
                         </>
                       )}
+                    </Button>
+                  )}
+                  
+                  {classItem.status === 'in_progress' && (
+                    <Button 
+                      variant="primary"
+                      onClick={() => router.push(`/teacher/classes/${classItem._id}/virtual-classroom`)}
+                      className="flex items-center"
+                    >
+                      <FiBookOpen className="mr-2" />
+                      Aula Virtual
                     </Button>
                   )}
                 </div>
