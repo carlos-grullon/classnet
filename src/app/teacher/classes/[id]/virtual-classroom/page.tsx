@@ -86,11 +86,17 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                 setActiveId={setActiveId}
                 className={`px-4 py-2 font-medium text-sm focus:outline-none ${activeId === 'week' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`}
               >
-                <div className="relative">
+                <div className="relative flex items-center">
+                  <span 
+                    className="mr-7 cursor-pointer"
+                    onClick={() => setActiveId('week')}
+                  >
+                    Semana {selectedWeek}
+                  </span>
                   <Select 
                     value={selectedWeek.toString()}
                     onChange={handleWeekChange}
-                    className="pr-3"
+                    className="w-5 opacity-0 absolute right-0"
                   >
                     {[1, 2, 3].map(week => (
                       <SelectItem key={week} value={week.toString()}>
@@ -98,6 +104,11 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                       </SelectItem>
                     ))}
                   </Select>
+                  <div className="pointer-events-none absolute right-0">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </Tab>
               <Tab 
