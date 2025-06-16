@@ -20,4 +20,5 @@ export * from './SubjectSelect';
 export * from './Badge';
 export * from './MonthlyPaymentSection';
 export * from './PaymentModal';
-
+export * from './FileUploader';
+export * from './AudioRecorder';

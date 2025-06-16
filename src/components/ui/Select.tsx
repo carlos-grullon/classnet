@@ -13,7 +13,7 @@ export function Select({ value, onChange, children, className }: SelectProps) {
       value={value} 
       onChange={onChange}
       className={[
-        'px-4 py-2 font-medium text-sm focus:outline-none',
+        'pr-5 py-2 font-medium text-sm focus:outline-none',
         'bg-transparent border-none cursor-pointer',
         'text-inherit', 
         className
