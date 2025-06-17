@@ -8,8 +8,38 @@ import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components';
-import { FiUpload } from 'react-icons/fi';
 import { FileUploader } from '@/components/FileUploader';
+import Link from 'next/link';
+import { FiFileText, FiImage, FiFile, FiYoutube, FiLink } from 'react-icons/fi';
+
+interface SupportMaterial {
+  id: string;
+  description: string;
+  link: string;
+  fileName?: string;
+}
+
+// Función para obtener el icono según el tipo de archivo
+const getFileIcon = (fileName: string) => {
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  if (!extension) return <FiLink className="mr-2 text-4xl" />;
+  
+  switch(extension) {
+    case 'pdf':
+      return <FiFileText className="mr-2 text-red-500 text-4xl" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+      return <FiImage className="mr-2 text-blue-500 text-4xl" />;
+    case 'doc':
+    case 'docx':
+      return <FiFileText className="mr-2 text-blue-600 text-4xl" />;
+    default:
+      return <FiFile className="mr-2 text-4xl" />;
+  }
+};
 
 export default function VirtualClassroom({ params }: { params: { classId: string } }) {
   const classId = params.classId;
@@ -20,7 +50,7 @@ export default function VirtualClassroom({ params }: { params: { classId: string
     weekContent: {
       meetingLink: '',
       recordingLink: '',
-      supportMaterials: [] as Array<{ id: string, description: string, link: string }>,
+      supportMaterials: [] as SupportMaterial[],
       documents: [] as string[],
       assignment: {
         createdAt: new Date().toISOString().split('T')[0],
@@ -348,9 +378,16 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                   <div className="space-y-3">
                     {content.weekContent.supportMaterials.map(material => (
                       <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                        <div>
-                          <p className="font-medium">{material.description}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{material.link}</p>
+                        <div className="flex items-center gap-2">
+                          {getFileIcon(material.link)}
+                          <div>
+                            <p className="font-medium">{material.description}</p>
+                            {material.fileName && (
+                              <Link href={material.link} target="_blank" className="text-blue-500 hover:underline text-sm">
+                                {material.fileName}
+                              </Link>
+                            )}
+                          </div>
                         </div>
                         {isEditingWeek && (
                           <Button size="sm" onClick={() => handleRemoveSupportMaterial(material.id)}>
@@ -467,9 +504,20 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                       {
                         id: Date.now().toString(),
                         description: materialData.title,
-                        link: materialData.link
+                        link: materialData.link,
+                        fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
                       }
                     ]
+                  }
+                });
+                setContent({
+                  ...content,
+                  weekContent: {
+                    ...content.weekContent,
+                    supportMaterials: content.weekContent.supportMaterials.map(m => ({
+                      ...m,
+                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                    }))
                   }
                 });
                 setMaterialData({ link: '', title: '', file: null });
@@ -513,7 +561,7 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                 onChange={(e) => setMaterialData({...materialData, title: e.target.value})} 
               />
               <FileUploader 
-                onUploadSuccess={(url) => {
+                onUploadSuccess={({ url, fileName }) => {
                   setContent({
                     ...content,
                     weekContent: {
@@ -522,8 +570,9 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                         ...content.weekContent.supportMaterials,
                         {
                           id: Date.now().toString(),
-                          description: materialData.title,
-                          link: url
+                          description: materialData.title || fileName || 'Documento',
+                          link: url,
+                          fileName: fileName
                         }
                       ]
                     }
@@ -557,6 +606,16 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                       link: materialData.link
                     }
                   ]
+                }
+              });
+              setContent({
+                ...content,
+                weekContent: {
+                  ...content.weekContent,
+                  supportMaterials: content.weekContent.supportMaterials.map(m => ({
+                    ...m,
+                    fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                  }))
                 }
               });
               setMaterialData({ link: '', title: '', file: null });

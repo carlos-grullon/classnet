@@ -5,7 +5,7 @@ import { FiUpload, FiX, FiCheckCircle, FiAlertTriangle, FiFileText, FiImage } fr
 import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface FileUploaderProps {
-  onUploadSuccess?: (url: string) => void;
+  onUploadSuccess?: (result: { url: string, fileName: string }) => void;
 }
 
 export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
@@ -108,7 +108,10 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
         if (inputRef.current) inputRef.current.value = '';
         // Ejecutar callback si existe
         if (onUploadSuccess) {
-          onUploadSuccess(data.url);
+          onUploadSuccess({
+            url: data.url,
+            fileName: file.name
+          });
         }
       } else {
         throw new Error(data.error || 'Error al subir el archivo');
