@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 
-export interface InputProps {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id?: string;
   name?: string;
-  label?: string;
+  label?: string | React.ReactNode;
   type?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -21,6 +21,7 @@ export interface InputProps {
   readOnly?: boolean;
   icon?: React.ReactNode;
   onClick?: () => void;
+  containerClassName?: string;
 }
 
 const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void) => {
@@ -35,31 +36,33 @@ const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, onChange?: (
   }
 };
 
-export function Input({
+export const Input = forwardRef<HTMLInputElement, InputProps>(({
   id,
-  name = id || '',
+  name,
   label,
   type = 'text',
-  value = '',
-  onChange = () => {},
-  onKeyUp = () => {},
+  value,
+  onChange,
+  onKeyUp,
   error,
-  placeholder = '',
-  disabled = false,
-  autoFocus = false,
-  min = '',
-  step = '',
-  className = '',
-  readOnly = false,
+  placeholder,
+  disabled,
+  min,
+  step,
+  className,
+  autoFocus,
+  readOnly,
   icon,
   onClick,
-}: InputProps) {
+  containerClassName = '',
+  ...props
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const inputType = type === 'password' && showPassword ? 'text' : type;
 
   return (
-    <div className="flex flex-col gap-1 mb-4">
+    <div className={`flex flex-col gap-1 mb-4 ${containerClassName}`}>
       {label && (
         <label htmlFor={id} className="block text-sm font-medium mb-1.5">
           {label}
@@ -81,6 +84,7 @@ export function Input({
           placeholder={placeholder}
           min={min}
           step={step}
+          ref={ref}
           className={`
             block w-full px-4 py-2.5 rounded-lg border transition-colors duration-200
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
@@ -89,6 +93,7 @@ export function Input({
             ${isFocused ? 'ring-2 ring-blue-500 outline-none' : ''}
             ${className}
           `}
+          {...props}
         />
         {type === 'password' && (
           <button
@@ -123,4 +128,6 @@ export function Input({
       )}
     </div>
   );
-}
+});
+
+Input.displayName = 'Input';

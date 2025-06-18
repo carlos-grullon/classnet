@@ -7,10 +7,11 @@ import { FiEdit, FiSave } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
-import { Input } from '@/components';
+import { Input, Textarea } from '@/components';
+import { DateInput, ToggleSwitch } from '@/components';
 import { FileUploader } from '@/components/FileUploader';
 import Link from 'next/link';
-import { FiFileText, FiImage, FiFile, FiYoutube, FiLink } from 'react-icons/fi';
+import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2 } from 'react-icons/fi';
 
 interface SupportMaterial {
   id: string;
@@ -19,13 +20,37 @@ interface SupportMaterial {
   fileName?: string;
 }
 
+interface Assignment {
+  createdAt: string;
+  updatedAt: string;
+  dueDate: string;
+  description: string;
+  hasAudio: boolean;
+  fileLink: string;
+  fileName: string;
+}
+
+interface WeekContent {
+  meetingLink: string;
+  recordingLink: string;
+  supportMaterials: SupportMaterial[];
+  assignment: Assignment | null;
+}
+
+interface VirtualClassroomContent {
+  presentationContent: string;
+  whatsappLink: string;
+  materialLink: string;
+  weekContent: WeekContent;
+}
+
 // Función para obtener el icono según el tipo de archivo
 const getFileIcon = (fileName: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase();
-  
+
   if (!extension) return <FiLink className="mr-2 text-4xl" />;
-  
-  switch(extension) {
+
+  switch (extension) {
     case 'pdf':
       return <FiFileText className="mr-2 text-red-500 text-4xl" />;
     case 'jpg':
@@ -41,9 +66,9 @@ const getFileIcon = (fileName: string) => {
   }
 };
 
-export default function VirtualClassroom({ params }: { params: { classId: string } }) {
-  const classId = params.classId;
-  const [content, setContent] = useState({
+export default function VirtualClassroom({ params }: { params: { id: string } }) {
+  const classId = params.id;
+  const [content, setContent] = useState<VirtualClassroomContent>({
     presentationContent: '',
     whatsappLink: '',
     materialLink: '',
@@ -51,15 +76,7 @@ export default function VirtualClassroom({ params }: { params: { classId: string
       meetingLink: '',
       recordingLink: '',
       supportMaterials: [] as SupportMaterial[],
-      documents: [] as string[],
-      assignment: {
-        createdAt: new Date().toISOString().split('T')[0],
-        updatedAt: new Date().toISOString().split('T')[0],
-        dueDate: '',
-        description: '',
-        hasAudio: false,
-        fileLink: ''
-      }
+      assignment: null
     }
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
@@ -74,6 +91,20 @@ export default function VirtualClassroom({ params }: { params: { classId: string
     file: null as File | null
   });
   const [isEditingWeek, setIsEditingWeek] = useState(false);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [assignmentForm, setAssignmentForm] = useState<{
+    dueDate: string;
+    description: string;
+    hasAudio: boolean;
+    fileLink: string;
+    fileName: string;
+  }>({
+    dueDate: '',
+    description: '',
+    hasAudio: false,
+    fileLink: '',
+    fileName: ''
+  });
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -103,15 +134,7 @@ export default function VirtualClassroom({ params }: { params: { classId: string
               meetingLink: '',
               recordingLink: '',
               supportMaterials: [],
-              documents: [],
-              assignment: {
-                createdAt: new Date().toISOString().split('T')[0],
-                updatedAt: new Date().toISOString().split('T')[0],
-                dueDate: '',
-                description: '',
-                hasAudio: false,
-                fileLink: ''
-              }
+              assignment: data.assignment || null
             }
           });
         }
@@ -179,6 +202,35 @@ export default function VirtualClassroom({ params }: { params: { classId: string
         supportMaterials: content.weekContent.supportMaterials.filter(m => m.id !== id)
       }
     });
+  };
+
+  const handleAddAssignment = () => {
+    const updatedContent = {
+      ...content,
+      weekContent: {
+        ...content.weekContent,
+        assignment: {
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          dueDate: assignmentForm.dueDate,
+          description: assignmentForm.description,
+          hasAudio: assignmentForm.hasAudio,
+          fileLink: assignmentForm.fileLink,
+          fileName: assignmentForm.fileName
+        }
+      }
+    };
+    setContent(updatedContent);
+    SuccessMsj('Asignación guardada localmente');
+    setIsAssignmentModalOpen(false);
+  };
+
+  const handleAssignmentFileUpload = (result: { url: string; fileName: string }) => {
+    setAssignmentForm(prev => ({
+      ...prev,
+      fileLink: result.url,
+      fileName: result.fileName
+    }));
   };
 
   return (
@@ -376,71 +428,88 @@ export default function VirtualClassroom({ params }: { params: { classId: string
                     )}
                   </div>
                   <div className="space-y-3">
-                    {content.weekContent.supportMaterials.map(material => (
-                      <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                        <div className="flex items-center gap-2">
-                          {getFileIcon(material.link)}
-                          <div>
-                            <p className="font-medium">{material.description}</p>
-                            {material.fileName && (
-                              <Link href={material.link} target="_blank" className="text-blue-500 hover:underline text-sm">
-                                {material.fileName}
-                              </Link>
-                            )}
+                    {content.weekContent.supportMaterials.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-4">
+                        <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
+                      </div>
+                    ) : (
+                      content.weekContent.supportMaterials.map(material => (
+                        <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                          <div className="flex items-center gap-2">
+                            {getFileIcon(material.link)}
+                            <div>
+                              <p className="font-medium">{material.description}</p>
+                              {material.fileName && (
+                                <Link href={material.link} target="_blank" className="text-blue-500 hover:underline text-sm">
+                                  {material.fileName}
+                                </Link>
+                              )}
+                            </div>
                           </div>
+                          {isEditingWeek && (
+                            <Button size="sm" onClick={() => handleRemoveSupportMaterial(material.id)}>
+                              Eliminar
+                            </Button>
+                          )}
                         </div>
-                        {isEditingWeek && (
-                          <Button size="sm" onClick={() => handleRemoveSupportMaterial(material.id)}>
-                            Eliminar
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {content.weekContent.documents.map((doc, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                        <span className="text-gray-600 dark:text-gray-300">{doc}</span>
-                        {isEditingWeek && (
-                          <Button size="sm" onClick={() => {
-                            setContent({
-                              ...content,
-                              weekContent: {
-                                ...content.weekContent,
-                                documents: content.weekContent.documents.filter((_, i) => i !== index)
-                              }
-                            });
-                          }}>
-                            Eliminar
-                          </Button>
-                        )}
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
                 {/* Sección Asignación */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    Asignación
-                  </h3>
                   <div className="space-y-3">
-                    <p className="text-gray-600 dark:text-gray-300">Entrega: {content.weekContent.assignment.dueDate}</p>
-                    <Input
-                      label="Descripción de la asignación"
-                      value={content.weekContent.assignment.description}
-                      onChange={(e) => setContent(prevState => ({ ...prevState, weekContent: { ...prevState.weekContent, assignment: { ...prevState.weekContent.assignment, description: e.target.value } } }))}
-                    />
-                    <Button
-                      onClick={handleSaveWeekContent}
-                      disabled={isSaving}
-                      className="flex items-center gap-2"
-                    >
-                      <FiSave />
-                      {isSaving ? 'Guardando...' : 'Guardar'}
-                    </Button>
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                        Asignación
+                      </h3>
+                      {isEditingWeek && (
+                        <Button size="sm" variant="outline" onClick={() => setIsAssignmentModalOpen(true)}>
+                          <FiEdit className="mr-1" /> Editar
+                        </Button>
+                      )}
+                    </div>
+                    {content.weekContent.assignment ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm text-gray-500">Fecha de Entrega:</span>
+                          <span className="font-semibold">
+                            {content.weekContent.assignment.dueDate}
+                          </span>
+                        </div>
+                        {content.weekContent.assignment.fileLink && (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-sm text-gray-500">Archivo:</span>
+                            <Link
+                              href={content.weekContent.assignment.fileLink}
+                              target="_blank"
+                              className="text-blue-500 hover:underline"
+                            >
+                              {content.weekContent.assignment.fileName}
+                            </Link>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={content.weekContent.assignment.hasAudio}
+                            readOnly
+                            className="rounded text-blue-500"
+                          />
+                          <span className="text-sm">Incluye audio</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-2 py-4">
+                        <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">
+                          No hay asignación para esta semana
+                        </span>
+                      </div>
+                    )}
+
                   </div>
                 </div>
               </div>
@@ -477,15 +546,15 @@ export default function VirtualClassroom({ params }: { params: { classId: string
         title="Agregar Enlace de Material"
       >
         <div className="space-y-4">
-          <Input 
-            label="Título" 
-            value={materialData.title} 
-            onChange={(e) => setMaterialData({...materialData, title: e.target.value})} 
+          <Input
+            label="Título"
+            value={materialData.title}
+            onChange={(e) => setMaterialData({ ...materialData, title: e.target.value })}
           />
-          <Input 
-            label="Enlace" 
-            value={materialData.link} 
-            onChange={(e) => setMaterialData({...materialData, link: e.target.value})} 
+          <Input
+            label="Enlace"
+            value={materialData.link}
+            onChange={(e) => setMaterialData({ ...materialData, link: e.target.value })}
           />
 
           <div className="flex justify-end gap-2 pt-2">
@@ -493,35 +562,32 @@ export default function VirtualClassroom({ params }: { params: { classId: string
               Cancelar
             </Button>
             <Button onClick={() => {
-              if ((materialType === 'link' && materialData.link && materialData.title) || 
-                  (materialType === 'file' && materialData.link && materialData.title)) {
+              if ((materialType === 'link' && materialData.link && materialData.title) ||
+                (materialType === 'file' && materialData.link && materialData.title)) {
+                const newMaterial = {
+                  id: Date.now().toString(),
+                  description: materialData.title,
+                  link: materialData.link,
+                  fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
+                };
+                
                 setContent({
                   ...content,
                   weekContent: {
                     ...content.weekContent,
                     supportMaterials: [
-                      ...content.weekContent.supportMaterials,
-                      {
-                        id: Date.now().toString(),
-                        description: materialData.title,
-                        link: materialData.link,
-                        fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
-                      }
+                      ...content.weekContent.supportMaterials.map(m => ({
+                        ...m,
+                        fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                      })),
+                      newMaterial
                     ]
                   }
                 });
-                setContent({
-                  ...content,
-                  weekContent: {
-                    ...content.weekContent,
-                    supportMaterials: content.weekContent.supportMaterials.map(m => ({
-                      ...m,
-                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                    }))
-                  }
-                });
+                
                 setMaterialData({ link: '', title: '', file: null });
                 setMaterialType(null);
+                setIsAddMaterialModalOpen(false);
               }
             }}>
               Subir
@@ -542,25 +608,25 @@ export default function VirtualClassroom({ params }: { params: { classId: string
         <div className="space-y-4">
           {materialType === 'link' ? (
             <>
-              <Input 
-                label="Título" 
-                value={materialData.title} 
-                onChange={(e) => setMaterialData({...materialData, title: e.target.value})} 
+              <Input
+                label="Título"
+                value={materialData.title}
+                onChange={(e) => setMaterialData({ ...materialData, title: e.target.value })}
               />
-              <Input 
-                label="Enlace" 
-                value={materialData.link} 
-                onChange={(e) => setMaterialData({...materialData, link: e.target.value})} 
+              <Input
+                label="Enlace"
+                value={materialData.link}
+                onChange={(e) => setMaterialData({ ...materialData, link: e.target.value })}
               />
             </>
           ) : (
             <>
-              <Input 
-                label="Título" 
-                value={materialData.title} 
-                onChange={(e) => setMaterialData({...materialData, title: e.target.value})} 
+              <Input
+                label="Título"
+                value={materialData.title}
+                onChange={(e) => setMaterialData({ ...materialData, title: e.target.value })}
               />
-              <FileUploader 
+              <FileUploader
                 onUploadSuccess={({ url, fileName }) => {
                   setContent({
                     ...content,
@@ -592,38 +658,123 @@ export default function VirtualClassroom({ params }: { params: { classId: string
             Cancelar
           </Button>
           <Button onClick={() => {
-            if ((materialType === 'link' && materialData.link && materialData.title) || 
-                (materialType === 'file' && materialData.link && materialData.title)) {
+            if ((materialType === 'link' && materialData.link && materialData.title) ||
+              (materialType === 'file' && materialData.link && materialData.title)) {
+              const newMaterial = {
+                id: Date.now().toString(),
+                description: materialData.title,
+                link: materialData.link,
+                fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
+              };
+                
               setContent({
                 ...content,
                 weekContent: {
                   ...content.weekContent,
                   supportMaterials: [
-                    ...content.weekContent.supportMaterials,
-                    {
-                      id: Date.now().toString(),
-                      description: materialData.title,
-                      link: materialData.link
-                    }
+                    ...content.weekContent.supportMaterials.map(m => ({
+                      ...m,
+                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                    })),
+                    newMaterial
                   ]
                 }
               });
-              setContent({
-                ...content,
-                weekContent: {
-                  ...content.weekContent,
-                  supportMaterials: content.weekContent.supportMaterials.map(m => ({
-                    ...m,
-                    fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                  }))
-                }
-              });
+                
               setMaterialData({ link: '', title: '', file: null });
               setMaterialType(null);
             }
           }}>
             Subir
           </Button>
+        </div>
+      </Modal>
+
+      {/* Assignment Modal */}
+      <Modal
+        isOpen={isAssignmentModalOpen}
+        className='max-w-6xl'
+        onClose={() => setIsAssignmentModalOpen(false)}
+        title={content.weekContent.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-4">
+            <div className='max-w-sm flex-1'>
+              <DateInput
+                label={
+                  <div className="flex items-center gap-2">
+                    <FiCalendar className="text-blue-500 text-2xl" />
+                    <span>Fecha de Entrega</span>
+                  </div>
+                }
+                value={assignmentForm.dueDate}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAssignmentForm(prev => ({
+                  ...prev,
+                  dueDate: e.target.value
+                }))}
+              />
+            </div>
+              <ToggleSwitch
+                label={
+                  <div className="flex items-center gap-2">
+                    <FiVolume2 className="text-blue-500 text-2xl" />
+                    <span>Incluye audio</span>
+                  </div>
+                }
+                checked={assignmentForm.hasAudio}
+                onChange={(checked) => setAssignmentForm(prev => ({
+                  ...prev,
+                  hasAudio: checked
+                }))}
+                trueLabel="Si"
+                falseLabel="No"
+              />
+            
+          </div>
+
+          <Textarea
+            id="assignmentDescription"
+            label={
+              <div className="flex items-center gap-2">
+                <FiFileText className="text-blue-500 text-2xl" />
+                <span>Descripción</span>
+              </div>
+            }
+            value={assignmentForm.description}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setAssignmentForm(prev => ({
+              ...prev,
+              description: e.target.value
+            }))}
+            rows={10}
+          />
+
+          <FileUploader
+            onUploadSuccess={handleAssignmentFileUpload}
+          />
+
+          {assignmentForm.fileLink && (
+            <div className="flex items-center gap-2 text-sm">
+              <FiFileText className="text-blue-500 text-xl" />
+              <span className="text-gray-700 dark:text-gray-300">
+                {assignmentForm.fileName}
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsAssignmentModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAddAssignment}
+              disabled={!assignmentForm.dueDate || !assignmentForm.description}
+            >
+              Guardar
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

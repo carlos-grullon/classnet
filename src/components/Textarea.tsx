@@ -3,7 +3,7 @@
 interface TextareaProps {
   id: string;
   name?: string;
-  label?: string;
+  label?: string | React.ReactNode;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   rows?: number;
