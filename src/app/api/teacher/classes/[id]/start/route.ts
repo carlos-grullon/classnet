@@ -92,6 +92,15 @@ export async function POST(
       }
     }
 
+    // Crear el contenido de la clase
+    const classContentCollection = await getCollection('class_contents');
+    await classContentCollection.insertOne({
+      classId: classId,
+      whatsappLink: '',
+      resources: [],
+      createdAt: new Date()
+    });
+
     return NextResponse.json({
       success: true,
       message: 'Clase iniciada correctamente',

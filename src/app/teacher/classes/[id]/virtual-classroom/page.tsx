@@ -21,6 +21,7 @@ interface SupportMaterial {
 }
 
 interface Assignment {
+  id?: string;
   createdAt: string;
   updatedAt: string;
   dueDate: string;
@@ -31,6 +32,7 @@ interface Assignment {
 }
 
 interface WeekContent {
+  id?: string;
   meetingLink: string;
   recordingLink: string;
   supportMaterials: SupportMaterial[];
@@ -38,9 +40,7 @@ interface WeekContent {
 }
 
 interface VirtualClassroomContent {
-  presentationContent: string;
-  whatsappLink: string;
-  materialLink: string;
+  id?: string;
   weekContent: WeekContent;
 }
 
@@ -69,10 +69,8 @@ const getFileIcon = (fileName: string) => {
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
   const classId = params.id;
   const [content, setContent] = useState<VirtualClassroomContent>({
-    presentationContent: '',
-    whatsappLink: '',
-    materialLink: '',
     weekContent: {
+      id: '',
       meetingLink: '',
       recordingLink: '',
       supportMaterials: [] as SupportMaterial[],
@@ -93,6 +91,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   const [isEditingWeek, setIsEditingWeek] = useState(false);
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState<{
+    id?: string;
     dueDate: string;
     description: string;
     hasAudio: boolean;
@@ -131,6 +130,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
           setContent({
             ...data.data,
             weekContent: data.data.weekContent || {
+              id: '',
               meetingLink: '',
               recordingLink: '',
               supportMaterials: [],
@@ -153,10 +153,10 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     setIsSaving(true);
     try {
       const response = await FetchData(`/api/teacher/classes/${classId}/content?week=${selectedWeek}`,
-        { presentationContent: content.presentationContent }, 'POST');
+        { weekContent: content.weekContent }, 'POST');
 
       if (response.success) {
-        SuccessMsj('Presentación guardada correctamente');
+        SuccessMsj('Contenido de la semana guardado correctamente');
         setIsEditing(false);
       } else {
         ErrorMsj(response.error || 'Error al guardar');
