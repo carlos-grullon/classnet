@@ -41,15 +41,12 @@ export const ClassFormSchema = z.object({
   endTime: z.string().min(1, 'Se requiere hora de fin'),
   maxStudents: z.coerce.number().min(1, "Mínimo 1 estudiante").max(150, "Máximo 150 estudiantes"),
   currency: z.string().default('DOP'),
-  paymentFrequency: z.enum(['monthly', 'bimonthly', 'quarterly', 'semiannual', 'annual']).default('monthly'),
-  paymentDay: z.number().min(1).max(31).default(30),
-  enrollmentFee: z.number().min(0).default(0),
-  description: z.string().optional()
+  description: z.string().optional(),
+  durationWeeks: z.number().min(1, "Mínimo 1 semana").max(24, "Máximo 24 semanas").default(12)
 });
 
 // Definición explícita del tipo para React Hook Form
-// Esto hace que los campos con valores por defecto sean explícitamente opcionales
-export type ClassFormValues = {
+export interface ClassFormValues {
   subject: { _id: string; name: string };
   price: number;
   level: string;
@@ -58,8 +55,6 @@ export type ClassFormValues = {
   endTime: string;
   maxStudents: number;
   currency?: string;
-  paymentFrequency?: 'monthly' | 'bimonthly' | 'quarterly' | 'semiannual' | 'annual';
-  paymentDay?: number;
-  enrollmentFee?: number;
   description?: string;
-};
+  durationWeeks?: number;
+}

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { mongoTimeToTimeString12h } from "@/utils/Tools.ts";
 import { getUserId } from "@/utils/Tools.ts";
 import { timeStringToMongoTime } from "@/utils/Tools.ts";
-import { ClassSchema, ClassFormValues } from "@/types/Class";
+import { ClassFormValues } from "@/types/Class";
 
 export async function GET(request: NextRequest) {
     try {
@@ -109,15 +109,13 @@ export async function POST(request: NextRequest) {
             endTime: timeStringToMongoTime(classData.endTime),
             selectedDays: classData.selectedDays,
             maxStudents: classData.maxStudents,
+            durationWeeks: classData.durationWeeks,
             price: classData.price,
             level: classData.level,
             status: 'ready_to_start',
             created_at: new Date(),
             updated_at: new Date(),
             currency: classData.currency,
-            paymentFrequency: classData.paymentFrequency,
-            paymentDay: classData.paymentDay,
-            enrollmentFee: classData.enrollmentFee
         });
         
         if (!insertedClass.insertedId) {

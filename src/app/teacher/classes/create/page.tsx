@@ -9,28 +9,26 @@ import { FiX, FiSave, FiBookOpen } from 'react-icons/fi';
 import { Class } from '@/interfaces';
 
 export default function TeacherClasses() {
-  
+
   const form = useForm<ClassFormValues>({
     resolver: zodResolver(ClassFormSchema),
     defaultValues: {
       subject: { _id: '', name: '' },
-      price: 0, 
-      level: '', 
-      selectedDays: [], 
-      startTime: '', 
-      endTime: '', 
+      price: 0,
+      level: '',
+      selectedDays: [],
+      startTime: '',
+      endTime: '',
       maxStudents: 30,
       currency: 'DOP',
-      paymentFrequency: 'monthly',
-      paymentDay: 30,
-      enrollmentFee: 0,
-      description: ''
+      description: '',
+      durationWeeks: 16
     }
   });
-  
-  const { 
-    handleSubmit, 
-    formState: { errors }, 
+
+  const {
+    handleSubmit,
+    formState: { errors },
     setValue,
     reset,
     control
@@ -45,10 +43,10 @@ export default function TeacherClasses() {
         const data = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
         if (data) {
           setClasses(data.classes || []);
-            if (data.subjects.length > 0) {
-              setTeacherSubjects(data.subjects);
-            }
+          if (data.subjects.length > 0) {
+            setTeacherSubjects(data.subjects);
           }
+        }
       } catch (error: any) {
         ErrorMsj(error.message || 'Error al obtener los datos del perfil');
       }
@@ -62,7 +60,7 @@ export default function TeacherClasses() {
 
   const onSubmit = async (data: ClassFormValues) => {
     try {
-      const response = await FetchData('/api/classes', {classData: data}, 'POST');
+      const response = await FetchData('/api/classes', { classData: data }, 'POST');
       if (response.success) {
         setClasses([...classes, response.classCreated]);
         SuccessMsj(response.message);
@@ -85,15 +83,15 @@ export default function TeacherClasses() {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Gestión de Clases</h1>
 
-        <Card 
-          title="Crear Nueva Clase" 
+        <Card
+          title="Crear Nueva Clase"
           icon={<FiBookOpen className="text-blue-500" />}
           className="mb-8"
-          fullWidth = {true}
+          fullWidth={true}
         >
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid md:grid-cols-12 gap-6">
-              <div className="md:col-span-6">
+              <div className="md:col-span-5">
                 <Controller
                   name="subject"
                   control={control}
@@ -103,9 +101,9 @@ export default function TeacherClasses() {
                       label="Materia"
                       error={errors.subject?.message}
                       options={[
-                        { 
-                          value: { _id: '', name: '' }, 
-                          label: 'Seleccionar materia' 
+                        {
+                          value: { _id: '', name: '' },
+                          label: 'Seleccionar materia'
                         },
                         ...getTeacherSubjectOptions()
                       ]}
@@ -114,8 +112,8 @@ export default function TeacherClasses() {
                 />
               </div>
 
-              <div className="grid md:col-span-6 md:grid-cols-2 gap-4">
-                <div>
+              <div className="grid md:col-span-7 md:grid-cols-12 gap-4">
+                <div className="md:col-span-6">
                   <Controller
                     name="level"
                     control={control}
@@ -135,27 +133,45 @@ export default function TeacherClasses() {
                     )}
                   />
                 </div>
-                <div>
-                  <Controller
-                    name="price"
-                    control={control}
-                    render={({ field }) => (
-                      <CurrencyInput
-                        {...field}
-                        id="price"
-                        label="Precio"
-                        error={errors.price?.message}
-                        onChange={(value: number) => field.onChange(value)}
-                      />
-                    )}
-                  />
+                <div className="md:col-span-6 grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Controller
+                      name="price"
+                      control={control}
+                      render={({ field }) => (
+                        <CurrencyInput
+                          {...field}
+                          id="price"
+                          label="Precio"
+                          error={errors.price?.message}
+                          onChange={(value: number) => field.onChange(value)}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <Controller
+                      name="durationWeeks"
+                      control={control}
+                      render={({ field }) => (
+                        <NumericInput
+                          {...field}
+                          id="durationWeeks"
+                          label="Duración (Semanas)"
+                          min={1}
+                          max={24}
+                          error={errors.durationWeeks?.message}
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="md:col-span-4">
-                <DaysCheckboxGroup 
-                  selectedDays={form.getValues('selectedDays')} 
-                  onChange={handleDaysChange} 
+                <DaysCheckboxGroup
+                  selectedDays={form.getValues('selectedDays')}
+                  onChange={handleDaysChange}
                 />
                 {errors.selectedDays?.message && <p className="text-red-500 text-sm">{errors.selectedDays.message}</p>}
               </div>
@@ -233,7 +249,7 @@ export default function TeacherClasses() {
           </form>
         </Card>
 
-        <Card title="Clases Existentes" fullWidth = {true}>
+        <Card title="Clases Existentes" fullWidth={true}>
           {classes.length === 0 ? (
             <p className="text-gray-500 text-center py-4">
               No hay clases registradas. Crea tu primera clase.

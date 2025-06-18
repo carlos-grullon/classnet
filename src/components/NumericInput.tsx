@@ -7,7 +7,7 @@ interface NumericInputProps extends Omit<InputProps, 'onChange' | 'value'> {
   value?: number | null;
   min?: number;
   max?: number;
-  label?: string;
+  label?: string | React.ReactNode;
 }
 
 export const NumericInput = ({ onChange, value, min, max, label, ...props }: NumericInputProps) => {
@@ -32,9 +32,9 @@ export const NumericInput = ({ onChange, value, min, max, label, ...props }: Num
 
   return (
     <div className="space-y-1">
-      {label && <label className="block text-sm font-medium mb-1.5">{label}</label>}
       <Input
         {...props}
+        label={label}
         type="text"
         value={inputValue}
         onChange={handleChange}

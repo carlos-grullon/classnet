@@ -12,6 +12,7 @@ interface BaseClass {
   status: 'A' | 'I' | 'C';
   created_at: Date;
   updated_at: Date;
+  durationWeeks: number;
 }
 
 export interface Class extends BaseClass {
