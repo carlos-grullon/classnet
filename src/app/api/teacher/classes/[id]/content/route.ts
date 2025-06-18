@@ -1,47 +1,49 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
+import { ObjectId } from 'mongodb';
 
-interface IWeek {
-  [key: string]: any;
+interface SupportMaterial {
+  id: string;
+  description: string;
+  link: string;
+  fileName?: string;
 }
 
-interface IClassContent {
-  classId: string;
-  presentationContent: string;
+interface IClassContent{
+  welcomemessage: string;
   whatsappLink: string;
-  materialLink: string;
-  weeks: IWeek[];
-  createdAt?: Date;
-  updatedAt?: Date;
+  resources: SupportMaterial[];
 }
 
-export async function POST(
+interface ClassContent {
+  _id: string;
+  classId: string;
+  welcomemessage: string;
+  whatsappLink: string;
+  resources: SupportMaterial[];
+  updatedAt: Date;
+  durationWeeks: number;
+}
+
+export async function PATCH(
   request: Request,
   { params }: { params: { classId: string } }
 ) {
   try {
     const classId = params.classId;
-    const { presentationContent, whatsappLink, materialLink }: Partial<IClassContent> = await request.json();
-    
-    const updateData = {
-      presentationContent: presentationContent || '',
-      whatsappLink: whatsappLink || '',
-      materialLink: materialLink || '',
-      updatedAt: new Date()
-    };
+    const classContent: IClassContent = await request.json();
     
     const classContentCollection = await getCollection('class_contents');
     const result = await classContentCollection.updateOne(
       { classId: classId },
       {
-        $set: updateData,
-        $setOnInsert: {
-          classId: classId,
-          createdAt: new Date(),
-          weeks: []
+        $set: {
+          welcomemessage: classContent.welcomemessage,
+          whatsappLink: classContent.whatsappLink,
+          resources: classContent.resources,
+          updatedAt: new Date()
         }
-      },
-      { upsert: true }
+      }
     );
     
     return NextResponse.json({
@@ -60,26 +62,31 @@ export async function POST(
 }
 
 export async function GET(
-  request: Request, 
-  { params }: { params: { classId: string } }
+  request: Request,
+  { params }: { params: { id: string } }
 ) {
   try {
-    const classId = params.classId;
-    const classContentCollection = await getCollection('class_contents');
-    const content = await classContentCollection.findOne<IClassContent>({
-      classId: classId
+    const classId = params.id;
+    const classCollection = await getCollection('classes');
+    const classData = await classCollection.findOne({
+      _id: new ObjectId(classId)
     });
+    const classContentCollection = await getCollection('class_contents');
+    const content = await classContentCollection.findOne<ClassContent>({
+      classId: new ObjectId(classId)
+    });
+    
+  if (!content || !classData) {
+      throw new Error('Contenido no encontrado');
+    }
+
+    content._id = content._id.toString();
+    content.classId = content.classId.toString();
+    content.durationWeeks = classData.durationWeeks;
     
     return NextResponse.json({
       success: true,
-      data: content || {
-        classId: classId,
-        presentationContent: '',
-        whatsappLink: '',
-        materialLink: '',
-        weeks: [],
-        createdAt: new Date()
-      }
+      data: content
     });
     
   } catch (error: any) {

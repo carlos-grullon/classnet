@@ -7,8 +7,7 @@ import { FiEdit, FiSave } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
-import { Input, Textarea } from '@/components';
-import { DateInput, ToggleSwitch } from '@/components';
+import { Input, Textarea, DateInput, ToggleSwitch } from '@/components';
 import { FileUploader } from '@/components/FileUploader';
 import Link from 'next/link';
 import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2 } from 'react-icons/fi';
@@ -32,16 +31,20 @@ interface Assignment {
 }
 
 interface WeekContent {
-  id?: string;
+  _id?: string;
   meetingLink: string;
   recordingLink: string;
   supportMaterials: SupportMaterial[];
   assignment: Assignment | null;
 }
 
-interface VirtualClassroomContent {
-  id?: string;
-  weekContent: WeekContent;
+interface ClassContent {
+  _id: string;
+  classId: string;
+  welcomemessage: string;
+  whatsappLink: string;
+  resources: SupportMaterial[];
+  durationWeeks: number;
 }
 
 // Función para obtener el icono según el tipo de archivo
@@ -68,19 +71,27 @@ const getFileIcon = (fileName: string) => {
 
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
   const classId = params.id;
-  const [content, setContent] = useState<VirtualClassroomContent>({
-    weekContent: {
-      id: '',
-      meetingLink: '',
-      recordingLink: '',
-      supportMaterials: [] as SupportMaterial[],
-      assignment: null
+  const [content, setContent] = useState<ClassContent>(
+    {
+      _id: '',
+      classId: '',
+      whatsappLink: '',
+      welcomemessage: '',
+      resources: [],
+      durationWeeks: 0
     }
+  );
+  const [weekContent, setWeekContent] = useState<WeekContent>({
+    _id: '',
+    meetingLink: '',
+    recordingLink: '',
+    supportMaterials: [],
+    assignment: null
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
   const [materialType, setMaterialType] = useState<'link' | 'file' | null>(null);
   const [materialData, setMaterialData] = useState({
@@ -105,38 +116,24 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     fileName: ''
   });
 
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsAddMaterialModalOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // Cargar contenido existente
+  // Cargar contenido inicial
   useEffect(() => {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const data = await FetchData(`/api/teacher/classes/${classId}/content?week=${selectedWeek}`, {}, 'GET');
+        const data = await FetchData(`/api/teacher/classes/${classId}/content`, {}, 'GET');
+        console.log(data);
         if (data.success && data.data) {
-          setContent({
-            ...data.data,
-            weekContent: data.data.weekContent || {
-              id: '',
-              meetingLink: '',
-              recordingLink: '',
-              supportMaterials: [],
-              assignment: data.assignment || null
+          setContent(
+            {
+              _id: data.data._id,
+              classId: data.data.classId,
+              welcomemessage: data.data.welcomemessage,
+              whatsappLink: data.data.whatsappLink,
+              resources: data.data.resources,
+              durationWeeks: data.data.durationWeeks
             }
-          });
+          );
         }
       } catch (error) {
         ErrorMsj('Error cargando contenido');
@@ -147,13 +144,13 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     };
 
     fetchContent();
-  }, [classId, selectedWeek]);
+  }, [classId]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const response = await FetchData(`/api/teacher/classes/${classId}/content?week=${selectedWeek}`,
-        { weekContent: content.weekContent }, 'POST');
+        { weekContent: weekContent }, 'POST');
 
       if (response.success) {
         SuccessMsj('Contenido de la semana guardado correctamente');
@@ -173,7 +170,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     try {
       const response = await FetchData(
         `/api/teacher/classes/${classId}/week-content?week=${selectedWeek}`,
-        { weekContent: content.weekContent },
+        { weekContent: weekContent },
         'POST'
       );
 
@@ -195,32 +192,26 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   };
 
   const handleRemoveSupportMaterial = (id: string) => {
-    setContent({
-      ...content,
-      weekContent: {
-        ...content.weekContent,
-        supportMaterials: content.weekContent.supportMaterials.filter(m => m.id !== id)
-      }
+    setWeekContent({
+      ...weekContent,
+      supportMaterials: weekContent.supportMaterials.filter(m => m.id !== id)
     });
   };
 
   const handleAddAssignment = () => {
     const updatedContent = {
-      ...content,
-      weekContent: {
-        ...content.weekContent,
-        assignment: {
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+      ...weekContent,
+      assignment: {
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
           dueDate: assignmentForm.dueDate,
           description: assignmentForm.description,
           hasAudio: assignmentForm.hasAudio,
           fileLink: assignmentForm.fileLink,
           fileName: assignmentForm.fileName
         }
-      }
     };
-    setContent(updatedContent);
+    setWeekContent(updatedContent);
     SuccessMsj('Asignación guardada localmente');
     setIsAssignmentModalOpen(false);
   };
@@ -269,7 +260,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     onChange={handleWeekChange}
                     className="w-5 opacity-0 absolute right-0"
                   >
-                    {[1, 2, 3, 4].map(week => (
+                    {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
                       <SelectItem key={week} value={week.toString()}>
                         Semana {week}
                       </SelectItem>
@@ -346,7 +337,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     </Button>
                     <Button
                       onClick={() => {
-                        console.log('Formulario enviado:', content.weekContent);
+                        console.log('Formulario enviado:', weekContent);
                         setIsEditingWeek(false);
                       }}
                     >
@@ -372,13 +363,13 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                   </h3>
                   <div className="space-y-3">
                     <div className="font-medium text-center">Link de la reunión:</div>
-                    <Input value={content.weekContent.meetingLink}
+                    <Input value={weekContent.meetingLink}
                       disabled={!isEditingWeek}
-                      onChange={(e) => setContent({ ...content, weekContent: { ...content.weekContent, meetingLink: e.target.value } })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
                     <div className="font-medium text-center">Link de la grabación:</div>
-                    <Input value={content.weekContent.recordingLink}
+                    <Input value={weekContent.recordingLink}
                       disabled={!isEditingWeek}
-                      onChange={(e) => setContent({ ...content, weekContent: { ...content.weekContent, recordingLink: e.target.value } })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
                   </div>
                 </div>
 
@@ -389,7 +380,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       Material de Apoyo
                     </h3>
                     {isEditingWeek && (
-                      <div className="relative" ref={menuRef}>
+                      <div className="relative">
                         <Button
                           size="sm"
                           variant="outline"
@@ -428,13 +419,13 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     )}
                   </div>
                   <div className="space-y-3">
-                    {content.weekContent.supportMaterials.length === 0 ? (
+                    {weekContent.supportMaterials.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-2 py-4">
                         <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
                         <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
                       </div>
                     ) : (
-                      content.weekContent.supportMaterials.map(material => (
+                      weekContent.supportMaterials.map(material => (
                         <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
@@ -471,30 +462,30 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                         </Button>
                       )}
                     </div>
-                    {content.weekContent.assignment ? (
+                    {weekContent.assignment ? (
                       <div className="space-y-2">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-500">Fecha de Entrega:</span>
                           <span className="font-semibold">
-                            {content.weekContent.assignment.dueDate}
+                            {weekContent.assignment.dueDate}
                           </span>
                         </div>
-                        {content.weekContent.assignment.fileLink && (
+                        {weekContent.assignment.fileLink && (
                           <div className="flex flex-col gap-1">
                             <span className="text-sm text-gray-500">Archivo:</span>
                             <Link
-                              href={content.weekContent.assignment.fileLink}
+                              href={weekContent.assignment.fileLink}
                               target="_blank"
                               className="text-blue-500 hover:underline"
                             >
-                              {content.weekContent.assignment.fileName}
+                              {weekContent.assignment.fileName}
                             </Link>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={content.weekContent.assignment.hasAudio}
+                            checked={weekContent.assignment.hasAudio}
                             readOnly
                             className="rounded text-blue-500"
                           />
@@ -571,19 +562,17 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                   fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
                 };
                 
-                setContent({
-                  ...content,
-                  weekContent: {
-                    ...content.weekContent,
-                    supportMaterials: [
-                      ...content.weekContent.supportMaterials.map(m => ({
-                        ...m,
-                        fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                setWeekContent({
+                  ...weekContent,
+                  supportMaterials: [
+                    ...weekContent.supportMaterials.map(m => ({
+                      ...m,
+                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
                       })),
                       newMaterial
                     ]
                   }
-                });
+                );
                 
                 setMaterialData({ link: '', title: '', file: null });
                 setMaterialType(null);
@@ -628,12 +617,10 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
               />
               <FileUploader
                 onUploadSuccess={({ url, fileName }) => {
-                  setContent({
-                    ...content,
-                    weekContent: {
-                      ...content.weekContent,
-                      supportMaterials: [
-                        ...content.weekContent.supportMaterials,
+                  setWeekContent({
+                    ...weekContent,
+                    supportMaterials: [
+                      ...weekContent.supportMaterials,
                         {
                           id: Date.now().toString(),
                           description: materialData.title || fileName || 'Documento',
@@ -642,7 +629,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                         }
                       ]
                     }
-                  });
+                  );
                   setMaterialData({ link: '', title: '', file: null });
                   setMaterialType(null);
                   setIsAddMaterialModalOpen(false);
@@ -667,19 +654,17 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                 fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
               };
                 
-              setContent({
-                ...content,
-                weekContent: {
-                  ...content.weekContent,
-                  supportMaterials: [
-                    ...content.weekContent.supportMaterials.map(m => ({
+              setWeekContent({
+                ...weekContent,
+                supportMaterials: [
+                    ...weekContent.supportMaterials.map(m => ({
                       ...m,
                       fileName: m.fileName || m.link.split('/').pop() || 'Link'
                     })),
                     newMaterial
                   ]
                 }
-              });
+              );
                 
               setMaterialData({ link: '', title: '', file: null });
               setMaterialType(null);
@@ -695,7 +680,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         isOpen={isAssignmentModalOpen}
         className='max-w-6xl'
         onClose={() => setIsAssignmentModalOpen(false)}
-        title={content.weekContent.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
+        title={weekContent.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
       >
         <div className="space-y-4">
           <div className="flex items-start gap-4">
