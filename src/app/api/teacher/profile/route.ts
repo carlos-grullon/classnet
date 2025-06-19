@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
-import { getUserId, mongoTimeToTimeString12h } from "@/utils/Tools.ts";
+import { getUserId } from "@/utils/Tools.ts";
+import { mongoTimeToTimeString12h } from "@/utils/GeneralTools.ts";
 import { ObjectId } from "mongodb";
 
 interface SubjectRef {

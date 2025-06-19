@@ -3,7 +3,7 @@ import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import path from 'path';
 import { unlink } from 'fs/promises';
-import { mongoTimeToTimeString12h } from '@/utils/Tools.ts';
+import { mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
 import { addMonths } from 'date-fns';

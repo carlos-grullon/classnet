@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { getUserId } from '@/utils/Tools.ts';
 import { ObjectId } from 'mongodb';
-import { mongoTimeToTimeString12h } from '@/utils/Tools.ts';
+import { mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
 
 // GET /api/student/enrollments/[id] - Obtener detalles de una inscripción específica
 export async function GET(

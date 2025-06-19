@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCollection } from "@/utils/MongoDB";
 import { SearchClassSchema } from '@/validations/classSearch';
 import { z } from 'zod';
-import { mongoTimeToTimeString12h } from "@/utils/Tools.ts";
+import { mongoTimeToTimeString12h } from "@/utils/GeneralTools.ts";
 import { getUserId } from "@/utils/Tools.ts";
 import { timeStringToMongoTime } from "@/utils/Tools.ts";
 import { ClassFormValues } from "@/types/Class";
