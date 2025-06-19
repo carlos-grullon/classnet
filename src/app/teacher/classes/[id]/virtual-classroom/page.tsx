@@ -82,7 +82,12 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     }
   );
   const [weekContent, setWeekContent] = useState<WeekContent>({
-    _id: '',
+    meetingLink: '',
+    recordingLink: '',
+    supportMaterials: [],
+    assignment: null
+  });
+  const [originalWeekContent, setOriginalWeekContent] = useState<WeekContent>({
     meetingLink: '',
     recordingLink: '',
     supportMaterials: [],
@@ -146,6 +151,35 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     fetchContent();
   }, [classId]);
 
+  useEffect(() => {
+    const fetchWeekContent = async () => {
+      try {
+        setIsLoading(true);
+        const response = await FetchData(
+          `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
+          {},
+          'GET'
+        );
+        
+        const content = response.data || {
+          meetingLink: '',
+          recordingLink: '',
+          supportMaterials: [],
+          assignment: null
+        };
+        
+        setOriginalWeekContent(content);
+        setWeekContent(content);
+      } catch (error) {
+        console.error('Error loading week content:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWeekContent();
+  }, [classId, selectedWeek]);
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -169,22 +203,29 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     setIsSaving(true);
     try {
       const response = await FetchData(
-        `/api/teacher/classes/${classId}/week-content?week=${selectedWeek}`,
-        { weekContent: weekContent },
+        `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
+        {
+          weekNumber: selectedWeek,
+          content: weekContent
+        },
         'POST'
       );
 
       if (response.success) {
-        SuccessMsj('Contenido de la semana guardado correctamente');
+        SuccessMsj('Contenido semanal guardado');
         setIsEditingWeek(false);
-      } else {
-        ErrorMsj(response.error || 'Error al guardar');
       }
-    } catch (error: any) {
-      ErrorMsj(error.message);
+    } catch (error) {
+      ErrorMsj('Error guardando contenido');
+      console.error(error);
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    setWeekContent(originalWeekContent);
+    setIsEditingWeek(false);
   };
 
   const handleWeekChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -198,21 +239,31 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     });
   };
 
+  const handleOpenAssignmentModal = () => {
+    setAssignmentForm({
+      dueDate: weekContent.assignment?.dueDate || '',
+      description: weekContent.assignment?.description || '',
+      hasAudio: weekContent.assignment?.hasAudio || false,
+      fileLink: weekContent.assignment?.fileLink || '',
+      fileName: weekContent.assignment?.fileName || ''
+    });
+    setIsAssignmentModalOpen(true);
+  };
+
   const handleAddAssignment = () => {
     const updatedContent = {
       ...weekContent,
       assignment: {
-        createdAt: new Date().toISOString(),
+        createdAt: weekContent.assignment?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-          dueDate: assignmentForm.dueDate,
-          description: assignmentForm.description,
-          hasAudio: assignmentForm.hasAudio,
-          fileLink: assignmentForm.fileLink,
-          fileName: assignmentForm.fileName
-        }
+        dueDate: assignmentForm.dueDate,
+        description: assignmentForm.description,
+        hasAudio: assignmentForm.hasAudio,
+        fileLink: assignmentForm.fileLink,
+        fileName: assignmentForm.fileName
+      }
     };
     setWeekContent(updatedContent);
-    SuccessMsj('Asignación guardada localmente');
     setIsAssignmentModalOpen(false);
   };
 
@@ -331,17 +382,15 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                   <>
                     <Button
                       variant="outline"
-                      onClick={() => setIsEditingWeek(false)}
+                      onClick={handleCancel}
                     >
                       Cancelar
                     </Button>
                     <Button
-                      onClick={() => {
-                        console.log('Formulario enviado:', weekContent);
-                        setIsEditingWeek(false);
-                      }}
+                      onClick={handleSaveWeekContent}
+                      disabled={isSaving}
                     >
-                      Guardar
+                      {isSaving ? 'Guardando...' : 'Guardar'}
                     </Button>
                   </>
                 ) : (
@@ -457,7 +506,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                         Asignación
                       </h3>
                       {isEditingWeek && (
-                        <Button size="sm" variant="outline" onClick={() => setIsAssignmentModalOpen(true)}>
+                        <Button size="sm" variant="outline" onClick={handleOpenAssignmentModal}>
                           <FiEdit className="mr-1" /> Editar
                         </Button>
                       )}
