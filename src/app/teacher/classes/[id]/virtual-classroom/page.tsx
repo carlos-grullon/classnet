@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiEdit, FiSave } from 'react-icons/fi';
+import { FiDownload, FiEdit, FiPlus, FiSave, FiTrash2 } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
@@ -11,7 +11,7 @@ import { Input, Textarea, DateInput, ToggleSwitch } from '@/components';
 import { FileUploader } from '@/components/FileUploader';
 import Link from 'next/link';
 import { useCountries } from '@/providers';
-import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMessageSquare, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiUsers } from 'react-icons/fi';
+import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMessageSquare, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiUsers, FiExternalLink } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 
 interface SupportMaterial {
@@ -65,9 +65,11 @@ interface ClassContent {
 }
 
 // Función para obtener el icono según el tipo de archivo
-const getFileIcon = (fileName: string) => {
+const getFileIcon = (fileName?: string) => {
+  if (!fileName) return <FiLink className="text-blue-600 dark:text-blue-300 text-xl" />;
+  
   const extension = fileName.split('.').pop()?.toLowerCase();
-
+  
   if (!extension) return <FiLink className="mr-2 text-4xl" />;
 
   switch (extension) {
@@ -155,6 +157,15 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   });
   const [isEditingWhatsapp, setIsEditingWhatsapp] = useState(false);
   const [isEditingWelcomeMessage, setIsEditingWelcomeMessage] = useState(false);
+  const [showResourceModal, setShowResourceModal] = useState(false);
+  const [newResource, setNewResource] = useState<SupportMaterial>({
+    id: '',
+    description: '',
+    link: '',
+    fileName: ''
+  });
+  const [resourceType, setResourceType] = useState<'file' | 'link'>('file');
+  const [isEditingResources, setIsEditingResources] = useState(false);
 
   // Cargar contenido inicial
   useEffect(() => {
@@ -323,6 +334,33 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     if (success) {
       setIsEditingWelcomeMessage(false);
       SuccessMsj('Mensaje de bienvenida guardado');
+    }
+  };
+
+  const handleAddResource = () => {
+    setContent({
+      ...content,
+      resources: [...content.resources, {
+        ...newResource,
+        id: Date.now().toString()
+      }]
+    });
+    setShowResourceModal(false);
+    setNewResource({ id: '', description: '', link: '', fileName: '' });
+  };
+
+  const handleRemoveResource = (id: string) => {
+    setContent({
+      ...content,
+      resources: content.resources.filter(res => res.id !== id)
+    });
+  };
+
+  const handleSaveResources = async () => {
+    const success = await handleSaveContent();
+    if (success) {
+      SuccessMsj('Recursos guardados correctamente');
+      setIsEditingResources(false);
     }
   };
 
@@ -539,16 +577,16 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       Mensaje de Bienvenida
                     </h2>
                     {isEditingWelcomeMessage ? (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={handleSaveWelcomeMessage}
                       >
                         <FiSave className="text-blue-500 mr-2" /> Guardar
                       </Button>
                     ) : (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setIsEditingWelcomeMessage(true)}
                       >
@@ -556,7 +594,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       </Button>
                     )}
                   </div>
-                  
+
                   {isEditingWelcomeMessage ? (
                     <Textarea
                       id="welcome-message"
@@ -764,7 +802,99 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
 
             <TabContent id="resources" activeId={activeId} className="mt-4">
               <div className="p-4 border rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Recursos compartidos</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center gap-4"> 
+                    <h2 className="text-xl font-semibold flex items-center">Recursos de la clase</h2>
+                    {isEditingResources && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowResourceModal(true)}
+                      >
+                        <FiPlus className="mr-2" /> Agregar Recurso
+                      </Button>
+                    )}
+                  </div>
+                  {isEditingResources ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleSaveResources}
+                        variant="primary"
+                      >
+                        <FiSave className="mr-2" /> Guardar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditingResources(false)}
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => setIsEditingResources(true)}
+                    >
+                      <FiEdit className="mr-2" /> Editar
+                    </Button>
+                  )}
+                </div>
+
+                {content.resources.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {content.resources.map(resource => (
+                      <div 
+                        key={resource.id} 
+                        className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="bg-blue-100 dark:bg-blue-900 p-2 rounded-lg">
+                            {getFileIcon(resource.fileName)}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white line-clamp-2">
+                              {resource.description}
+                            </h3>
+                            <div className="mt-2">
+                              {resource.fileName ? (
+                                <Link 
+                                  href={resource.link} 
+                                  target="_blank" 
+                                  className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
+                                >
+                                  <FiDownload className="text-sm" />
+                                  {resource.fileName}
+                                </Link>
+                              ) : (
+                                <Link 
+                                  href={resource.link} 
+                                  target="_blank" 
+                                  className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
+                                >
+                                  <FiExternalLink className="text-sm" />
+                                  Click aquí para ir al enlace
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                          {isEditingResources && (
+                            <button 
+                              onClick={() => handleRemoveResource(resource.id)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <FiTrash2 />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-8">
+                    {isEditingResources ? 'No hay recursos compartidos aún' : 'No hay recursos compartidos'}
+                  </p>
+                )}
               </div>
             </TabContent>
 
@@ -776,6 +906,66 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
           </>
         )}
       </Tabs>
+
+      {/* Modal para agregar recursos */}
+      <Modal
+        isOpen={showResourceModal}
+        onClose={() => setShowResourceModal(false)}
+        title="Agregar Recurso Compartido"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Descripción"
+            value={newResource.description}
+            onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+          />
+
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant={resourceType === 'file' ? 'primary' : 'outline'}
+              onClick={() => setResourceType('file')}
+            >
+              <FiFileText className="mr-2" /> Subir archivo
+            </Button>
+            <Button
+              variant={resourceType === 'link' ? 'primary' : 'outline'}
+              onClick={() => setResourceType('link')}
+            >
+              <FiLink className="mr-2" /> Añadir enlace
+            </Button>
+          </div>
+
+          {resourceType === 'file' ? (
+            <FileUploader
+              onUploadSuccess={(result: { url: string; fileName: string }) => {
+                setNewResource({ ...newResource, link: result.url, fileName: result.fileName });
+              }}
+            />
+          ) : (
+            <Input
+              label="URL del recurso"
+              value={newResource.link}
+              onChange={(e) => setNewResource({ ...newResource, link: e.target.value, fileName: '' })}
+              placeholder="https://ejemplo.com/recurso"
+            />
+          )}
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowResourceModal(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAddResource}
+              disabled={!newResource.description || !newResource.link}
+            >
+              Agregar
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal para enlace */}
       <Modal
