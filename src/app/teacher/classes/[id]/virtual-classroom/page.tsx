@@ -243,8 +243,8 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         SuccessMsj('Contenido semanal guardado');
         setIsEditingWeek(false);
       }
-    } catch (error) {
-      ErrorMsj('Error guardando contenido');
+    } catch (error: any) {
+      ErrorMsj(error.message || 'Error guardando contenido');
       console.error(error);
     } finally {
       setIsSaving(false);

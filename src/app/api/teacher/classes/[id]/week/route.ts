@@ -39,6 +39,13 @@ export async function POST(
     // convertir la fecha a Date para guardarla
     if (content.assignment) {
       content.assignment.dueDate = parseInputDate(content.assignment.dueDate);
+      // Validar que la fecha no sea anterior a la actual
+      if (content.assignment.dueDate < new Date()) {
+        return NextResponse.json(
+          { success: false, error: 'La fecha de entrega no puede ser anterior a la fecha actual' },
+          { status: 400 }
+        );
+      }
     }
     const filter = { 
       classId: new ObjectId(params.id), 
