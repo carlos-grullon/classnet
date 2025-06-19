@@ -65,3 +65,55 @@ export function mongoTimeToTimeString12h(date: Date): string {
     
     return `${hours}:${minutes} ${ampm}`;
 }
+
+/**
+ * Convierte una fecha en formato yyyy-mm-dd a dd/mes(texto)/yyyy
+ * @param dateString Fecha en formato yyyy-mm-dd (ej. "2025-06-19")
+ * @returns String en formato "dd/Mes/yyyy" (ej. "19/Junio/2025")
+ */
+export function formatInputDateToLong(dateString: string): string {
+    const [year, month, day] = dateString.split('-').map(Number);
+    if (isNaN(year) || isNaN(month) || isNaN(day) || 
+        month < 1 || month > 12 || day < 1 || day > 31) {
+        throw new Error('Formato de fecha inválido. Se esperaba yyyy-mm-dd');
+    }
+    
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    
+    return `${day}/${monthNames[month - 1]}/${year}`;
+}
+
+/**
+ * Convierte una fecha en formato yyyy-mm-dd a un objeto Date
+ * @param dateString Fecha en formato yyyy-mm-dd (ej. "2025-06-19")
+ * @returns Objeto Date correspondiente
+ */
+export function parseInputDate(dateString: string): Date {
+    const [year, month, day] = dateString.split('-').map(Number);
+    
+    if (isNaN(year) || isNaN(month) || isNaN(day) || 
+        month < 1 || month > 12 || day < 1 || day > 31) {
+        throw new Error('Formato de fecha inválido. Se esperaba yyyy-mm-dd');
+    }
+    
+    // Nota: Los meses en Date son 0-indexed (0 = Enero, 11 = Diciembre)
+    return new Date(year, month - 1, day);
+}
+
+/**
+ * Convierte un objeto Date a formato yyyy-mm-dd
+ * @param date Objeto Date a convertir
+ * @returns String en formato yyyy-mm-dd (ej. "2025-06-19")
+ */
+export function formatDateToInput(date: Date): string {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+        throw new Error('Se esperaba un objeto Date válido');
+    }
+    
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // +1 porque los meses son 0-indexed
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}

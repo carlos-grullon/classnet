@@ -1,23 +1,32 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
+import { formatDateToInput, parseInputDate } from '@/utils/GeneralTools';
+
+interface SupportMaterial {
+  id: string;
+  description: string;
+  link: string;
+  fileName?: string;
+}
+
+interface Assignment {
+  id?: string;
+  createdAt: string;
+  updatedAt: string;
+  dueDate: string;
+  description: string;
+  hasAudio: boolean;
+  fileLink: string;
+  fileName: string;
+}
 
 interface WeekContent {
+  _id?: string;
   meetingLink: string;
   recordingLink: string;
-  supportMaterials: {
-    id: string;
-    description: string;
-    link: string;
-    fileName?: string;
-  }[];
-  assignment: {
-    dueDate: string;
-    description: string;
-    hasAudio: boolean;
-    fileLink?: string;
-    fileName?: string;
-  } | null;
+  supportMaterials: SupportMaterial[];
+  assignment: Assignment | null;
 }
 
 export async function POST(
@@ -27,20 +36,35 @@ export async function POST(
   try {
     const { weekNumber, content } = await request.json();
     const weeksCollection = await getCollection('weeks');
+    // convertir la fecha a Date para guardarla
+    if (content.assignment) {
+      content.assignment.dueDate = parseInputDate(content.assignment.dueDate);
+    }
+    const filter = { 
+      classId: new ObjectId(params.id), 
+      weekNumber: Number(weekNumber) 
+    };
     
-    await weeksCollection.updateOne(
-      { 
-        classId: new ObjectId(params.id), 
-        weekNumber: Number(weekNumber) 
-      },
-      { 
-        $set: { 
-          content,
-          updatedAt: new Date() 
-        } 
-      },
-      { upsert: true }
-    );
+    const existingWeek = await weeksCollection.findOne(filter);
+    
+    if (existingWeek) {
+      await weeksCollection.updateOne(
+        filter,
+        { 
+          $set: { 
+            content,
+            updatedAt: new Date() 
+          } 
+        }
+      );
+    } else {
+      await weeksCollection.insertOne({
+        ...filter,
+        content,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
@@ -64,6 +88,10 @@ export async function GET(
       classId: new ObjectId(params.id),
       weekNumber
     });
+    // convertir la fecha a string para mostrarla
+    if (weekData?.content?.assignment) {
+      weekData.content.assignment.dueDate = formatDateToInput(weekData.content.assignment.dueDate);
+    }
 
     return NextResponse.json({
       success: true,

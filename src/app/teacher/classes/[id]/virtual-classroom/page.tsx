@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useCountries } from '@/providers';
 import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMessageSquare, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiUsers, FiExternalLink } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
+import { formatInputDateToLong } from '@/utils/GeneralTools';
 
 interface SupportMaterial {
   id: string;
@@ -23,8 +24,6 @@ interface SupportMaterial {
 
 interface Assignment {
   id?: string;
-  createdAt: string;
-  updatedAt: string;
   dueDate: string;
   description: string;
   hasAudio: boolean;
@@ -283,8 +282,6 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     const updatedContent = {
       ...weekContent,
       assignment: {
-        createdAt: weekContent.assignment?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
         dueDate: assignmentForm.dueDate,
         description: assignmentForm.description,
         hasAudio: assignmentForm.hasAudio,
@@ -755,7 +752,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-500">Fecha de Entrega:</span>
                           <span className="font-semibold">
-                            {weekContent.assignment.dueDate}
+                            {formatInputDateToLong(weekContent.assignment.dueDate)}
                           </span>
                         </div>
                         {weekContent.assignment.fileLink && (
