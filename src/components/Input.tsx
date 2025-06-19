@@ -88,7 +88,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           className={`
             block w-full px-4 py-2.5 rounded-lg border transition-colors duration-200
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
-            ${disabled ? ' cursor-not-allowed bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}
+            ${disabled ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}
             text-gray-900 dark:text-white
             ${isFocused ? 'ring-2 ring-blue-500 outline-none' : ''}
             ${className}

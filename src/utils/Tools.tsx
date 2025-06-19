@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { Dispatch, SetStateAction } from 'react';
+import { FiLink, FiFileText, FiImage, FiFile } from 'react-icons/fi';
 
 export async function FetchData(url: string, data: Record<string, any> = {}, method: string = "POST", extraHeaders: Record<string, any> = {}) {
     const requestBody = { body: JSON.stringify(data) };
@@ -85,5 +86,29 @@ export const getLevelName = (level: string) => {
     case '2': return 'Intermedio';
     case '3': return 'Avanzado';
     default: return level;
+  }
+};
+
+// Función para obtener el icono según el tipo de archivo
+export const getFileIcon = (fileName?: string) => {
+  if (!fileName) return <FiLink className="text-blue-600 dark:text-blue-300 text-xl" />;
+  
+  const extension = fileName.split('.').pop()?.toLowerCase();
+  
+  if (!extension) return <FiLink className="mr-2 text-4xl" />;
+
+  switch (extension) {
+    case 'pdf':
+      return <FiFileText className="mr-2 text-red-500 text-4xl" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'gif':
+      return <FiImage className="mr-2 text-blue-500 text-4xl" />;
+    case 'doc':
+    case 'docx':
+      return <FiFileText className="mr-2 text-blue-600 text-4xl" />;
+    default:
+      return <FiFile className="mr-2 text-4xl" />;
   }
 };

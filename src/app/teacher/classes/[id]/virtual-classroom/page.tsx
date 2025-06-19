@@ -4,118 +4,23 @@ import { useState, useEffect, useRef } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
 import { FiDownload, FiEdit, FiPlus, FiSave, FiTrash2 } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj, SuccessMsj, getFileIcon } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
 import { Input, Textarea, DateInput, ToggleSwitch } from '@/components';
 import { FileUploader } from '@/components/FileUploader';
 import Link from 'next/link';
 import { useCountries } from '@/providers';
-import { FiFileText, FiImage, FiFile, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMessageSquare, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiUsers, FiExternalLink } from 'react-icons/fi';
+import { FiFileText, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { formatInputDateToLong } from '@/utils/GeneralTools';
-
-interface SupportMaterial {
-  id: string;
-  description: string;
-  link: string;
-  fileName?: string;
-}
-
-interface Assignment {
-  id?: string;
-  dueDate: string;
-  description: string;
-  hasAudio: boolean;
-  fileLink: string;
-  fileName: string;
-}
-
-interface WeekContent {
-  _id?: string;
-  meetingLink: string;
-  recordingLink: string;
-  supportMaterials: SupportMaterial[];
-  assignment: Assignment | null;
-}
-
-interface ClassContent {
-  _id: string;
-  classId: string;
-  teacher: {
-    name: string;
-    country: string;
-    whatsapp: string;
-    email: string;
-    photo: string;
-  };
-  class: {
-    name: string;
-    level: string;
-    selectedDays: string;
-    startTime: string;
-    endTime: string;
-    price: number;
-  };
-  welcomeMessage: string;
-  whatsappLink: string;
-  resources: SupportMaterial[];
-  durationWeeks: number;
-}
-
-// Función para obtener el icono según el tipo de archivo
-const getFileIcon = (fileName?: string) => {
-  if (!fileName) return <FiLink className="text-blue-600 dark:text-blue-300 text-xl" />;
-  
-  const extension = fileName.split('.').pop()?.toLowerCase();
-  
-  if (!extension) return <FiLink className="mr-2 text-4xl" />;
-
-  switch (extension) {
-    case 'pdf':
-      return <FiFileText className="mr-2 text-red-500 text-4xl" />;
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-      return <FiImage className="mr-2 text-blue-500 text-4xl" />;
-    case 'doc':
-    case 'docx':
-      return <FiFileText className="mr-2 text-blue-600 text-4xl" />;
-    default:
-      return <FiFile className="mr-2 text-4xl" />;
-  }
-};
+import { SupportMaterial, WeekContent, ClassContent } from '@/interfaces/VirtualClassroom';
+import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
-  const [welcomeMessage, setWelcomeMessage] = useState<string>('');
   const { getCountryByCode } = useCountries();
   const classId = params.id;
-  const [content, setContent] = useState<ClassContent>(
-    {
-      _id: '',
-      classId: '',
-      teacher: {
-        name: 'adsadf',
-        country: '',
-        whatsapp: '',
-        email: '',
-        photo: '/images/default-avatar.png',
-      },
-      class: {
-        name: '',
-        level: '',
-        selectedDays: '',
-        startTime: '',
-        endTime: '',
-        price: 0,
-      },
-      whatsappLink: '',
-      welcomeMessage: '',
-      resources: [],
-      durationWeeks: 0
-    }
-  );
+  const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>({
     meetingLink: '',
     recordingLink: '',
@@ -130,7 +35,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
   const [materialType, setMaterialType] = useState<'link' | 'file' | null>(null);
   const [materialData, setMaterialData] = useState({
@@ -172,20 +77,11 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
       try {
         setIsLoading(true);
         const data = await FetchData(`/api/teacher/classes/${classId}/content`, {}, 'GET');
-        console.log(data);
+        
         if (data.success && data.data) {
-          setContent(
-            {
-              _id: data.data._id,
-              classId: data.data.classId,
-              teacher: data.data.teacher,
-              class: data.data.class,
-              welcomeMessage: data.data.welcomeMessage,
-              whatsappLink: data.data.whatsappLink,
-              resources: data.data.resources,
-              durationWeeks: data.data.durationWeeks
-            }
-          );
+          setContent(data.data);
+        } else {
+          ErrorMsj('Error obteniendo datos del curso');
         }
       } catch (error) {
         ErrorMsj('Error cargando contenido');
@@ -201,13 +97,11 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   useEffect(() => {
     const fetchWeekContent = async () => {
       try {
-        setIsLoading(true);
         const response = await FetchData(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
           {},
           'GET'
         );
-
         const content = response.data || {
           meetingLink: '',
           recordingLink: '',
@@ -219,14 +113,16 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         setWeekContent(content);
       } catch (error) {
         console.error('Error loading week content:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
     fetchWeekContent();
   }, [classId, selectedWeek]);
 
+  if (isLoading || !content) {
+    return <VirtualClassroomSkeleton />;
+  }
+  
   const handleSaveWeekContent = async () => {
     setIsSaving(true);
     try {
