@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiDownload } from 'react-icons/fi';
+import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getFileIcon } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Input } from '@/components';
 import { useCountries } from '@/providers';
-import { FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
-import { formatInputDateToLong } from '@/utils/GeneralTools';
+import { formatInputDateToLong, parseInputDate } from '@/utils/GeneralTools';
 import Link from 'next/link';
 import { WeekContent, ClassContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
+import { differenceInDays, isAfter } from 'date-fns';
 
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
   const { getCountryByCode } = useCountries();
@@ -27,6 +27,56 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+
+  const getTimeRemainingMessage = (dueDate: string, submittedAt?: string) => {
+    const now = new Date();
+    const due = parseInputDate(dueDate);
+  
+    // Normalize dates to midnight for accurate day difference calculation
+    const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const normalizedDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+
+    if (submittedAt) {
+      const submitted = parseInputDate(submittedAt);
+      const normalizedSubmitted = new Date(submitted.getFullYear(), submitted.getMonth(), submitted.getDate());
+      
+      if (isAfter(normalizedSubmitted, normalizedDue)) {
+        const daysLate = differenceInDays(normalizedSubmitted, normalizedDue);
+        return {
+          message: `Asignación enviada ${daysLate} días tarde`,
+          color: 'text-red-600 dark:text-red-400'
+        };
+      } else {
+        const daysBefore = differenceInDays(normalizedDue, normalizedSubmitted);
+        return {
+          message: `Asignación enviada ${daysBefore} días antes`,
+          color: 'text-green-600 dark:text-green-400'
+        };
+      }
+    }
+  
+    if (isAfter(normalizedNow, normalizedDue)) {
+      const daysLate = differenceInDays(normalizedNow, normalizedDue);
+      return {
+        message: `¡Fecha límite pasada por ${daysLate} días!`,
+        color: 'text-red-600 dark:text-red-400'
+      };
+    }
+  
+    const daysRemaining = differenceInDays(normalizedDue, normalizedNow);
+  
+    if (daysRemaining > 3) {
+      return {
+        message: `${daysRemaining} días restantes para la entrega`,
+        color: 'text-yellow-700 dark:text-yellow-400'
+      };
+    } else {
+      return {
+        message: `${daysRemaining} días restantes para la entrega`,
+        color: 'text-red-600 dark:text-red-400'
+      };
+    }
+  };
 
   // Cargar contenido inicial
   useEffect(() => {
@@ -243,9 +293,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                           <p className=" text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <FaWhatsapp className="text-green-500 text-xl" /> Link del grupo de whatsapp
                           </p>
-                            <p className="text-gray-700 dark:text-gray-300 break-all whitespace-normal overflow-hidden">
-                              {content.whatsappLink || 'Aún no se ha agregado un Link'}
-                            </p>
+                          <p className="text-gray-700 dark:text-gray-300 break-all whitespace-normal overflow-hidden">
+                            {content.whatsappLink || 'Aún no se ha agregado un Link'}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -258,9 +308,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       Mensaje de Bienvenida
                     </h2>
                   </div>
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {content.welcomeMessage || 'Aún no se ha agregado un mensaje de bienvenida'}
-                    </p>
+                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {content.welcomeMessage || 'Aún no se ha agregado un mensaje de bienvenida'}
+                  </p>
                 </div>
               </div>
             </TabContent>
@@ -269,15 +319,22 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Sección Reunión */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                    Reunión Semana {selectedWeek}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiVideo className="text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Reunión Semana {selectedWeek}</h3>
+                  </div>
                   <div className="space-y-3">
-                    <div className="font-medium text-center">Link de la reunión:</div>
+                    <div className="font-medium text-center flex items-center justify-center gap-2">
+                      <FiLink className="text-blue-600 dark:text-blue-400" />
+                      <span>Link de la reunión:</span>
+                    </div>
                     <Input value={weekContent.meetingLink}
                       disabled={true}
                       onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
-                    <div className="font-medium text-center">Link de la grabación:</div>
+                    <div className="font-medium text-center flex items-center justify-center gap-2">
+                      <FiLink className="text-blue-600 dark:text-blue-400" />
+                      <span>Link de la grabación:</span>
+                    </div>
                     <Input value={weekContent.recordingLink}
                       disabled={true}
                       onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
@@ -287,9 +344,10 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                 {/* Sección Material de Apoyo */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                      Material de Apoyo
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <FiBookOpen className="text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {weekContent.supportMaterials.length === 0 ? (
@@ -299,7 +357,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       </div>
                     ) : (
                       weekContent.supportMaterials.map(material => (
-                        <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                        <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
                             <div>
@@ -319,23 +377,31 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
 
                 {/* Sección Asignación */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                        Asignación
-                      </h3>
-                    </div>
-                    {weekContent.assignment ? (
-                      <div className="space-y-2">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm text-gray-500">Fecha de Entrega:</span>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiEdit className="text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Asignación de la semana {selectedWeek}</h3>
+                  </div>
+                  {weekContent.assignment ? (
+                    <div className="space-y-2">
+                      <div className="grid md:grid-cols-12 gap-2">
+                        <div className="flex flex-col gap-1 md:col-span-5">
+                          <span className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</span>
                           <span className="font-semibold">
                             {formatInputDateToLong(weekContent.assignment.dueDate)}
                           </span>
                         </div>
-                        {weekContent.assignment.fileLink && (
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm text-gray-500">Archivo:</span>
+                        <div className="flex flex-col gap-1 md:col-span-7">
+                          <span className="text-sm text-gray-500 dark:text-gray-300 text-center">Estado:</span>
+                          <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold text-center ${getTimeRemainingMessage(weekContent.assignment.dueDate).color}`}>
+                            {getTimeRemainingMessage(weekContent.assignment.dueDate).message}
+                          </span>
+                        </div>
+                      </div>
+                      {weekContent.assignment.fileLink && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm text-gray-500 dark:text-gray-300">Archivo:</span>
+                          <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
+                            {getFileIcon(weekContent.assignment.fileName)}
                             <Link
                               href={weekContent.assignment.fileLink}
                               target="_blank"
@@ -343,28 +409,28 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                             >
                               {weekContent.assignment.fileName}
                             </Link>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={weekContent.assignment.hasAudio}
-                            readOnly
-                            className="rounded text-blue-500"
-                          />
-                          <span className="text-sm">Incluye audio</span>
+                          </span>
                         </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={weekContent.assignment.hasAudio}
+                          readOnly
+                          className="rounded text-blue-500"
+                        />
+                        <span className="text-sm">Incluye audio</span>
                       </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-2 py-4">
-                        <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
-                        <span className="font-semibold text-gray-700 dark:text-gray-300">
-                          No hay asignación para esta semana
-                        </span>
-                      </div>
-                    )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 py-4">
+                      <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">
+                        No hay asignación para esta semana
+                      </span>
+                    </div>
+                  )}
 
-                  </div>
                 </div>
               </div>
             </TabContent>
@@ -372,7 +438,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
             <TabContent id="resources" activeId={activeId} className="mt-4">
               <div className="p-4 border rounded-lg">
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex justify-between items-center gap-4"> 
+                  <div className="flex justify-between items-center gap-4">
                     <h2 className="text-xl font-semibold flex items-center">Recursos de la clase</h2>
                   </div>
                 </div>
@@ -380,8 +446,8 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                 {content.resources.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {content.resources.map(resource => (
-                      <div 
-                        key={resource.id} 
+                      <div
+                        key={resource.id}
                         className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-3">
@@ -394,18 +460,18 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                             </h3>
                             <div className="mt-2">
                               {resource.fileName ? (
-                                <Link 
-                                  href={resource.link} 
-                                  target="_blank" 
+                                <Link
+                                  href={resource.link}
+                                  target="_blank"
                                   className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
                                 >
                                   <FiDownload className="text-sm" />
                                   {resource.fileName}
                                 </Link>
                               ) : (
-                                <Link 
-                                  href={resource.link} 
-                                  target="_blank" 
+                                <Link
+                                  href={resource.link}
+                                  target="_blank"
                                   className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
                                 >
                                   <FiExternalLink className="text-sm" />
