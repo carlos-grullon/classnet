@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
-import { Button } from '@/components';
-import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
+import { Button, Modal } from '@/components';
+import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getFileIcon } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Input } from '@/components';
@@ -14,9 +14,22 @@ import Link from 'next/link';
 import { WeekContent, ClassContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { differenceInDays, isAfter } from 'date-fns';
+import { FileUploader } from '@/components/FileUploader';
+import { AudioRecorder } from '@/components/AudioRecorder';
+import { AudioPlayer } from '@/components/AudioPlayer';
+import { Textarea } from '@/components/Textarea';
+import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
+
+interface StudentAssignment {
+  fileUrl: string | null;
+  fileName: string | null;
+  audioUrl: string | null;
+  message: string;
+}
 
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
   const { getCountryByCode } = useCountries();
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const classId = params.id;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>({
@@ -31,7 +44,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   const getTimeRemainingMessage = (dueDate: string, submittedAt?: string) => {
     const now = new Date();
     const due = parseInputDate(dueDate);
-  
+
     // Normalize dates to midnight for accurate day difference calculation
     const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const normalizedDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
@@ -39,7 +52,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     if (submittedAt) {
       const submitted = parseInputDate(submittedAt);
       const normalizedSubmitted = new Date(submitted.getFullYear(), submitted.getMonth(), submitted.getDate());
-      
+
       if (isAfter(normalizedSubmitted, normalizedDue)) {
         const daysLate = differenceInDays(normalizedSubmitted, normalizedDue);
         return {
@@ -54,7 +67,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         };
       }
     }
-  
+
     if (isAfter(normalizedNow, normalizedDue)) {
       const daysLate = differenceInDays(normalizedNow, normalizedDue);
       return {
@@ -62,9 +75,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         color: 'text-red-600 dark:text-red-400'
       };
     }
-  
+
     const daysRemaining = differenceInDays(normalizedDue, normalizedNow);
-  
+
     if (daysRemaining > 3) {
       return {
         message: `${daysRemaining} días restantes para la entrega`,
@@ -136,6 +149,60 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
 
   const handleWeekChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedWeek(parseInt(e.target.value));
+  };
+
+  const [studentAssignment, setStudentAssignment] = useState<StudentAssignment>({
+    fileUrl: null,
+    fileName: null,
+    audioUrl: null,
+    message: ''
+  });
+
+  const handleFileChange = ({ url, fileName }: { url: string; fileName: string }) => {
+    setStudentAssignment(prev => ({
+      ...prev,
+      fileUrl: url,
+      fileName: fileName
+    }));
+  };
+
+  const handleAudioRecordingComplete = (audioUrl: string) => {
+    setStudentAssignment(prev => ({ ...prev, audioUrl }));
+  };
+
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setStudentAssignment(prev => ({ ...prev, message: e.target.value }));
+  };
+
+  const handleFileUpload = async () => {
+    console.log(studentAssignment);
+    // if (!studentAssignment.fileUrl) return;
+
+    // try {
+    //   const response = await fetch(`/api/student/classes/${classId}/assignments/${weekContent.assignment?.id}/submit`, {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify({
+    //       fileUrl: studentAssignment.fileUrl,
+    //       audioUrl: weekContent.assignment?.hasAudio ? studentAssignment.audioUrl : null,
+    //       message: studentAssignment.message
+    //     })
+    //   });
+
+    //   const data = await response.json();
+
+    //   if (response.ok) {
+    //     SuccessMsj('Asignación enviada correctamente');
+    //     setIsAssignmentModalOpen(false);
+    //     setStudentAssignment({ fileUrl: null, audioUrl: null, message: '' });
+    //   } else {
+    //     throw new Error(data.error || 'Error al subir la asignación');
+    //   }
+    // } catch (error: any) {
+    //   ErrorMsj(error.message);
+    // }
   };
 
   if (isLoading || !content) {
@@ -421,6 +488,12 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                         />
                         <span className="text-sm">Incluye audio</span>
                       </div>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsAssignmentModalOpen(true)}
+                      >
+                        Ver Detalle
+                      </Button>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-4">
@@ -494,6 +567,163 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
           </>
         )}
       </Tabs>
+      <Modal
+        isOpen={isAssignmentModalOpen}
+        onClose={() => setIsAssignmentModalOpen(false)}
+        title={`Asignación Semana ${selectedWeek}`}
+        className='w-auto max-w-6xl'
+      >
+        {weekContent.assignment && (
+          <div className="">
+            {/* Grid principal */}
+            <div className="grid md:grid-cols-2">
+              {/* Sección 1: Información de la asignación */}
+              <div className="space-y-4 md:border-r-2 md:border-r-blue-500 pb-4 border-b-2 border-b-blue-500">
+                <div className="flex items-center gap-2">
+                  <FiInfo className="text-blue-500 text-lg" />
+                  <h3 className="text-blue-500 font-semibold text-lg">Información de la Asignación</h3>
+                </div>
+                <div className="md:ml-7 pr-5">
+                  <div className="grid md:grid-cols-12 mb-3">
+                    <div className="md:col-span-5">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</p>
+                      <p className="font-semibold">
+                        {formatInputDateToLong(weekContent.assignment.dueDate)}
+                      </p>
+                    </div>
+                    <div className="md:col-span-7">
+                      <p className="text-sm text-gray-500 dark:text-gray-300">Estado:</p>
+                      <p className={`${getTimeRemainingMessage(weekContent.assignment.dueDate).color}`}>
+                        {getTimeRemainingMessage(weekContent.assignment.dueDate).message}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-500 dark:text-gray-300">Descripción:</p>
+                    <p className="whitespace-pre-line">{weekContent.assignment.description}</p>
+                  </div>
+
+                  {weekContent.assignment.fileLink && (
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Archivo adjunto:</p>
+                      <Link
+                        href={weekContent.assignment.fileLink}
+                        target="_blank"
+                        className="flex bg-gray-200 dark:bg-gray-700 rounded items-center gap-2 text-blue-500 hover:underline w-fit p-1 px-4"
+                      >
+                        {getFileIcon(weekContent.assignment.fileName)}
+                        {weekContent.assignment.fileName}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Sección 2: Subida de archivo */}
+              <div className="space-y-4 pb-4 border-b-2 border-b-blue-500 pl-3">
+                <div className="flex items-center gap-2">
+                  <FiUpload className="text-blue-500 text-lg" />
+                  <h3 className="text-blue-500 font-semibold text-lg">Subir Archivo</h3>
+                </div>
+                
+                {studentAssignment.fileUrl ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
+                      {getFileIcon(studentAssignment.fileName || '')}
+                      <Link 
+                        href={studentAssignment.fileUrl} 
+                        target="_blank"
+                        className="text-blue-500 hover:underline flex items-center gap-2"
+                      >
+                        <FiDownload className="text-sm" />
+                        <span className="font-medium">{studentAssignment.fileName}</span>
+                      </Link>
+                    </div>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setStudentAssignment(prev => ({
+                        ...prev,
+                        fileUrl: null,
+                        fileName: null
+                      }))}
+                    >
+                      <FiEdit className="mr-2" />
+                      Cambiar Archivo
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-base text-gray-500 dark:text-gray-300 block">
+                      Aquí puedes subir tu asignación cuando la tengas lista.
+                    </div>
+                    <div className="md:ml-7">
+                      <FileUploader onUploadSuccess={handleFileChange} />
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Sección 3: Audio */}
+              {weekContent.assignment.hasAudio && (
+                <div className="space-y-4 pt-3 md:border-r-2 md:border-r-blue-500 border-b-2 pb-4 md:pb-0 border-b-blue-500 md:border-b-0">
+                  <div className="flex items-center gap-2">
+                    <FiMic className="text-blue-500 text-lg" />
+                    <h3 className="text-blue-500 font-semibold text-lg">Grabación de Audio</h3>
+                  </div>
+                  {studentAssignment.audioUrl ? (
+                    <div className="pl-3 pr-5">
+                      <AudioPlayer
+                        audioUrl={studentAssignment.audioUrl}
+                        onDelete={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
+                        onNewRecording={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
+                      />
+                    </div>
+                  ) : (
+                    <div className="pl-3">
+                      <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sección 4: Mensaje */}
+              <div className="space-y-4 pt-3 pl-3">
+                <div className="flex items-center gap-2">
+                  <FiMessageSquare className="text-blue-500 text-lg" />
+                  <h3 className="text-blue-500 font-semibold text-lg">Mensaje para el Profesor (Opcional)</h3>
+                </div>
+                <div className="md:ml-7">
+                  <Textarea
+                    id="message"
+                    value={studentAssignment.message}
+                    onChange={handleMessageChange}
+                    placeholder="Escribe un mensaje..."
+                    rows={4}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex justify-end gap-2 pt-6">
+              <Button
+                variant="secondary"
+                onClick={() => setIsAssignmentModalOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleFileUpload}
+                disabled={!studentAssignment.fileUrl}
+              >
+                Enviar Asignación
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

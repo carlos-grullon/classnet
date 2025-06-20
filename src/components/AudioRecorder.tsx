@@ -2,8 +2,15 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
+import { FiMic, FiPlay, FiPause, FiSquare, FiUpload, FiRefreshCw } from 'react-icons/fi';
 
-export const AudioRecorder: React.FC = () => {
+interface AudioRecorderProps {
+  onRecordingComplete?: (audioUrl: string) => void;
+}
+
+export const AudioRecorder: React.FC<AudioRecorderProps> = ({ 
+  onRecordingComplete 
+}) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -272,6 +279,7 @@ export const AudioRecorder: React.FC = () => {
       if (response.ok) {
         toast.success('Audio subido correctamente');
         console.log('Audio URL:', data.url);
+        if (onRecordingComplete) onRecordingComplete(data.url);
       } else {
         throw new Error(data.error || 'Error al subir el audio');
       }
@@ -282,73 +290,90 @@ export const AudioRecorder: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto text-center space-y-4 bg-white dark:bg-gray-800 rounded-xl shadow dark:shadow-gray-700">
-      <h2 className="text-lg font-bold dark:text-white">Audio Recorder</h2>
-      <canvas ref={canvasRef} width={300} height={100} className="mx-auto border dark:border-gray-600" />
-      <p className="dark:text-gray-300">{`Tiempo: ${time}s`}</p>
-
-      {!isRecording && !audioUrl && (
-        <button 
-          onClick={startRecording} 
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Grabar
-        </button>
-      )}
-
-      {isRecording && (
-        <div className="space-x-2">
-          {!isPaused ? (
-            <button 
-              onClick={pauseRecording} 
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition-colors"
-            >
-              Pausar
-            </button>
-          ) : (
-            <button 
-              onClick={resumeRecording} 
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition-colors"
-            >
-              Reanudar
-            </button>
-          )}
-          <button 
-            onClick={stopRecording} 
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
+    <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Grabadora de Audio</h2>
+        <div className="flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">
+          <FiMic className="text-blue-500" />
+          <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
+            {time}s
+          </span>
+        </div>
+      </div>
+      
+      <canvas 
+        ref={canvasRef} 
+        width={300} 
+        height={80} 
+        className="w-full h-20 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-4" 
+      />
+      
+      <div className="flex flex-col items-center gap-3">
+        {/* Estado: Inactivo */}
+        {!isRecording && !audioUrl && (
+          <button
+            onClick={startRecording}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
           >
-            Detener
+            <FiMic />
+            Comenzar Grabación
           </button>
-        </div>
-      )}
-
-      {audioUrl && !isRecording && (
-        <div className="space-y-2">
-          <div className="flex justify-center">
-            <audio controls src={audioUrl} className="w-full max-w-xs"></audio>
-          </div>
-          <div className="space-x-2">
-            <button 
-              onClick={startRecording} 
-              className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded transition-colors"
+        )}
+        
+        {/* Estado: Grabando */}
+        {isRecording && (
+          <div className="flex gap-3">
+            <button
+              onClick={isPaused ? resumeRecording : pauseRecording}
+              className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Grabar nuevo
+              {isPaused ? <FiPlay /> : <FiPause />}
+              {isPaused ? 'Continuar' : 'Pausar'}
             </button>
-            <button 
-              onClick={sendAudio} 
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+            
+            <button
+              onClick={stopRecording}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Enviar
-            </button>
-            <button 
-              onClick={resetRecording} 
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
-            >
-              Reset
+              <FiSquare />
+              Detener
             </button>
           </div>
-        </div>
-      )}
+        )}
+        
+        {/* Estado: Grabación completada */}
+        {audioUrl && !isRecording && (
+          <div className="w-full space-y-4">
+            <audio controls src={audioUrl} className="w-full" />
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                onClick={startRecording}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <FiMic />
+                Grabar Nuevo
+              </button>
+              
+              <button
+                onClick={sendAudio}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                disabled={!audioBlob}
+              >
+                <FiUpload />
+                Subir Audio
+              </button>
+              
+              <button
+                onClick={resetRecording}
+                className="flex items-center gap-2 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <FiRefreshCw />
+                Resetear
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
