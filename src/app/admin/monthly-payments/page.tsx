@@ -74,9 +74,9 @@ export default function MonthlyPaymentsPage() {
       } else {
         ErrorMsj('Error al cargar los pagos pendientes');
       }
-    } catch (error: any) {
-      console.error('Error al cargar pagos pendientes:', error);
-      ErrorMsj(error.message || 'Error al cargar los pagos pendientes');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      ErrorMsj(message);
     } finally {
       setIsLoading(false);
     }
@@ -112,9 +112,9 @@ export default function MonthlyPaymentsPage() {
       } else {
         throw new Error(response?.error || 'Error al procesar la solicitud');
       }
-    } catch (error: any) {
-      console.error('Error al procesar el pago:', error);
-      ErrorMsj(error.message || 'Error al procesar el pago');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      ErrorMsj(message);
     } finally {
       setIsProcessing(false);
     }

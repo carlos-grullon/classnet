@@ -5,6 +5,7 @@ import { Card, Button, Modal } from '@/components';
 import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye, FiRefreshCw } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx';
 import Image from 'next/image';
+import { useCallback } from 'react';
 
 // Interfaz para las inscripciones
 interface Enrollment {
@@ -42,32 +43,28 @@ export default function AdminEnrollments() {
     total: 0,
     totalPages: 0
   });
-  
+
   // Estado para el modal de detalle y actualización
   const [detailModal, setDetailModal] = useState({
     isOpen: false,
     enrollment: null as Enrollment | null
   });
-  
+
   // Estado para el modal de visualización de comprobante
   const [imageModal, setImageModal] = useState({
     isOpen: false,
     imageUrl: ''
   });
-  
+
   // Estado para el formulario de actualización
   const [updateForm, setUpdateForm] = useState({
     status: '',
     notes: ''
   });
-  
-  const [isUpdating, setIsUpdating] = useState(false);
-  
-  useEffect(() => {
-    fetchEnrollments();
-  }, [statusFilter, pagination.page]);
 
-  const fetchEnrollments = async () => {
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const fetchEnrollments = useCallback(async () => {
     setIsLoading(true);
     try {
       let url = `/api/admin/enrollments?page=${pagination.page}&limit=${pagination.limit}`;
@@ -77,21 +74,26 @@ export default function AdminEnrollments() {
       const response = await FetchData(url, {}, 'GET');
       if (response.success) {
         setEnrollments(response.enrollments);
-        setPagination({
-          ...pagination,
+        setPagination(prev => ({
+          ...prev,
           total: response.pagination.total,
           totalPages: response.pagination.totalPages
-        });
+        }));
       } else {
         ErrorMsj('Error al cargar las inscripciones');
       }
-    } catch (error: any) {
-      ErrorMsj('Error al cargar las inscripciones');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      ErrorMsj(message);
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination, statusFilter]);
+
+  useEffect(() => {
+    fetchEnrollments();
+  }, [fetchEnrollments]);
 
   const handleViewDetails = (enrollment: Enrollment) => {
     setDetailModal({
@@ -113,14 +115,14 @@ export default function AdminEnrollments() {
 
   const handleUpdateStatus = async () => {
     if (!detailModal.enrollment) return;
-    
+
     setIsUpdating(true);
     try {
       const response = await FetchData(`/api/admin/enrollments/${detailModal.enrollment.id}/status`, {
         status: updateForm.status,
         notes: updateForm.notes
       }, 'PATCH');
-      
+
       if (response.success) {
         SuccessMsj('Estado actualizado correctamente');
         setDetailModal({
@@ -131,13 +133,14 @@ export default function AdminEnrollments() {
       } else {
         ErrorMsj(response.error || 'Error al actualizar el estado');
       }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error al actualizar el estado');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      ErrorMsj(message);
     } finally {
       setIsUpdating(false);
     }
   };
-  
+
   // Función para obtener el color según el estado
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -191,7 +194,7 @@ export default function AdminEnrollments() {
         return 'Desconocido';
     }
   };
-  
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -204,11 +207,11 @@ export default function AdminEnrollments() {
           >
             {isLoading ? 'Actualizando...' : 'Actualizar'}
             <span className="ml-2">
-            <FiRefreshCw className={isLoading ? 'animate-spin' : ''} />
+              <FiRefreshCw className={isLoading ? 'animate-spin' : ''} />
             </span>
           </Button>
         </div>
-        
+
         {/* Filtros */}
         <div className="mb-6">
           <Card className="p-4">
@@ -231,7 +234,7 @@ export default function AdminEnrollments() {
                 </select>
               </div>
               <div className="flex-none self-end">
-                <Button 
+                <Button
                   onClick={() => fetchEnrollments()}
                   icon={<FiSearch />}
                   variant="outline"
@@ -242,7 +245,7 @@ export default function AdminEnrollments() {
             </div>
           </Card>
         </div>
-        
+
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-700 dark:border-primary-400 mb-4"></div>
@@ -274,14 +277,14 @@ export default function AdminEnrollments() {
                       Fecha: {new Date(enrollment.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-col gap-2 items-end">
                     <p className="text-blue-600 dark:text-blue-400 font-medium">
                       ${enrollment.paymentAmount}
                     </p>
                     {enrollment.paymentProof && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         onClick={() => handleViewImage(enrollment.paymentProof!)}
                         icon={<FiEye />}
@@ -289,7 +292,7 @@ export default function AdminEnrollments() {
                         Ver Comprobante
                       </Button>
                     )}
-                    <Button 
+                    <Button
                       size="sm"
                       onClick={() => handleViewDetails(enrollment)}
                     >
@@ -299,14 +302,14 @@ export default function AdminEnrollments() {
                 </div>
               </Card>
             ))}
-            
+
             {/* Paginación */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-center mt-6 gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination({...pagination, page: Math.max(0, pagination.page - 1)})}
+                  onClick={() => setPagination({ ...pagination, page: Math.max(0, pagination.page - 1) })}
                   disabled={pagination.page === 0}
                 >
                   Anterior
@@ -317,7 +320,7 @@ export default function AdminEnrollments() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination({...pagination, page: Math.min(pagination.totalPages - 1, pagination.page + 1)})}
+                  onClick={() => setPagination({ ...pagination, page: Math.min(pagination.totalPages - 1, pagination.page + 1) })}
                   disabled={pagination.page === pagination.totalPages - 1}
                 >
                   Siguiente
@@ -382,7 +385,7 @@ export default function AdminEnrollments() {
                     <FiUpload className="mr-2" /> Comprobante de pago
                   </h4>
                   <div className="flex justify-center">
-                    <div 
+                    <div
                       className="relative w-full h-48 cursor-pointer border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
                       onClick={() => handleViewImage(detailModal.enrollment!.paymentProof!)}
                     >
@@ -405,7 +408,7 @@ export default function AdminEnrollments() {
                   </label>
                   <select
                     value={updateForm.status}
-                    onChange={(e) => setUpdateForm({...updateForm, status: e.target.value})}
+                    onChange={(e) => setUpdateForm({ ...updateForm, status: e.target.value })}
                     className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
                   >
                     <option value="pending_payment">Pendiente de Pago</option>
@@ -422,7 +425,7 @@ export default function AdminEnrollments() {
                   </label>
                   <textarea
                     value={updateForm.notes}
-                    onChange={(e) => setUpdateForm({...updateForm, notes: e.target.value})}
+                    onChange={(e) => setUpdateForm({ ...updateForm, notes: e.target.value })}
                     className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
                     rows={3}
                     placeholder="Añade notas o motivo de rechazo si es necesario"

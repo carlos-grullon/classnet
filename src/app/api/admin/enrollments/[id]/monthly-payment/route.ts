@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { addMonths } from 'date-fns';
 import { formatDateLong } from '@/utils/GeneralTools';
+import { Payment, EnrollmentUpdate } from '@/interfaces/Enrollment';
 
 // Función auxiliar para eliminar archivo de comprobante de pago
 async function deletePaymentProofFile(proofUrl: string) {
@@ -73,11 +74,12 @@ export async function GET(
 
     return NextResponse.json(paymentInfo);
 
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener pagos mensuales:', error);
     return NextResponse.json({
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }
@@ -123,7 +125,7 @@ export async function PATCH(
 
     // Buscar el pago específico en el array de pagos
     const paymentIndex = enrollment.paymentsMade?.findIndex(
-      (payment: any) => payment._id.toString() === paymentId
+      (payment: Payment) => payment._id.toString() === paymentId
     );
 
     if (paymentIndex === -1 || paymentIndex === undefined) {
@@ -134,26 +136,24 @@ export async function PATCH(
     const proofUrl = enrollment.paymentsMade[paymentIndex].proofUrl;
 
     // Preparar la actualización según el estado
-    const updateData: any = {};
-    const now = new Date();
+    const updateData: EnrollmentUpdate = {
+      paymentsMade: {
+        [paymentIndex]: {
+          status: status === 'approved' ? 'paid' : 
+                 status === 'rejected' ? 'rejected' : 'pending',
+          ...(status === 'approved' && { approvedAt: new Date() }),
+          ...(status === 'rejected' && { rejectedAt: new Date() }),
+          adminNotes: notes || ''
+        }
+      },
+      ...(status === 'approved' && {
+        lastPaymentDate: enrollment.paymentsMade[paymentIndex].date,
+        nextPaymentDueDate: addMonths(enrollment.nextPaymentDueDate, 1)
+      })
+    };
 
+    // Enviar correo de confirmación de pago
     if (status === 'approved') {
-      updateData[`paymentsMade.${paymentIndex}.status`] = 'paid';
-      updateData[`paymentsMade.${paymentIndex}.approvedAt`] = now;
-      updateData[`paymentsMade.${paymentIndex}.adminNotes`] = notes || '';
-
-      // Guardar la fecha del pago actual como último pago realizado
-      const paymentDate = enrollment.paymentsMade[paymentIndex].date;
-      updateData.lastPaymentDate = paymentDate;
-
-      // Actualizar fecha del próximo pago (un mes después de la fecha de vencimiento actual)
-      const paymentDueDate = enrollment.nextPaymentDueDate;
-      const nextPaymentDate = addMonths(paymentDueDate, 1);
-
-      updateData.nextPaymentDueDate = nextPaymentDate;
-      updateData[`paymentsMade.${paymentIndex}.paymentDueDate`] = paymentDueDate;
-
-      // Enviar correo de confirmación de pago
       try {
         // Verificar que tenemos la información del estudiante antes de enviar el correo
         if (student && student.email && student.username) {
@@ -166,8 +166,8 @@ export async function PATCH(
             classData?.level || '',
             {
               paymentDate: formatDateLong(new Date()),
-              paymentDueDate: formatDateLong(paymentDueDate),
-              nextPaymentDate: formatDateLong(nextPaymentDate),
+              paymentDueDate: formatDateLong(enrollment.nextPaymentDueDate),
+              nextPaymentDate: formatDateLong(addMonths(enrollment.nextPaymentDueDate, 1)),
               amount: enrollment.paymentsMade[paymentIndex].amount,
               currency: classData?.currency || 'RD$'
             }
@@ -177,10 +177,6 @@ export async function PATCH(
         console.error('Error al enviar correo de confirmación:', emailError);
       }
     } else if (status === 'rejected') {
-      updateData[`paymentsMade.${paymentIndex}.status`] = 'rejected';
-      updateData[`paymentsMade.${paymentIndex}.rejectedAt`] = now;
-      updateData[`paymentsMade.${paymentIndex}.adminNotes`] = notes || '';
-      // Enviar correo de rechazo de pago
       try {
         await sendPaymentRejectionEmail(
           student?.email,
@@ -192,9 +188,6 @@ export async function PATCH(
       } catch (emailError) {
         console.error('Error al enviar correo de rechazo:', emailError);
       }
-    } else {
-      updateData[`paymentsMade.${paymentIndex}.status`] = 'pending';
-      updateData[`paymentsMade.${paymentIndex}.adminNotes`] = notes || '';
     }
 
     // Actualizar en la base de datos
@@ -215,11 +208,11 @@ export async function PATCH(
       status
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error al actualizar pago mensual:', error);
     return NextResponse.json({
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Error desconocido'
     }, { status: 500 });
   }
 }
@@ -241,7 +234,7 @@ export async function getMonthlyPaymentsPending() {
     for (const enrollment of enrollments) {
       // Filtrar solo los pagos pendientes
       const pendingPaymentsForEnrollment = enrollment.paymentsMade?.filter(
-        (payment: any) => payment.status === 'pending'
+        (payment: Payment) => payment.status === 'pending'
       ) || [];
 
       if (pendingPaymentsForEnrollment.length > 0) {
@@ -273,8 +266,12 @@ export async function getMonthlyPaymentsPending() {
     }
 
     return pendingPayments;
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener pagos mensuales pendientes:', error);
-    throw error;
+    return NextResponse.json({
+      error: 'Error al procesar la solicitud',
+      details: message
+    }, { status: 500 });
   }
 }
