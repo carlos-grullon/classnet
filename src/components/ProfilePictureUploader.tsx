@@ -1,12 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-
-interface UploadResponse {
-  url?: string;
-  message: string;
-  error?: string;
-}
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { FiUpload, FiX, FiCheckCircle, FiImage } from 'react-icons/fi';
+import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface ProfilePictureUploaderProps {
   currentImageUrl?: string;
@@ -23,84 +19,115 @@ export function ProfilePictureUploader({
   editMode = false,
   onImageClick
 }: ProfilePictureUploaderProps) {
-  const [mounted, setMounted] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const defaultImage = '/images/default-avatar.png';
-  const [imageUrl, setImageUrl] = useState<string>(defaultImage);
+  const [imageUrl, setImageUrl] = useState<string>(currentImageUrl || defaultImage);
 
   useEffect(() => {
-    setMounted(true);
     if (currentImageUrl) {
       setImageUrl(currentImageUrl);
+    } else {
+      setImageUrl(defaultImage);
     }
   }, [currentImageUrl]);
 
-  if (!mounted) {
-    return null;
-  }
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setIsDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setIsDragActive(false);
+    }
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
     
-    const file = e.target.files[0];
-    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      validateAndSetFile(e.dataTransfer.files[0]);
+    }
+  }, []);
+
+  const validateAndSetFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      setMessage('Solo se permiten imágenes (JPEG, PNG)');
-      e.target.value = '';
+      setError('Solo se permiten imágenes (JPEG, PNG)');
+      ErrorMsj('Tipo de archivo no válido');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      setMessage('La imagen debe ser menor a 5MB');
-      e.target.value = '';
+      setError('La imagen debe ser menor a 5MB');
+      ErrorMsj('Imagen demasiado grande');
       return;
     }
-    
-    setSelectedFile(file);
-    setMessage(`Imagen seleccionada: ${file.name}`);
-    
-    const reader = new FileReader();
-    reader.onload = () => setImageUrl(reader.result as string);
-    reader.readAsDataURL(file);
+
+    setError('');
+    setFile(file);
+    setImageUrl(URL.createObjectURL(file));
+    SuccessMsj('Imagen lista para subir');
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    if (e.target.files && e.target.files[0]) {
+      validateAndSetFile(e.target.files[0]);
+    }
   };
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!file) return;
     
-    setUploading(true);
-    setMessage('Subiendo imagen...');
+    setIsLoading(true);
+    setError('');
     
     try {
       const formData = new FormData();
-      formData.append('profilePicture', selectedFile);
+      formData.append('profilePicture', file);
       
-      const res = await fetch('/api/uploadpicture', {
+      // Only send oldImageUrl if it's from our S3
+      if (currentImageUrl && currentImageUrl.includes('amazonaws.com')) {
+        formData.append('oldImageUrl', currentImageUrl);
+      }
+
+      const res = await fetch('/api/update-profile-picture', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
+
+      const data = await res.json();
       
-      const data: UploadResponse = await res.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
+      if (res.ok && data.url) {
+        setImageUrl(data.url);
+        setFile(null); // Clear selected file
+        if (onUploadSuccess) onUploadSuccess(data.url);
+        SuccessMsj('Imagen actualizada correctamente');
+      } else {
+        throw new Error(data.error || 'Error al subir la imagen');
       }
-      
-      if (data.url && onUploadSuccess) {
-        onUploadSuccess(data.url);
-      }
-      
-      setMessage(data.message || 'Imagen subida con éxito');
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Error al subir la imagen');
+    } catch (err: any) {
+      setError(err.message);
+      ErrorMsj(err.message);
     } finally {
-      setUploading(false);
+      setIsLoading(false);
     }
   };
 
+  const removeFile = () => {
+    setFile(null);
+    setImageUrl(currentImageUrl || defaultImage);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`}>
       <div className="flex items-center gap-4">
         <div 
           className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-600 cursor-pointer"
@@ -118,46 +145,64 @@ export function ProfilePictureUploader({
         </div>
 
         {editMode && (
-          <div className="flex-1">
-            <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Cambiar foto de perfil
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-500 dark:text-gray-400
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 dark:file:bg-blue-900/30
-                file:text-blue-700 dark:file:text-blue-300
-                hover:file:bg-blue-100 dark:hover:file:bg-blue-900/40
-                cursor-pointer"
-              disabled={uploading}
-            />
+          <div className="flex-1 max-w-md overflow-hidden">
+            <div 
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={() => inputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors
+                ${isDragActive ? 
+                  'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 
+                  'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}
+                w-full overflow-hidden`}
+            >
+              <input 
+                ref={inputRef}
+                type="file" 
+                onChange={handleChange} 
+                className="hidden" 
+                accept="image/*"
+              />
+              
+              {!file ? (
+                <div className="flex flex-col items-center justify-center space-y-2 overflow-hidden">
+                  <FiUpload className="w-8 h-8 text-gray-400" />
+                  <p className="text-sm text-gray-600 dark:text-gray-300 truncate w-full px-2">
+                    Arrastra y suelta una imagen aquí o haz clic para seleccionar
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-full px-2">
+                    Formatos soportados: JPEG, PNG (máx. 5MB)
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md w-full">
+                  <FiCheckCircle className="text-green-500 flex-shrink-0" />
+                  <span className="text-sm font-medium truncate flex-1 min-w-0">{file.name}</span>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                    className="text-gray-500 hover:text-red-500 flex-shrink-0"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {file && (
+              <button
+                onClick={handleUpload}
+                disabled={isLoading}
+                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md
+                  disabled:opacity-50 disabled:cursor-not-allowed w-full truncate"
+              >
+                {isLoading ? 'Subiendo...' : 'Subir imagen'}
+              </button>
+            )}
           </div>
         )}
       </div>
-
-      {editMode && message && (
-        <p className={`text-sm ${message.includes('éxito') ? 
-          'text-green-600 dark:text-green-400' : 
-          'text-red-600 dark:text-red-400'}`}>
-          {message}
-        </p>
-      )}
-
-      {editMode && selectedFile && (
-        <button
-          onClick={handleUpload}
-          disabled={uploading}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md
-            disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {uploading ? 'Subiendo...' : 'Guardar cambios'}
-        </button>
-      )}
     </div>
   );
 }

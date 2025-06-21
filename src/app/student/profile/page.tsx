@@ -86,120 +86,132 @@ export default function StudentProfile() {
     }
     setEditMode(false);
   };
-  return (
-    <div className="grid grid-cols-3">
-      <div></div>
-      <div className="min-h-screen flex pt-3 ">
-        <Card title="Perfil del Estudiante" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
-          {!editMode && (
+
+  const handleUploadSuccess = async (url: string) => {
+    try {
+      const updatedData: StudentProfileProps = {
+        ...formData,
+        image: url
+      };
+      setInitialData(updatedData);
+      setFormData(updatedData);
+      setEditMode(false);
+    } catch (error: any) {
+    ErrorMsj(error.message);
+  }
+};
+
+return (
+  <div className="grid grid-cols-3">
+    <div></div>
+    <div className="min-h-screen flex pt-3 ">
+      <Card title="Perfil del Estudiante" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
+        {!editMode && (
+          <div className="flex gap-2 mb-4">
+            <Button
+              type="button"
+              onClick={() => setEditMode(true)}
+              children="Editar"
+              icon={<FiEdit />}
+            />
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {editMode && (
             <div className="flex gap-2 mb-4">
               <Button
+                type="submit"
+                children="Guardar"
+                icon={<FiSave />}
+              />
+              <Button
                 type="button"
-                onClick={() => setEditMode(true)}
-                children="Editar"
-                icon={<FiEdit />}
+                onClick={handleCancel}
+                children="Cancelar"
+                icon={<FiX />}
+                variant="danger"
               />
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {editMode && (
-              <div className="flex gap-2 mb-4">
-                <Button
-                  type="submit"
-                  children="Guardar"
-                  icon={<FiSave />}
-                />
-                <Button
-                  type="button"
-                  onClick={handleCancel}
-                  children="Cancelar"
-                  icon={<FiX />}
-                  variant="danger"
-                />
-              </div>
+          {/* Sección de foto de perfil */}
+          <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Foto de perfil
+            </label>
+            <ProfilePictureUploader
+              currentImageUrl={formData.image}
+              onUploadSuccess={handleUploadSuccess}
+              editMode={editMode}
+              onImageClick={() => setIsImageModalOpen(true)}
+            />
+            {isImageModalOpen && (
+              <ImageModal
+                imageUrl={formData.image}
+                onClose={() => setIsImageModalOpen(false)}
+                altText="Foto de perfil"
+              />
             )}
+          </div>
 
-            {/* Sección de foto de perfil */}
-            <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Foto de perfil
-              </label>
-              <ProfilePictureUploader
-                currentImageUrl={formData.image}
-                onUploadSuccess={(url) => {
-                  setFormData(prev => ({ ...prev, image: url }));
-                  SuccessMsj('Foto de perfil actualizada correctamente');
-                }}
-                editMode={editMode}
-                onImageClick={() => formData.image && setIsImageModalOpen(true)}
-              />
-              {isImageModalOpen && (
-                <ImageModal
-                  imageUrl={formData.image}
-                  onClose={() => setIsImageModalOpen(false)}
-                  altText="Foto de perfil"
-                />
-              )}
-            </div>
-
-            {/* Nombre */}
-            <div className="space-y-2">
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                label="Nombre"
-                value={formData.name}
-                onChange={handleLocalInputChange}
-                placeholder="Tu nombre completo"
-                disabled={!editMode}
-              />
-            </div>
-
-            {/* Descripción */}
-            <Textarea
-              id="description"
-              name="description"
-              label="Descripción Breve"
-              placeholder="Escribe una breve descripción de ti"
-              value={formData.description}
+          {/* Nombre */}
+          <div className="space-y-2">
+            <Input
+              id="name"
+              name="name"
+              type="text"
+              label="Nombre"
+              value={formData.name}
               onChange={handleLocalInputChange}
-              rows={4}
+              placeholder="Tu nombre completo"
               disabled={!editMode}
             />
+          </div>
 
-            {/* Pais */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                País
-              </label>
-              {editMode ? (
-                <Suspense fallback={<div className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800">Loading country selector...</div>}>
-                  <CountrySelector
-                    value={formData.country || ''}
-                    onChange={(countryCode: string) => setFormData({ ...formData, country: countryCode })}
-                    className="w-full"
-                  />
-                </Suspense>
-              ) : (
-                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10 cursor-not-allowed">
-                  {formData.country ? (
-                    <>
-                      <span className="text-lg">
-                        {getCountryByCode(formData.country)?.flag}
-                      </span>
-                      <span>{getCountryByCode(formData.country)?.name.common}</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">No especificado</span>
-                  )}
-                </div>
-              )}
-            </div>
-          </form>
-        </Card>
-      </div>
+          {/* Descripción */}
+          <Textarea
+            id="description"
+            name="description"
+            label="Descripción Breve"
+            placeholder="Escribe una breve descripción de ti"
+            value={formData.description}
+            onChange={handleLocalInputChange}
+            rows={4}
+            disabled={!editMode}
+          />
+
+          {/* Pais */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+              País
+            </label>
+            {editMode ? (
+              <Suspense fallback={<div className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800">Loading country selector...</div>}>
+                <CountrySelector
+                  value={formData.country || ''}
+                  onChange={(countryCode: string) => setFormData({ ...formData, country: countryCode })}
+                  className="w-full"
+                />
+              </Suspense>
+            ) : (
+              <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10 cursor-not-allowed">
+                {formData.country ? (
+                  <>
+                    <span className="text-lg">
+                      {getCountryByCode(formData.country)?.flag}
+                    </span>
+                    <span>{getCountryByCode(formData.country)?.name.common}</span>
+                  </>
+                ) : (
+                  <span className="text-gray-400">No especificado</span>
+                )}
+              </div>
+            )}
+          </div>
+        </form>
+      </Card>
     </div>
-  );
+  </div>
+);
 }

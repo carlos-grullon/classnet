@@ -83,7 +83,7 @@ The application includes the following API endpoints:
 - **/api/subjects**: Subject management endpoints
 - **/api/countries**: Country data endpoints
 - **/api/upload-payment-proof**: Payment proof upload endpoint
-- **/api/uploadpicture**: Profile picture upload endpoint
+- **/api/update-profile-picture**: Profile picture upload endpoint
 - **/api/usertype**: User type management endpoint
 
 ## Authentication Flow

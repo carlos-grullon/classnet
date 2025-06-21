@@ -7,7 +7,7 @@ type MongoDBConnection = {
 };
 
 // Variables para implementar el patrón singleton
-const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const MONGODB_URI = process.env.MONGO_URI || '';
 const MONGODB_DB = process.env.DATABASE_NAME || 'classnet_dev';
 
 // Caché para mantener una única instancia de conexión
