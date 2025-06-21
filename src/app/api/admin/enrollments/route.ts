@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || '';
     
     // Construir filtro
-    const filter: any = {};
+    const filter: { status?: string } = {};
     if (status) {
       filter.status = status;
     }

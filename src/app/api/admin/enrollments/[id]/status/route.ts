@@ -8,6 +8,9 @@ import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
 import { addMonths } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
+import { Enrollment } from '@/interfaces/Enrollment';
+import { User } from '@/interfaces/User';
+import { ClassDatabase } from '@/interfaces/Class';
 
 const getDayName = (days: string[]): string => {
   const daysMap = {
@@ -52,16 +55,16 @@ export async function PATCH(
 
     // Obtener datos del estudiante para el correo
     const usersCollection = await getCollection('users');
-    const student = await usersCollection.findOne({ _id: new ObjectId(enrollment.student_id) });
+    const student = await usersCollection.findOne<User>({ _id: new ObjectId(enrollment.student_id) });
     
     // Obtener datos de la clase para el correo
     const classesCollection = await getCollection('classes');
-    const classData = await classesCollection.findOne({ _id: new ObjectId(enrollment.class_id) });
+    const classData = await classesCollection.findOne<ClassDatabase>({ _id: new ObjectId(enrollment.class_id) });
     
     // Si se está aprobando el pago (cambiando a 'enrolled')
     if (status === 'enrolled' && enrollment.status === 'proof_submitted') {
       // Enviar correo de confirmación de pago
-      // await sendConfirmationEmailToStudent(student, classData);
+      await sendConfirmationEmailToStudent(student!, classData!);
       
       // Eliminar el archivo de comprobante de pago (ya no es necesario)
       if (enrollment.paymentProof && enrollment.paymentProof.startsWith('/uploads/payments/')) {
@@ -79,11 +82,11 @@ export async function PATCH(
     // Si se está rechazando el comprobante
     if (status === 'proof_rejected' && enrollment.status === 'proof_submitted') {
       // Enviar correo de rechazo de comprobante
-      await sendRejectionEmailToStudent(student, classData, notes);
+      await sendRejectionEmailToStudent(student!, classData!, notes);
     }
     
     // Preparar datos de actualización
-    const updateData: any = { 
+    const updateData: Enrollment = { 
       status, 
       updatedAt: new Date()
     };
@@ -137,27 +140,28 @@ export async function PATCH(
       }
     });
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al actualizar estado de inscripción:', error);
     return NextResponse.json({ 
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }
 
 // Función para enviar correo de confirmación de inscripción
-async function sendConfirmationEmailToStudent(student: any, classData: any) {
+async function sendConfirmationEmailToStudent(student: User, classData: ClassDatabase) {
   try {
     // Usar el nuevo servicio de correo electrónico
     await sendEnrollmentConfirmationEmail(
-      student.email,
-      student.username || 'Estudiante',
-      classData.subjectName || 'la clase',
+      student.email || '{ email del estudiante }',
+      student.username || '{ nombre del estudiante }',
+      classData.subjectName || '{ nombre de la clase }',
       classData.level,
       {
-        teacherName: classData.teacherName,
-        schedule: `${getDayName(classData.selectedDays)} ${mongoTimeToTimeString12h(classData.startTime)} - ${mongoTimeToTimeString12h(classData.endTime)}`,
+        teacherName: classData.teacherName || '{ nombre del profesor }',
+        schedule: `${getDayName(classData.selectedDays || [])} ${mongoTimeToTimeString12h(classData.startTime)} - ${mongoTimeToTimeString12h(classData.endTime)}`,
         startDate: classData.startDate ? formatDateLong(new Date(classData.startDate)) : undefined,
         price: classData.price
       }
@@ -171,13 +175,13 @@ async function sendConfirmationEmailToStudent(student: any, classData: any) {
 }
 
 // Función para enviar correo de rechazo de comprobante
-async function sendRejectionEmailToStudent(student: any, classData: any, notes: string) {
+async function sendRejectionEmailToStudent(student: User, classData: ClassDatabase, notes: string) {
   try {
     // Usar el nuevo servicio de correo electrónico
     await sendPaymentRejectionEmail(
-      student.email,
-      student.username || 'Estudiante',
-      classData.subjectName || 'la clase',
+      student.email || '{ email del estudiante }',
+      student.username || '{ nombre del estudiante }',
+      classData.subjectName || '{ nombre de la clase }',
       classData.level,
       notes || 'El comprobante no cumple con los requisitos necesarios.'
     );

@@ -182,7 +182,7 @@ export async function sendEnrollmentConfirmationEmail(
     teacherName?: string;
     schedule?: string;
     startDate?: string;
-    price?: string;
+    price?: number;
   } = {}
 ) {
   const subject = '¡Inscripción Confirmada! - ClassNet';

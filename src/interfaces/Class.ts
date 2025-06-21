@@ -1,28 +1,28 @@
 import { ObjectId } from "mongodb";
 
 interface BaseClass {
-  subjectName: string;
-  teacherName: string;
-  startTime: string | Date;
-  endTime: string | Date;
-  selectedDays: string[];
-  maxStudents: number;
+  subjectName?: string;
+  teacherName?: string;
+  startTime?: string | Date;
+  endTime?: string | Date;
+  selectedDays?: string[];
+  maxStudents?: number;
   price: number;
   level: string;
-  status: 'A' | 'I' | 'C';
+  status: 'ready_to_start' | 'in_progress' | 'completed' | 'cancelled';
   created_at: Date;
   updated_at: Date;
   durationWeeks: number;
+  startDate: Date | string;
 }
 
 export interface Class extends BaseClass {
   _id: string;
   teacher_id: string;
   subject_id: string;
-  startTime: string;
-  endTime: string;
   students_enrolled: number;
 }
+  
 
 export interface ClassDatabase extends BaseClass {
   _id: ObjectId;

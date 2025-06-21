@@ -116,9 +116,14 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       } else {
         throw new Error(data.error || 'Error al subir el archivo');
       }
-    } catch (err: any) {
-      setError(err.message);
-      ErrorMsj(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+        ErrorMsj(err.message);
+      } else {
+        setError('Error al subir el archivo');
+        ErrorMsj('Error al subir el archivo');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -125,7 +125,7 @@ export async function PATCH(
 
     // Buscar el pago específico en el array de pagos
     const paymentIndex = enrollment.paymentsMade?.findIndex(
-      (payment: Payment) => payment._id.toString() === paymentId
+      (payment: Payment) => payment._id!.toString() === paymentId
     );
 
     if (paymentIndex === -1 || paymentIndex === undefined) {

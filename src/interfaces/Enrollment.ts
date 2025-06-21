@@ -1,43 +1,44 @@
 export interface Enrollment {
-  _id: string;
-  student_id: string;
-  class_id: string;
-  status: string;
-  paymentAmount: number;
-  expiresAt: string;
-  createdAt: string;
-  updatedAt: string;
-  paymentNotes: string;
-  paymentProof: string;
-  paymentSubmittedAt: string;
-  billingStartDate: string;
-  lastPaymentDate: string;
-  nextPaymentDueDate: string;
-  paymentsMade: Array<Payment>;
-  priceAtEnrollment: number;
-  paymentDueDate: string;
+  _id?: string;
+  student_id?: string;
+  class_id?: string;
+  status?: string;
+  paymentAmount?: number;
+  expiresAt?: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  paymentNotes?: string;
+  paymentProof?: string | null;
+  paymentSubmittedAt?: string | Date;
+  billingStartDate?: string | Date | null;
+  lastPaymentDate?: string | Date | null;
+  nextPaymentDueDate?: string | Date | null;
+  paymentsMade?: Array<Payment>;
+  priceAtEnrollment?: number;
+  paymentDueDate?: string | Date;
+  notes?: string;
 }
 
 export interface Payment {
-  _id: string;
-  amount: number;
-  date: string;
-  status: string;
-  notes: string;
-  paymentDueDate: string;
-  proofUrl: string;
-  submittedAt: string;
-  adminNotes: string;
-  approvedAt: string;
+  _id?: string;
+  amount?: number;
+  date?: string | Date;
+  status?: string;
+  notes?: string;
+  paymentDueDate?: string | Date;
+  proofUrl?: string;
+  submittedAt?: string | Date;
+  adminNotes?: string;
+  approvedAt?: string | Date;
 }
 
 export interface PaymentUpdate {
   status?: 'pending' | 'paid' | 'overdue' | 'rejected';
-  approvedAt?: Date;
-  rejectedAt?: Date;
+  approvedAt?: string | Date;
+  rejectedAt?: string | Date;
   adminNotes?: string;
   proofUrl?: string;
-  date?: Date;
+  date?: string | Date;
 }
 
 export interface EnrollmentUpdate {
