@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { FiMic, FiPlay, FiPause, FiSquare, FiUpload, FiRefreshCw } from 'react-icons/fi';
+import { ErrorMsj } from '@/utils/Tools.tsx';
 
 interface AudioRecorderProps {
   onRecordingComplete?: (audioUrl: string) => void;
@@ -30,7 +31,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   // Inicializar AudioContext al montar el componente
   useEffect(() => {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
     audioCtxRef.current = ctx;
     
     // Configurar nodos iniciales pero silenciados
@@ -100,8 +101,9 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       recorder.start();
       intervalRef.current = setInterval(() => setTime((prev) => prev + 1), 1000);
       drawWaves();
-    } catch (error: any) {
-      toast.error('Error al acceder al micrófono: ' + error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al acceder al micrófono';
+      ErrorMsj(message);
       console.error('Error al acceder al micrófono:', error);
     }
   };

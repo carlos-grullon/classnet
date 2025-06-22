@@ -112,9 +112,10 @@ export function ProfilePictureUploader({
       } else {
         throw new Error(data.error || 'Error al subir la imagen');
       }
-    } catch (err: any) {
-      setError(err.message);
-      ErrorMsj(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al subir la imagen';
+      setError(message);
+      ErrorMsj(message);
     } finally {
       setIsLoading(false);
     }

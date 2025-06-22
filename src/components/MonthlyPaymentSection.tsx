@@ -63,9 +63,10 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
       } else {
         ErrorMsj('Error al cargar la información de pagos');
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cargar la información de pagos';
       console.error('Error al cargar información de pagos:', error);
-      ErrorMsj(error.message || 'Error al cargar la información de pagos');
+      ErrorMsj(message);
     } finally {
       setIsLoading(false);
     }

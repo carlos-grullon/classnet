@@ -7,7 +7,7 @@ import { mongoTimeToTimeString12h } from "@/utils/GeneralTools.ts";
 import { getUserId } from "@/utils/Tools.ts";
 import { timeStringToMongoTime } from "@/utils/Tools.ts";
 import { ClassFormValues } from "@/types/Class";
-import { Class } from "@/interfaces/Class";
+import { ClassDatabase } from "@/interfaces/Class";
 
 export async function GET(request: NextRequest) {
     try {
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         const totalPages = Math.ceil(total / limit);
 
         // Convertir a formato legible para el front
-        const formattedClasses = await Promise.all(classes.map(async (classItem: Class) => {
+        const formattedClasses = await Promise.all(classes.map(async (classItem: ClassDatabase) => {
             return {
                 ...classItem,
                 _id: classItem._id.toString(),

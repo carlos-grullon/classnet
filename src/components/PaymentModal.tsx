@@ -124,8 +124,9 @@ export function PaymentModal({
       } else {
         throw new Error(data.error || 'Error al subir el archivo');
       }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error al subir el comprobante');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al subir el comprobante';
+      ErrorMsj(message);
     } finally {
       setIsUploading(false);
     }

@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
+import { User } from '@/interfaces/User';
 
 // Constantes para la autenticación de Google
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
@@ -73,14 +73,14 @@ export const getGoogleUserInfo = async (access_token: string) => {
 };
 
 // Crear JWT para la sesión del usuario
-export const createUserSession = async (user: any) => {
+export const createUserSession = async (user: User) => {
   const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
   const token = await new SignJWT({
-    userId: user._id.toString(),
+    userId: user._id?.toString(),
     userIsStudent: user.user_is_student,
     userIsTeacher: user.user_is_teacher,
     userEmail: user.email,
-    userImage: user.image_path || user.data?.image_path || ''
+    userImage: user.image_path
   })
   .setProtectedHeader({ alg: 'HS256' })
   .setExpirationTime('7d')
