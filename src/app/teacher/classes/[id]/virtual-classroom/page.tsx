@@ -139,8 +139,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         SuccessMsj('Contenido semanal guardado');
         setIsEditingWeek(false);
       }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error guardando contenido');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error guardando contenido';
+      ErrorMsj(message);
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -207,8 +208,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
       if (response.success) {
         return true;
       }
-    } catch (error: any) {
-      ErrorMsj(error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error guardando contenido';
+      ErrorMsj(message);
       console.error(error);
       return false;
     }

@@ -3,8 +3,6 @@ import { ObjectId } from "mongodb";
 interface BaseClass {
   subjectName?: string;
   teacherName?: string;
-  startTime?: string | Date;
-  endTime?: string | Date;
   selectedDays?: string[];
   maxStudents?: number;
   price: number;
@@ -22,6 +20,8 @@ export interface Class extends BaseClass {
   teacher_id: string;
   subject_id: string;
   students_enrolled: number;
+  startTime?: string;
+  endTime?: string;
 }
   
 

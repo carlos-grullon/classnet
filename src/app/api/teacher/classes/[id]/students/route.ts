@@ -50,8 +50,9 @@ export async function GET(
     }).toArray();
 
     return NextResponse.json({ students });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener estudiantes de la clase:', error);
-    return NextResponse.json({ error: String(error) }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

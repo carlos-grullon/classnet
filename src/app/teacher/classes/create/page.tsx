@@ -47,8 +47,9 @@ export default function TeacherClasses() {
             setTeacherSubjects(data.subjects);
           }
         }
-      } catch (error: any) {
-        ErrorMsj(error.message || 'Error al obtener los datos del perfil');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al obtener los datos del perfil';
+        ErrorMsj(message);
       }
     };
     GetTeacherData();
@@ -66,8 +67,9 @@ export default function TeacherClasses() {
         SuccessMsj(response.message);
         reset();
       }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error al crear la clase');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al crear la clase';
+      ErrorMsj(message);
     }
   };
 
@@ -267,7 +269,7 @@ export default function TeacherClasses() {
                     </span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {getDayName(cls.selectedDays)} • {cls.startTime} - {cls.endTime}
+                    {getDayName(cls.selectedDays! || [])} • {cls.startTime!} - {cls.endTime!}
                   </p>
                   <p className="text-sm font-medium mt-1">
                     Precio: ${cls.price.toLocaleString()}

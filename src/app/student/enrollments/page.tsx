@@ -45,8 +45,9 @@ export default function StudentEnrollments() {
       if (response.success) {
         setEnrollments(response.enrollments);
       }
-    } catch (error: any) {
-      ErrorMsj('Error al cargar las inscripciones');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cargar las inscripciones';
+      ErrorMsj(message);
       console.error(error);
     } finally {
       setIsLoading(false);

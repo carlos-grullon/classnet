@@ -9,6 +9,21 @@ interface SubjectRef {
     code: string;
 }
 
+interface TeacherProfileResponse {
+    name: string;
+    image: string;
+    description: string;
+    subjects: string[];
+    country: string;
+    classes?: {
+      _id: ObjectId;
+      startTime: string;
+      endTime: string;
+      selectedDays: string[];
+      students_enrolled: number;
+    }[];
+  }
+
 export async function GET(request: NextRequest) {
     try {
         // Busca los datos del profesor.
@@ -18,7 +33,7 @@ export async function GET(request: NextRequest) {
         if (!teacher) {
             return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
         }
-        const response: any = {
+        const response: TeacherProfileResponse = {
             name: teacher.username,
             image: teacher.image_path,
             description: teacher.description,

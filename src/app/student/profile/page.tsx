@@ -43,8 +43,9 @@ export default function StudentProfile() {
           setInitialData(datos);
           setFormData(datos);
         }
-      } catch (error: any) {
-        ErrorMsj('Error al obtener los datos del perfil');
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al obtener los datos del perfil';
+        ErrorMsj(message);
       }
     }
     GetStudentData();
@@ -75,8 +76,9 @@ export default function StudentProfile() {
         SuccessMsj(data.message);
         setEditMode(false);
       }
-    } catch (error: any) {
-      ErrorMsj(error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar el perfil';
+      ErrorMsj(message);
     }
   };
 
@@ -96,9 +98,10 @@ export default function StudentProfile() {
       setInitialData(updatedData);
       setFormData(updatedData);
       setEditMode(false);
-    } catch (error: any) {
-    ErrorMsj(error.message);
-  }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar el perfil';
+      ErrorMsj(message);
+    }
 };
 
 return (

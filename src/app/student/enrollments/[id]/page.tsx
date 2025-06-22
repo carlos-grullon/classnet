@@ -88,8 +88,9 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
         ErrorMsj('Error al cargar los detalles de la inscripción');
         router.push('/student/enrollments');
       }
-    } catch (error: any) {
-      ErrorMsj('Error al cargar los detalles de la inscripción');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al cargar los detalles de la inscripción';
+      ErrorMsj(message);
       console.error(error);
       router.push('/student/enrollments');
     } finally {

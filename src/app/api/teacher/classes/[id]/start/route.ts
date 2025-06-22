@@ -107,8 +107,9 @@ export async function POST(
       message: 'Clase iniciada correctamente',
       startDate: startDate
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al iniciar la clase:', error);
-    return NextResponse.json({ error: 'Error al iniciar la clase' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

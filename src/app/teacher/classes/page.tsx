@@ -54,9 +54,10 @@ export default function MisClases() {
         setClasses(response.classes);
       }
       setError(null);
-    } catch (err: any) {
-      setError(err.message || 'Error al cargar las clases');
-      ErrorMsj('Error al cargar las clases');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al cargar las clases';
+      setError(message);
+      ErrorMsj(message);
     } finally {
       setLoading(false);
     }
@@ -70,8 +71,9 @@ export default function MisClases() {
         setClassStudents(response.students);
       }
       return response.students || [];
-    } catch (err: any) {
-      ErrorMsj('Error al cargar los estudiantes');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al cargar los estudiantes';
+      ErrorMsj(message);
       return [];
     }
   };
@@ -87,8 +89,9 @@ export default function MisClases() {
         SuccessMsj('Clase iniciada correctamente');
         fetchClasses(); // Recargar las clases para actualizar el estado
       }
-    } catch (err: any) {
-      ErrorMsj(err.message || 'Error al iniciar la clase');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error al iniciar la clase';
+      ErrorMsj(message);
     } finally {
       setStartingClass(false);
       setStartClassId(null);

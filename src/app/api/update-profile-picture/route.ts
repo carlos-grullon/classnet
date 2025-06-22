@@ -117,13 +117,12 @@ export async function POST(request: NextRequest) {
       message: 'Foto de perfil subida con éxito',
       url: url // Devuelve la URL final al frontend
     });
-  } catch (error: any) {
-    // Manejar errores generales durante el proceso
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error en la subida o procesamiento:', error);
-    
     return NextResponse.json({ 
       message: 'Error interno del servidor al procesar la subida', 
-      error: error.message 
+      error: message 
     }, { status: 500 });
   }
 }

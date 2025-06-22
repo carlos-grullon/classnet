@@ -94,10 +94,11 @@ export async function POST(req: NextRequest) {
       message: 'Archivo subido correctamente'
     });
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al subir archivo:', error);
     return NextResponse.json({ 
-      error: error.message || 'Error al procesar el archivo' 
+      error: message 
     }, { status: 500 });
   }
 }

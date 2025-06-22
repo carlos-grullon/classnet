@@ -45,8 +45,9 @@ export default function CompleteRegistrationPage() {
       } else {
         setError(result.message || 'Error al completar el registro');
       }
-    } catch (error: any) {
-      setError(error.message || 'Error al completar el registro');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al completar el registro';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

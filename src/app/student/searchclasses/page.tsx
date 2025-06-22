@@ -124,8 +124,9 @@ export default function StudentClasses() {
           ErrorMsj(response.error || 'Error al procesar la inscripción');
         }
       }
-    } catch (error: any) {
-      ErrorMsj(error.message || 'Error al procesar la inscripción');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al procesar la inscripción';
+      ErrorMsj(message);
     } finally {
       setEnrollmentLoading(false);
     }
@@ -306,7 +307,7 @@ export default function StudentClasses() {
                           Profesor/a: <span className='font-bold'>{classItem.teacherName}</span>
                         </p>
                         <p className="text-gray-600 dark:text-gray-300">
-                          Días: <span className='font-bold'>{getDayName(classItem.selectedDays)}</span>
+                          Días: <span className='font-bold'>{getDayName(classItem.selectedDays!)}</span>
                         </p>
                         <p className="text-gray-600 dark:text-gray-300">
                           Horario: <span className='font-bold'>{classItem.startTime} - {classItem.endTime}</span>
@@ -380,7 +381,7 @@ export default function StudentClasses() {
                 </p>
                 <p className="flex items-center gap-2">
                   <FiCheckCircle className="text-blue-500" />
-                  <span className="font-medium">Días:</span> {getDayName(enrollmentModal.classItem.selectedDays)}
+                  <span className="font-medium">Días:</span> {getDayName(enrollmentModal.classItem.selectedDays!)}
                 </p>
                 <p className="flex items-center gap-2">
                   <FiClock className="text-blue-500" />

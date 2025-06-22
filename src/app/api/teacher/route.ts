@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
         const userName: string = data.userName;
         const collection = await getCollection("users");
         const onlyNameAndId: boolean = data.onlyNameAndId;
-        const pipeline: any[] = [
+        const pipeline: object[] = [
             { $match: {
                 user_is_teacher: true,
                 $or: [
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         }
         const result = collection.aggregate(pipeline)
         const teachers = await result.toArray();
-        teachers.forEach((teacher: any) => {
+        teachers.forEach((teacher) => {
             teacher._id = teacher._id.toString();
         })
         return NextResponse.json({ teachers: teachers });

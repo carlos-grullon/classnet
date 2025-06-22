@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         if (!student) {
             return NextResponse.json({ error: 'Estudiante no encontrado' }, { status: 404 });
         }
-        const response: any = {
+        const response = {
             name: student.username,
             image: student.image_path,
             description: student.description,
