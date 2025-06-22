@@ -24,7 +24,7 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
 
   const fetchTeachers = async () => {
     try {
-      const data = await FetchData('/api/teacher', { userName: searchTerm, onlyNameAndId: true }, "POST");
+      const data = await FetchData<{success: boolean, teachers: { _id: string; username: string }[]}>('/api/teacher', { userName: searchTerm, onlyNameAndId: true }, "POST");
       setTeachers(data.teachers);
     } catch (error) {
       console.error('Failed to load teachers:', error);

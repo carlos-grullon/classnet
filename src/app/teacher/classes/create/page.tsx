@@ -40,7 +40,7 @@ export default function TeacherClasses() {
   useEffect(() => {
     const GetTeacherData = async () => {
       try {
-        const data = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
+        const data = await FetchData<{success: boolean, classes: Class[], subjects: { _id: string; name: string }[]}>('/api/teacher/profile?needClasses=true', {}, 'GET');
         if (data) {
           setClasses(data.classes || []);
           if (data.subjects.length > 0) {
@@ -61,7 +61,7 @@ export default function TeacherClasses() {
 
   const onSubmit = async (data: ClassFormValues) => {
     try {
-      const response = await FetchData('/api/classes', { classData: data }, 'POST');
+      const response = await FetchData<{success: boolean, classCreated: Class, message: string}>('/api/classes', { classData: data }, 'POST');
       if (response.success) {
         setClasses([...classes, response.classCreated]);
         SuccessMsj(response.message);

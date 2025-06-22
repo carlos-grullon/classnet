@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -10,6 +10,14 @@ import Image from 'next/image';
 import { ThemeToggle } from '@/components';
 
 export default function CompleteRegistrationPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <CompleteRegistrationContent />
+    </Suspense>
+  );
+}
+
+function CompleteRegistrationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -33,7 +41,7 @@ export default function CompleteRegistrationPage() {
     setError('');
     
     try {
-      const result = await FetchData('/api/auth/google/register', {
+      const result = await FetchData<{success: boolean, message: string}>('/api/auth/google/register', {
         email,
         username: name,
         user_type: userType,

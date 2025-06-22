@@ -29,9 +29,47 @@ interface PendingPayment {
   currency: string;
   paymentDate: string;
   paymentDueDate: string;
-  proofUrl: string;
+  proofUrl?: string;
   notes: string;
-  submittedAt: string;
+  submittedAt?: string;
+}
+
+interface PendingPaymentsResponse {
+  success: boolean;
+  pendingPayments: Array<{
+    paymentId: string;
+    enrollmentId: string;
+    classId: string;
+    studentName: string;
+    studentEmail: string;
+    className: string;
+    classLevel: string;
+    amount: number;
+    currency: string;
+    paymentDate: string;
+    paymentDueDate: string;
+    proofUrl?: string;
+    notes: string;
+    submittedAt?: string;
+  }>;
+  classes: Array<{
+    _id: string;
+    name: string;
+    level: string;
+    teacher_id?: string;
+    teacherName: string;
+  }>;
+  error?: string; // Solo presente cuando success es false
+  details?: string; // Solo presente cuando success es false
+}
+
+interface MonthlyPaymentStatusResponse {
+  success: boolean;
+  message: string;
+  paymentId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  error?: string; // Solo presente cuando success es false
+  details?: string; // Solo presente cuando success es false
 }
 
 export default function MonthlyPaymentsPage() {
@@ -65,7 +103,7 @@ export default function MonthlyPaymentsPage() {
   const fetchPendingPayments = async () => {
     setIsLoading(true);
     try {
-      const response = await FetchData('/api/admin/monthly-payments/pending', {}, 'GET');
+      const response = await FetchData<PendingPaymentsResponse>('/api/admin/monthly-payments/pending', {}, 'GET');
       if (response && response.success) {
         setAllPayments(response.pendingPayments || []);
         console.log(response.pendingPayments);
@@ -99,7 +137,7 @@ export default function MonthlyPaymentsPage() {
 
     setIsProcessing(true);
     try {
-      const response = await FetchData(`/api/admin/enrollments/${selectedPayment.enrollmentId}/monthly-payment`, {
+      const response = await FetchData<MonthlyPaymentStatusResponse>(`/api/admin/enrollments/${selectedPayment.enrollmentId}/monthly-payment`, {
         paymentId: selectedPayment.paymentId,
         status: reviewAction,
         notes: reviewNotes
@@ -193,7 +231,7 @@ export default function MonthlyPaymentsPage() {
                 <div className="col-span-8">
                 <div className="flex justify-end mt-2">
                     <Button
-                      onClick={() => handleViewProof(payment.proofUrl)}
+                      onClick={() => handleViewProof(payment.proofUrl || '')}
                       variant="outline"
                       icon={<FiEye />}
                       className=""

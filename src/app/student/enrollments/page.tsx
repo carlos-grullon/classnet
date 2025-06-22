@@ -41,7 +41,7 @@ export default function StudentEnrollments() {
   const fetchEnrollments = async () => {
     setIsLoading(true);
     try {
-      const response = await FetchData('/api/student/enrollments', {}, 'GET');
+      const response = await FetchData<{success: boolean, enrollments: Enrollment[]}>('/api/student/enrollments', {}, 'GET');
       if (response.success) {
         setEnrollments(response.enrollments);
       }

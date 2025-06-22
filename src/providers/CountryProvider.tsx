@@ -31,15 +31,15 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCountries = async () => {
     try {
-      const data = await FetchData('/api/countries', {}, 'GET');
+      const data = await FetchData<{countries: Country[]}>('/api/countries', {}, 'GET');
 
       const cache: CachedCountries = {
-        data,
+        data: data.countries,
         timestamp: Date.now()
       };
       
       localStorage.setItem('countriesCache', JSON.stringify(cache));
-      setCountries(data);
+      setCountries(data.countries);
     } catch (error) {
       console.error('Error fetching countries:', error);
       // Lista de respaldo por si falla el endpoint
