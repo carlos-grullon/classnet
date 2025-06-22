@@ -17,6 +17,7 @@ import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { formatInputDateToLong } from '@/utils/GeneralTools';
 import { SupportMaterial, WeekContent, Assignment } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
+import { useParams } from 'next/navigation';
 
 interface WeekContentForm {
   content: {
@@ -27,10 +28,10 @@ interface WeekContentForm {
   };
 }
 
-export default async function VirtualClassroom({ params }: { params: Promise<{ id: string }> }) {
+export default function VirtualClassroom() {
   const { getCountryByCode } = useCountries();
-  const { id } = await params;
-  const classId = id;
+  const params = useParams();
+  const classId = params?.id as string;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContentForm>({
     content: {

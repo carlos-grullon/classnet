@@ -60,7 +60,7 @@ interface APIResponse {
 }
 
 // Helper function to convert API response to Class
-export function toClass(item: { _id: ObjectId; startTime: string; endTime: string; selectedDays: string[]; students_enrolled: number }): Class {
+function toClass(item: { _id: ObjectId; startTime: string; endTime: string; selectedDays: string[]; students_enrolled: number }): Class {
   return {
     _id: item._id.toString(),
     startTime: item.startTime,

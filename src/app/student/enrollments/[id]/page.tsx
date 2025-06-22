@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, MonthlyPaymentSection, PaymentModal } from '@/components';
 import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiDollarSign } from 'react-icons/fi';
 import { FetchData, ErrorMsj, formatDate, getLevelName, getDayName } from '@/utils/Tools.tsx';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/GeneralTools';
 import { useCallback } from 'react';
@@ -78,7 +78,7 @@ const bankDetails = [
   }
 ];
 
-export default async function EnrollmentDetails({ params }: { params: Promise<{ id: string }> }) {
+export default function EnrollmentDetails() {
   const router = useRouter();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,8 +87,8 @@ export default async function EnrollmentDetails({ params }: { params: Promise<{ 
   const [currentPaymentType, setCurrentPaymentType] = useState<'enrollment' | 'monthly'>('enrollment');
   const [currentPaymentId, setCurrentPaymentId] = useState<string | undefined>(undefined);
 
-  const { id } = await params;
-  const enrollmentId = id;
+  const params = useParams();
+  const enrollmentId = params?.id as string;
 
   const fetchEnrollmentDetails = useCallback(async () => {
     setIsLoading(true);
@@ -369,7 +369,7 @@ export default async function EnrollmentDetails({ params }: { params: Promise<{ 
           {['enrolled', 'proof_submitted', 'proof_rejected'].includes(enrollment.status) && (
             <div className="md:col-span-6">
               <MonthlyPaymentSection 
-                enrollmentId={params.id} 
+                enrollmentId={enrollmentId} 
                 onOpenPaymentModal={(paymentId) => {
                   // Abrir el modal de pago para pagos mensuales
                   setCurrentPaymentType('monthly');
@@ -392,7 +392,7 @@ export default async function EnrollmentDetails({ params }: { params: Promise<{ 
         bankDetails={bankDetails}
         paymentAmount={enrollment?.paymentAmount || 0}
         currency="RD$"
-        enrollmentId={params.id}
+        enrollmentId={enrollmentId}
         onPaymentSuccess={fetchEnrollmentDetails}
         paymentType={currentPaymentType}
         paymentId={currentPaymentId} // Pasar el ID del pago si existe

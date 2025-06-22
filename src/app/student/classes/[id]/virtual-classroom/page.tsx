@@ -19,6 +19,7 @@ import { AudioRecorder } from '@/components/AudioRecorder';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { Textarea } from '@/components/Textarea';
 import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
+import { useParams } from 'next/navigation';
 
 interface StudentAssignment {
   fileUrl: string | null;
@@ -87,9 +88,9 @@ export interface WeekGetApiResponse {
   data: WeekDataResponse;
 }
 
-export default async function VirtualClassroom({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const classId = id;
+export default function VirtualClassroom() {
+  const params = useParams();
+  const classId = params?.id as string;
   const { getCountryByCode } = useCountries();
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [content, setContent] = useState<ClassContent | null>(null);

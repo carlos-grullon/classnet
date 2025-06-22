@@ -10,7 +10,7 @@ import { useCallback } from 'react';
 // Interfaz para las inscripciones
 interface Enrollment {
   id: string;
-  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled';
+  status: string; // Cambiado de tipo específico a string
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -31,6 +31,54 @@ interface Enrollment {
     price: number;
     level: string;
   };
+}
+
+interface EnrollmentResponse {
+  success: boolean;
+  enrollments: Array<{
+    id: string;
+    status: string;
+    createdAt: string;
+    updatedAt: string;
+    expiresAt: string;
+    paymentAmount: number;
+    paymentProof?: string;
+    notes?: string;
+    student: {
+      _id: string;
+      name: string;
+      lastName: string;
+      email: string;
+    };
+    class: {
+      _id: string;
+      name: string;
+      subjectName: string;
+      teacherName: string;
+      price: number;
+      level: string;
+    };
+  }>;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string; // Solo presente cuando success es false
+}
+
+interface EnrollmentStatusResponse {
+  success: boolean;
+  message: string;
+  enrollment: {
+    id: string;
+    status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled';
+    updatedAt: string;
+    notes?: string;
+  };
+  error?: string; // Solo presente cuando success es false
+  details?: string; // Solo presente cuando success es false
 }
 
 export default function AdminEnrollments() {
@@ -71,7 +119,7 @@ export default function AdminEnrollments() {
       if (statusFilter) {
         url += `&status=${statusFilter}`;
       }
-      const response = await FetchData(url, {}, 'GET');
+      const response = await FetchData<EnrollmentResponse>(url, {}, 'GET');
       if (response.success) {
         setEnrollments(response.enrollments);
         setPagination(prev => ({
@@ -118,7 +166,7 @@ export default function AdminEnrollments() {
 
     setIsUpdating(true);
     try {
-      const response = await FetchData(`/api/admin/enrollments/${detailModal.enrollment.id}/status`, {
+      const response = await FetchData<EnrollmentStatusResponse>(`/api/admin/enrollments/${detailModal.enrollment.id}/status`, {
         status: updateForm.status,
         notes: updateForm.notes
       }, 'PATCH');
