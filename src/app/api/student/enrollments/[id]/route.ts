@@ -44,11 +44,12 @@ export async function GET(
       }
     });
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener detalles de inscripción:', error);
     return NextResponse.json({ 
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }

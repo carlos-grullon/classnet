@@ -14,6 +14,7 @@ interface BaseClass {
   updated_at: Date;
   durationWeeks: number;
   startDate: Date | string;
+  currency: string;
 }
 
 export interface Class extends BaseClass {

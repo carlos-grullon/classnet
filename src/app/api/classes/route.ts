@@ -7,6 +7,7 @@ import { mongoTimeToTimeString12h } from "@/utils/GeneralTools.ts";
 import { getUserId } from "@/utils/Tools.ts";
 import { timeStringToMongoTime } from "@/utils/Tools.ts";
 import { ClassFormValues } from "@/types/Class";
+import { Class } from "@/interfaces/Class";
 
 export async function GET(request: NextRequest) {
     try {
@@ -59,14 +60,14 @@ export async function GET(request: NextRequest) {
         const totalPages = Math.ceil(total / limit);
 
         // Convertir a formato legible para el front
-        const formattedClasses = await Promise.all(classes.map(async (classItem: any) => {
+        const formattedClasses = await Promise.all(classes.map(async (classItem: Class) => {
             return {
                 ...classItem,
                 _id: classItem._id.toString(),
                 teacher_id: classItem.teacher_id.toString(),
-                selectedDays: classItem.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b)),
-                startTime: mongoTimeToTimeString12h(classItem.startTime),
-                endTime: mongoTimeToTimeString12h(classItem.endTime),
+                selectedDays: classItem.selectedDays!.sort((a: string, b: string) => parseInt(a) - parseInt(b)),
+                startTime: classItem.startTime instanceof Date ? mongoTimeToTimeString12h(classItem.startTime) : '',
+                endTime: classItem.endTime instanceof Date ? mongoTimeToTimeString12h(classItem.endTime) : '',
                 teacherName: classItem.teacherName || 'Profesor no disponible',
                 subjectName: classItem.subjectName || 'Materia no disponible'
             };
@@ -135,9 +136,11 @@ export async function POST(request: NextRequest) {
             message: 'Clase agregada correctamente',
             classCreated: newClass
         });
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al procesar la solicitud';
+        console.error('Error al crear la clase:', error);
         return NextResponse.json(
-            { error: error.message || 'Error al procesar la solicitud' },
+            { error: message },
             { status: 500 }
         );
     }

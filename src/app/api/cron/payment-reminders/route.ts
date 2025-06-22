@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import { addDays, isBefore, isAfter, differenceInDays } from 'date-fns';
 import { sendPaymentReminderEmail, sendPaymentOverdueEmail } from '@/utils/EmailService';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
+import { Payment, Enrollment } from '@/interfaces/Enrollment'
 
 // Clave secreta para proteger el endpoint de cron
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
     }
 
     const now = new Date();
-    const enrollmentsCollection = await getCollection('enrollments');
+    const enrollmentsCollection = await getCollection<Enrollment>('enrollments');
     const usersCollection = await getCollection('users');
     const classesCollection = await getCollection('classes');
 
@@ -30,11 +31,15 @@ export async function GET(req: NextRequest) {
       nextPaymentDueDate: { $exists: true }
     }).toArray();
 
+    if (!enrollments || enrollments.length === 0) {
+      return NextResponse.json({ error: 'No se encontraron inscripciones' }, { status: 404 });
+    }
+
     let remindersSent = 0;
     let overdueNoticesSent = 0;
 
     for (const enrollment of enrollments) {
-      const nextPaymentDate = new Date(enrollment.nextPaymentDueDate);
+      const nextPaymentDate = new Date(enrollment.nextPaymentDueDate!);
       
       // Obtener datos del estudiante y la clase
       const student = await usersCollection.findOne({ _id: new ObjectId(enrollment.student_id) });
@@ -77,17 +82,6 @@ export async function GET(req: NextRequest) {
       
       // 3. Enviar notificación de pago vencido si han pasado 3 días desde la fecha de vencimiento
       else if (isAfter(now, addDays(nextPaymentDate, 3))) {
-        // Definir interfaz para Payment
-        interface Payment {
-          _id: string;
-          amount: number;
-          date: string;
-          status: 'paid' | 'pending' | 'overdue';
-          proofUrl?: string;
-          notes?: string;
-          approvedAt?: string;
-          rejectedAt?: string;
-        }
         
         // Verificar si ya se ha marcado como vencido para no enviar múltiples correos
         const isAlreadyMarkedOverdue = enrollment.paymentsMade?.some(
@@ -99,18 +93,18 @@ export async function GET(req: NextRequest) {
 
         if (!isAlreadyMarkedOverdue) {
           // Marcar el pago como vencido
-          const newPayment = {
+          const newPayment: Payment = {
             _id: new ObjectId().toString(),
             amount: enrollment.priceAtEnrollment || classData.price,
             date: now.toISOString(),
-            status: 'overdue' as 'overdue',
+            status: 'overdue',
             notes: 'Pago mensual vencido'
           };
           
           // Usar aserción de tipo para evitar problemas con TypeScript
           await enrollmentsCollection.updateOne(
             { _id: enrollment._id },
-            { $push: { paymentsMade: newPayment } } as any
+            { $push: { paymentsMade: newPayment } }
           );
 
           // Enviar correo de notificación de pago vencido
@@ -150,8 +144,9 @@ export async function GET(req: NextRequest) {
       overdueNoticesSent,
       processedAt: now.toISOString()
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al procesar recordatorios de pago:', error);
-    return NextResponse.json({ error: 'Error al procesar recordatorios' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

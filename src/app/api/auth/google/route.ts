@@ -6,9 +6,10 @@ export async function GET() {
   try {
     const googleAuthURL = getGoogleAuthURL();
     return NextResponse.redirect(googleAuthURL);
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }

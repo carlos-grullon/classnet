@@ -5,6 +5,7 @@ import { ObjectId } from 'mongodb';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { Enrollment } from '@/interfaces/Enrollment';
 
 // Directorio para guardar los comprobantes de pago
 const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'payments');
@@ -19,7 +20,7 @@ export async function POST(
     const enrollmentId = params.id;
     
     // Obtener colección
-    const enrollmentsCollection = await getCollection('enrollments');
+    const enrollmentsCollection = await getCollection<Enrollment>('enrollments');
     
     // Verificar si la inscripción existe y pertenece al estudiante
     const enrollment = await enrollmentsCollection.findOne({
@@ -92,9 +93,10 @@ export async function POST(
           // Intentar eliminar el archivo anterior
           await unlink(oldFilePath);
           console.log(`Archivo anterior eliminado: ${oldFilePath}`);
-        } catch (error: any) {
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Error desconocido';
           // Si hay un error al eliminar, lo registramos pero continuamos
-          console.error(`Error al eliminar archivo anterior: ${error?.message || 'Error desconocido'}`);
+          console.error(`Error al eliminar archivo anterior: ${message}`);
         }
       }
 
@@ -125,7 +127,7 @@ export async function POST(
     } else {
       // Pago mensual
       // Verificar que la inscripción esté activa
-      if (!['enrolled', 'proof_submitted', 'proof_rejected'].includes(enrollment.status)) {
+      if (!['enrolled', 'proof_submitted', 'proof_rejected'].includes(enrollment.status!)) {
         return NextResponse.json({ 
           error: 'La inscripción no está en un estado válido para pagos mensuales',
           status: enrollment.status
@@ -158,9 +160,10 @@ export async function POST(
             // Intentar eliminar el archivo anterior
             await unlink(oldFilePath);
             console.log(`Archivo anterior eliminado: ${oldFilePath}`);
-          } catch (error: any) {
+          } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error desconocido';
             // Si hay un error al eliminar (por ejemplo, el archivo no existe), lo registramos pero continuamos
-            console.error(`Error al eliminar archivo anterior: ${error?.message || 'Error desconocido'}`);
+            console.error(`Error al eliminar archivo anterior: ${message}`);
           }
         }
         
@@ -197,14 +200,14 @@ export async function POST(
             $push: {
               paymentsMade: {
                 _id: newPaymentId,
-                amount: enrollment.monthlyPaymentAmount || enrollment.paymentAmount,
+                amount: enrollment.paymentAmount || enrollment.priceAtEnrollment,
                 date: now,
                 proofUrl: relativePath,
                 status: 'pending',
                 notes: notes,
                 submittedAt: now
               }
-            } as any
+            }
           }
         );
 
@@ -217,11 +220,12 @@ export async function POST(
       }
     }
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al subir comprobante de pago:', error);
     return NextResponse.json({ 
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }
@@ -275,8 +279,9 @@ export async function GET(
     };
 
     return NextResponse.json(paymentInfo);
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener información de pago mensual:', error);
-    return NextResponse.json({ error: 'Error al procesar la solicitud' }, { status: 500 });
+    return NextResponse.json({ error: 'Error al procesar la solicitud', details: message }, { status: 500 });
   }
 }

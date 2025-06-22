@@ -58,8 +58,9 @@ export async function GET(request: NextRequest) {
     });
     
     return response;
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error en el callback de Google:', error);
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error.message)}`, request.url));
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(message)}`, request.url));
   }
 }

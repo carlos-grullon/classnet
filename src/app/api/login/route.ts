@@ -38,9 +38,11 @@ export async function POST(request: Request) {
         });
 
         return response;
-    } catch (error: any) {
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error desconocido';
+        console.error('Error al iniciar sesión:', error);
         return NextResponse.json(
-            { success: false, message: error.message },
+            { success: false, message: message },
             { status: 401 }
         );
     }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { formatDateLong } from '@/utils/GeneralTools';
+import { ClassDatabase } from '@/interfaces/Class';
+import { PaymentUpdate } from '@/interfaces/Enrollment';
 
 interface ClassInfo {
   _id: string;
@@ -30,12 +32,12 @@ export async function GET(req: NextRequest) {
     for (const enrollment of enrollments) {
       // Filtrar solo los pagos pendientes
       const pendingPaymentsForEnrollment = enrollment.paymentsMade?.filter(
-        (payment: any) => payment.status === 'pending'
+        (payment: PaymentUpdate) => payment.status === 'pending'
       ) || [];
       
       if (pendingPaymentsForEnrollment.length > 0) {
         // Obtener información de la clase
-        const classData = await classesCollection.findOne({ _id: enrollment.class_id });
+        const classData = await classesCollection.findOne<ClassDatabase>({ _id: enrollment.class_id });
         allClasses.push(classData);
 
         // Obtener información del estudiante
@@ -69,8 +71,10 @@ export async function GET(req: NextRequest) {
 
     // Preparar información de clases
     const classes: ClassInfo[] = await Promise.all(
-      allClasses.map(async (classData: any) => {
-        
+      allClasses.map(async (classData) => {
+        if (!classData) {
+          throw new Error('Falta info de la clase');
+        }
         return {
           _id: classData._id.toString(),
           name: classData.subjectName || 'Clase sin nombre',
@@ -86,11 +90,12 @@ export async function GET(req: NextRequest) {
       pendingPayments,
       classes
     });
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener pagos mensuales pendientes:', error);
     return NextResponse.json({ 
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }

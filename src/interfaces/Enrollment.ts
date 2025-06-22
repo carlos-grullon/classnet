@@ -1,7 +1,9 @@
+import { ObjectId } from "mongodb";
+
 export interface Enrollment {
-  _id?: string;
-  student_id?: string;
-  class_id?: string;
+  _id?: string | ObjectId;
+  student_id?: string | ObjectId;
+  class_id?: string | ObjectId;
   status?: string;
   paymentAmount?: number;
   expiresAt?: string | Date;

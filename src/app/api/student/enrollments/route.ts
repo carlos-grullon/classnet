@@ -73,11 +73,12 @@ export async function POST(req: NextRequest) {
       expiresAt: expiresAt
     }, { status: 201 });
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al crear inscripción:', error);
     return NextResponse.json({ 
       error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     }, { status: 500 });
   }
 }
@@ -129,11 +130,12 @@ export async function GET(req: NextRequest) {
       }
     });
     
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al obtener inscripciones:', error);
     return NextResponse.json({ 
         error: 'Error al procesar la solicitud',
-      details: error.message
+      details: message
     });
   }
 }

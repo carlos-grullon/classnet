@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from "@/utils/MongoDB";
+import { Country } from '@/interfaces/Country';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 604800; // 7 días en segundos
-
-interface Country {
-  cca2: string;
-  name: {
-    common: string;
-  };
-  flag: string;
-}
 
 export async function GET() {
   try {
@@ -27,7 +20,7 @@ export async function GET() {
       const data = await res.json();
 
       const countries: Country[] = data
-        .map((c: any) => ({
+        .map((c: Country) => ({
           cca2: c.cca2,
           name: { common: c.name.common },
           flag: c.flag

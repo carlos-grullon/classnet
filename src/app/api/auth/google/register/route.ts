@@ -92,10 +92,11 @@ export async function POST(request: NextRequest) {
     });
     
     return response;
-  } catch (error: any) {
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error en el registro con Google:', error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }
