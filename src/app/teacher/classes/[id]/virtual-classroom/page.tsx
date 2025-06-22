@@ -27,9 +27,10 @@ interface WeekContentForm {
   };
 }
 
-export default function VirtualClassroom({ params }: { params: { id: string } }) {
+export default async function VirtualClassroom({ params }: { params: Promise<{ id: string }> }) {
   const { getCountryByCode } = useCountries();
-  const classId = params.id;
+  const { id } = await params;
+  const classId = id;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContentForm>({
     content: {

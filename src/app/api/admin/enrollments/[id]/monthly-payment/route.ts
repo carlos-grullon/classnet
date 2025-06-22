@@ -31,11 +31,11 @@ async function deletePaymentProofFile(proofUrl: string) {
 
 // GET /api/admin/enrollments/[id]/monthly-payment - Obtener información de pagos mensuales
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const enrollmentId = params.id;
+    const enrollmentId = (await params).id;
 
     // Obtener colección
     const enrollmentsCollection = await getCollection('enrollments');
@@ -86,11 +86,11 @@ export async function GET(
 
 // PATCH /api/admin/enrollments/[id]/monthly-payment - Actualizar estado de un pago mensual
 export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const enrollmentId = params.id;
+    const enrollmentId = (await params).id;
 
     // Obtener colección
     const enrollmentsCollection = await getCollection('enrollments');
@@ -110,7 +110,7 @@ export async function PATCH(
     const classesCollection = await getCollection('classes');
     const classData = await classesCollection.findOne({ _id: enrollment.class_id });
 
-    const body = await req.json();
+    const body = await request.json();
     const { paymentId, status, notes } = body;
 
     if (!paymentId) {

@@ -6,7 +6,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';
 import { FetchData, getDayName, getLevelName, ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
-import { Class } from '@/interfaces/Class';
 import { useRouter } from 'next/navigation';
 
 interface SearchClassResult {

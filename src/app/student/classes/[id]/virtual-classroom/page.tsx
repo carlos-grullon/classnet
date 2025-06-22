@@ -87,10 +87,11 @@ export interface WeekGetApiResponse {
   data: WeekDataResponse;
 }
 
-export default function VirtualClassroom({ params }: { params: { id: string } }) {
+export default async function VirtualClassroom({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const classId = id;
   const { getCountryByCode } = useCountries();
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
-  const classId = params.id;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekDataResponse>({
     content: {

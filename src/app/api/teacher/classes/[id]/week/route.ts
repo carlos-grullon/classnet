@@ -6,9 +6,10 @@ import { WeekContent } from '@/interfaces/VirtualClassroom';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const classId = (await params).id;
     const { weekNumber, content } = await request.json();
     const weeksCollection = await getCollection('weeks');
     // convertir la fecha a Date para guardarla
@@ -23,7 +24,7 @@ export async function POST(
       }
     }
     const filter = { 
-      classId: new ObjectId(params.id), 
+      classId: new ObjectId(classId), 
       weekNumber: Number(weekNumber) 
     };
     
@@ -60,15 +61,16 @@ export async function POST(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const classId = (await params).id;
     const { searchParams } = new URL(request.url);
     const weekNumber = Number(searchParams.get('week'));
     const weeksCollection = await getCollection<WeekContent>('weeks');
     
     const weekData = await weeksCollection.findOne({
-      classId: new ObjectId(params.id),
+      classId: new ObjectId(classId),
       weekNumber
     });
     if (!weekData) {

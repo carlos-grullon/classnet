@@ -78,7 +78,7 @@ const bankDetails = [
   }
 ];
 
-export default function EnrollmentDetails({ params }: { params: { id: string } }) {
+export default async function EnrollmentDetails({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +87,8 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
   const [currentPaymentType, setCurrentPaymentType] = useState<'enrollment' | 'monthly'>('enrollment');
   const [currentPaymentId, setCurrentPaymentId] = useState<string | undefined>(undefined);
 
-  const enrollmentId = params.id;
+  const { id } = await params;
+  const enrollmentId = id;
 
   const fetchEnrollmentDetails = useCallback(async () => {
     setIsLoading(true);

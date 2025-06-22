@@ -7,12 +7,11 @@ import { mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
 // GET /api/student/enrollments/[id] - Obtener detalles de una inscripción específica
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    const enrollmentId = (await params).id;
     const studentId = await getUserId(req);
-    const enrollmentId = params.id;
-    
     // Obtener colecciones
     const enrollmentsCollection = await getCollection('enrollments');
     const classesCollection = await getCollection('classes');

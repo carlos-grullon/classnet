@@ -13,12 +13,13 @@ const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'payments');
 // POST /api/student/enrollments/[id]/payment-proof - Subir comprobante de pago
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const studentId = await getUserId(req);
-    const enrollmentId = params.id;
+    const { id } = await params;
+    const enrollmentId = id;
     
+    const studentId = await getUserId(req);
     // Obtener colección
     const enrollmentsCollection = await getCollection<Enrollment>('enrollments');
     
@@ -233,14 +234,15 @@ export async function POST(
 // GET /api/student/enrollments/[id]/payment-proof - Obtener comprobantes de pago
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
+    // Obtener el ID de la inscripción
+    const enrollmentId = (await params).id;
+
     // Verificar autenticación y obtener ID del usuario
     const userId = await getUserId(req);
     
-    // Obtener el ID de la inscripción
-    const enrollmentId = params.id;
     if (!ObjectId.isValid(enrollmentId)) {
       return NextResponse.json({ error: 'ID de inscripción inválido' }, { status: 400 });
     }

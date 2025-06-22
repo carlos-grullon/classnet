@@ -9,10 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 // POST /api/teacher/classes/[id]/start - Iniciar una clase
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const classId = params.id;
+    const classId = (await params).id;
     if (!ObjectId.isValid(classId)) {
       return NextResponse.json({ error: 'ID de clase inválido' }, { status: 400 });
     }

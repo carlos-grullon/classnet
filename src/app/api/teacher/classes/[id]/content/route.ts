@@ -6,10 +6,10 @@ import { getDayName, getLevelName, mongoTimeToTimeString12h } from '@/utils/Gene
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const classId = params.id;
+    const classId = (await params).id;
     const classContent: ClassContent = await request.json();
 
     const classContentCollection = await getCollection('class_contents');
@@ -49,10 +49,10 @@ export async function PATCH(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const classId = params.id;
+    const classId = (await params).id;
     const classCollection = await getCollection('classes');
     const classData = await classCollection.findOne({
       _id: new ObjectId(classId)

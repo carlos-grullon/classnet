@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';

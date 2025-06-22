@@ -29,10 +29,10 @@ const getDayName = (days: string[]): string => {
 // PATCH /api/admin/enrollments/[id]/status - Actualizar estado de inscripción
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const enrollmentId = params.id;
+    const enrollmentId = (await params).id;
     
     // Obtener colección
     const enrollmentsCollection = await getCollection('enrollments');

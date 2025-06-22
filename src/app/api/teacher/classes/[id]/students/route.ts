@@ -5,11 +5,11 @@ import { getUserId } from '@/utils/Tools.ts';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
     const userId = await getUserId(request);
-    const classId = params.id;
+    const classId = (await params).id;
 
     // Verificar que la clase exista y pertenezca al profesor
     const classesCollection = await getCollection('classes');
