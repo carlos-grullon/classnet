@@ -12,6 +12,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormSchema, LoginFormValues } from '@/validations/login';
 import { Controller } from 'react-hook-form';
 
+interface User {
+  userIsStudent: boolean;
+  userIsTeacher: boolean;
+}
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -34,7 +39,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const user = await FetchData("/api/login", data);
+      const user = await FetchData("/api/login", data) as User;
       SuccessMsj("Inicio de sesión exitoso");
       if (user.userIsStudent && user.userIsTeacher) {
         router.push("/");
@@ -44,6 +49,7 @@ export default function LoginPage() {
         router.push("/teacher");
       }
     } catch (error) {
+      console.error(error);
       ErrorMsj("Credenciales incorrectas");
     } finally {
       setIsLoading(false);

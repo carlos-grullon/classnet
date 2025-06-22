@@ -16,7 +16,7 @@ const RegisterSchema = z.object({
 export async function POST(request: Request) {
     try {
         const data = await request.json();
-        const { confirmPassword, ...validatedData } = RegisterSchema.parse(data);
+        const validatedData = RegisterSchema.parse(data);
             
         await Register(
             validatedData.username,

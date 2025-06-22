@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     // Buscar o crear usuario en la base de datos
     const usersCollection = await getCollection('users');
-    let user = await usersCollection.findOne({ email: googleUser.email });
+    const user = await usersCollection.findOne({ email: googleUser.email });
 
     if (!user) {
       // Si es la primera vez que el usuario inicia sesión con Google,
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     // Crear token JWT para la sesión
     const token = await createUserSession(user);
     
-    let redirectUrl = '/';
+    const redirectUrl = '/';
     
     // Crear una respuesta con redirección y establecer la cookie httpOnly
     const response = NextResponse.redirect(new URL(redirectUrl, request.url));

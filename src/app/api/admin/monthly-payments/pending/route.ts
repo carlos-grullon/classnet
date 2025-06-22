@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { formatDateLong } from '@/utils/GeneralTools';
 import { ClassDatabase } from '@/interfaces/Class';
@@ -13,7 +13,7 @@ interface ClassInfo {
 }
 
 // GET /api/admin/monthly-payments/pending - Obtener todos los pagos mensuales pendientes
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Obtener colecciones
     const enrollmentsCollection = await getCollection('enrollments');

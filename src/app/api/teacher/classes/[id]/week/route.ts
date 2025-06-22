@@ -21,14 +21,6 @@ interface Assignment {
   fileName: string;
 }
 
-interface WeekContent {
-  _id?: string;
-  meetingLink: string;
-  recordingLink: string;
-  supportMaterials: SupportMaterial[];
-  assignment: Assignment | null;
-}
-
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }

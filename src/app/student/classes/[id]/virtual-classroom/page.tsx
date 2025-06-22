@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button, Modal } from '@/components';
 import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj, getFileIcon } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj, getFileIcon } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Input } from '@/components';
 import { useCountries } from '@/providers';
