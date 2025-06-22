@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { BiLogOut } from 'react-icons/bi';
 import { FetchData } from '@/utils/Tools.tsx';

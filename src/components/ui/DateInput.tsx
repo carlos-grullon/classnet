@@ -3,9 +3,7 @@
 import { Input, InputProps } from '@/components/Input';
 import { forwardRef } from 'react';
 
-export interface DateInputProps extends Omit<InputProps, 'ref'> {}
-
-export const DateInput = forwardRef<HTMLInputElement, DateInputProps>((props, ref) => {
+export const DateInput = forwardRef<HTMLInputElement, Omit<InputProps, 'ref'>>((props, ref) => {
   return (
     <Input
       {...props}

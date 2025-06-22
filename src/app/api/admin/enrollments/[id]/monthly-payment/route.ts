@@ -29,7 +29,7 @@ async function deletePaymentProofFile(proofUrl: string) {
   }
 }
 
-// GET /api/admin/enrollments/[id]/monthly-payment - Obtener pagos mensuales de una inscripción
+// GET /api/admin/enrollments/[id]/monthly-payment - Obtener información de pagos mensuales
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -213,65 +213,6 @@ export async function PATCH(
     return NextResponse.json({
       error: 'Error al procesar la solicitud',
       details: error instanceof Error ? error.message : 'Error desconocido'
-    }, { status: 500 });
-  }
-}
-
-// GET /api/admin/enrollments/[id]/monthly-payment/all - Obtener todos los pagos mensuales pendientes
-export async function getMonthlyPaymentsPending() {
-  try {
-    // Obtener colección
-    const enrollmentsCollection = await getCollection('enrollments');
-
-    // Buscar inscripciones con pagos pendientes
-    const enrollments = await enrollmentsCollection.find({
-      'paymentsMade.status': 'pending'
-    }).toArray();
-
-    // Preparar datos para la respuesta
-    const pendingPayments = [];
-
-    for (const enrollment of enrollments) {
-      // Filtrar solo los pagos pendientes
-      const pendingPaymentsForEnrollment = enrollment.paymentsMade?.filter(
-        (payment: Payment) => payment.status === 'pending'
-      ) || [];
-
-      if (pendingPaymentsForEnrollment.length > 0) {
-        // Obtener información de la clase
-        const classesCollection = await getCollection('classes');
-        const classData = await classesCollection.findOne({ _id: enrollment.class_id });
-
-        // Obtener información del estudiante
-        const usersCollection = await getCollection('users');
-        const student = await usersCollection.findOne({ _id: enrollment.student_id });
-
-        // Agregar información a la lista de pagos pendientes
-        for (const payment of pendingPaymentsForEnrollment) {
-          pendingPayments.push({
-            paymentId: payment._id,
-            enrollmentId: enrollment._id,
-            studentName: student ? `${student.firstName} ${student.lastName}` : 'Estudiante',
-            studentEmail: student?.email || '',
-            className: classData?.name || 'Clase',
-            amount: payment.amount,
-            currency: classData?.currency || 'DOP',
-            date: payment.date,
-            proofUrl: payment.proofUrl,
-            notes: payment.notes || '',
-            submittedAt: payment.submittedAt
-          });
-        }
-      }
-    }
-
-    return pendingPayments;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error desconocido';
-    console.error('Error al obtener pagos mensuales pendientes:', error);
-    return NextResponse.json({
-      error: 'Error al procesar la solicitud',
-      details: message
     }, { status: 500 });
   }
 }

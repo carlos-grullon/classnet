@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Card, Button, Modal } from '@/components';
+import React, { useState } from 'react';
+import { Card, Button } from '@/components';
 import { FiClock, FiCheckCircle, FiUpload, FiAlertTriangle, FiCalendar } from 'react-icons/fi';
 import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import { formatDateLong, formatCurrency } from '@/utils/GeneralTools.ts';
-import Image from 'next/image';
 
 // Interfaz para los pagos mensuales
 interface Payment {
@@ -57,7 +56,7 @@ export function MonthlyPaymentSection({ enrollmentId, onOpenPaymentModal }: Mont
   const fetchPaymentInfo = async () => {
     setIsLoading(true);
     try {
-      const response = await FetchData(`/api/student/enrollments/${enrollmentId}/payment-proof`, {}, 'GET');
+      const response = await FetchData<PaymentInfo>(`/api/student/enrollments/${enrollmentId}/payment-proof`, {}, 'GET');
       if (response) {
         setPaymentInfo(response);
       } else {

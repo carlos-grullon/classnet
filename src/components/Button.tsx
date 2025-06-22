@@ -51,9 +51,6 @@ export function Button({
   // Clases para ancho completo
   const widthClasses = fullWidth ? 'w-full' : '';
   
-  // Clases para estados disabled y loading
-  const stateClasses = (disabled || isLoading) ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer';
-  
   return (
     <button
       type={type}

@@ -9,6 +9,34 @@ import { FetchData, getDayName, getLevelName, ErrorMsj, SuccessMsj } from '@/uti
 import { Class } from '@/interfaces/Class';
 import { useRouter } from 'next/navigation';
 
+interface SearchClassResult {
+  _id: string;
+  teacher_id: string;
+  subjectName: string;
+  teacherName: string;
+  price: number;
+  level: string;
+  selectedDays: string[];
+  startTime: string;
+  endTime: string;
+  // Agregar otros campos según sea necesario
+}
+
+export interface SearchClassesResponse {
+  classes: SearchClassResult[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+interface ClassSearchPostResponse {
+  success: boolean;
+  message: string;
+  enrollmentId: string;
+  expiresAt: Date;
+  error?: string;
+}
+
 export default function StudentClasses() {
   const router = useRouter();
   const [subjectModalOpen, setSubjectModalOpen] = useState(false);
@@ -20,14 +48,14 @@ export default function StudentClasses() {
     total: 0,
     totalPages: 0
   });
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<SearchClassResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
   
   // Estado para el modal de confirmación de inscripción
   const [enrollmentModal, setEnrollmentModal] = useState({
     isOpen: false,
-    classItem: null as Class | null
+    classItem: null as SearchClassResult | null
   });
 
   const {
@@ -61,14 +89,16 @@ export default function StudentClasses() {
         }
       });
       params.append('page', String(page));
-      const response = await FetchData(`/api/classes?${params}`, {}, 'GET');
+      const response = await FetchData<SearchClassesResponse>(`/api/classes?${params}`, {}, 'GET');
       setClasses(response.classes);
       setPagination({
         page: response.page,
         total: response.total,
         totalPages: response.totalPages
       });
-    } catch (error: unknown) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al buscar las clases';
+      console.error(message, error)
       ErrorMsj('Error al buscar las clases');
     } finally {
       setIsLoading(false);
@@ -93,7 +123,7 @@ export default function StudentClasses() {
   };
   
   // Manejador para abrir el modal de confirmación de inscripción
-  const handleEnrollmentClick = (classItem: Class) => {
+  const handleEnrollmentClick = (classItem: SearchClassResult) => {
     setEnrollmentModal({
       isOpen: true,
       classItem
@@ -106,7 +136,7 @@ export default function StudentClasses() {
     
     setEnrollmentLoading(true);
     try {
-      const response = await FetchData('/api/student/enrollments', {
+      const response = await FetchData<ClassSearchPostResponse>('/api/student/enrollments', {
         classId: enrollmentModal.classItem._id
       }, 'POST');
       

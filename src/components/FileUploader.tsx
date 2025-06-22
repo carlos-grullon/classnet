@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { FiUpload, FiX, FiCheckCircle, FiAlertTriangle, FiFileText, FiImage } from "react-icons/fi";
+import { FiUpload, FiX, FiCheckCircle, FiAlertTriangle, FiFileText } from "react-icons/fi";
 import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface FileUploaderProps {
@@ -9,7 +9,6 @@ interface FileUploaderProps {
 }
 
 export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
-  const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -101,7 +100,6 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
       const data = await res.json();
       
       if (res.ok) {
-        setUrl(data.url);
         SuccessMsj('Archivo subido correctamente');
         // Limpiar después de subir
         setFile(null);
@@ -131,7 +129,6 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
 
   const removeFile = () => {
     setFile(null);
-    setUrl('');
     if (inputRef.current) inputRef.current.value = '';
   };
 

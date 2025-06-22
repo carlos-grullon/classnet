@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect } from "react";
-
 interface SubjectOption {
   value: { _id: string; name: string };
   label: string;
@@ -17,7 +15,6 @@ interface SubjectSelectProps {
   id?: string;
   name?: string;
   disabled?: boolean;
-  trigger?: number;
 }
 
 export function SubjectSelect({
@@ -30,18 +27,7 @@ export function SubjectSelect({
   id,
   name,
   disabled = false,
-  trigger = 0
 }: SubjectSelectProps) {
-
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    if (error) {
-      setHasError(true);
-    } else {
-      setHasError(false);
-    }
-  }, [error, trigger]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;

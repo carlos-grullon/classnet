@@ -16,13 +16,13 @@ interface TeacherProfileResponse {
     subjects: string[];
     country: string;
     classes?: {
-      _id: ObjectId;
-      startTime: string;
-      endTime: string;
-      selectedDays: string[];
-      students_enrolled: number;
+        _id: ObjectId;
+        startTime: string;
+        endTime: string;
+        selectedDays: string[];
+        students_enrolled: number;
     }[];
-  }
+}
 
 export async function GET(request: NextRequest) {
     try {
@@ -48,11 +48,11 @@ export async function GET(request: NextRequest) {
             const classes = await ClassesCollection.find({ teacher_id: new ObjectId(userId) }).toArray();
             if (classes.length > 0) {
                 const classesWithEnrollments = await Promise.all(classes.map(async (cls) => {
-                    const enrollments = await EnrollmentsCollection.find({ 
+                    const enrollments = await EnrollmentsCollection.find({
                         class_id: new ObjectId(cls._id),
                         status: 'enrolled'
                     }).toArray();
-                    
+
                     return {
                         ...cls,
                         startTime: mongoTimeToTimeString12h(cls.startTime),
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
                         students_enrolled: enrollments.length
                     };
                 }));
-                
+
                 response.classes = classesWithEnrollments;
             }
         }
@@ -79,34 +79,34 @@ export async function PUT(request: NextRequest) {
     try {
         const userId = await getUserId(request);
         const { name, description, subjects, country }: { name: string; description: string; subjects: SubjectRef[]; country: string } = await request.json();
-        
+
         const collection = await getCollection("users");
-        
+
         const updateResult = await collection.updateOne(
             { _id: new ObjectId(userId) },
-            { 
-                $set: { 
+            {
+                $set: {
                     username: name,
-                    description : description,
+                    description: description,
                     data: {
                         subjects: subjects
                     },
                     country: country,
                     updated_at: new Date()
-                } 
+                }
             }
         );
-        
+
         if (updateResult.matchedCount === 0) {
             return NextResponse.json({ error: 'Profesor no encontrado' }, { status: 404 });
         }
-        
-        return NextResponse.json({ 
+
+        return NextResponse.json({
             success: true,
             message: 'Perfil actualizado correctamente',
             updatedFields: { name, description, subjects, country }
         });
-        
+
     } catch (error) {
         console.error('Error al actualizar datos del profesor:', error);
         if (error instanceof Error) {

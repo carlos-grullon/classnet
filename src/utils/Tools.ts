@@ -4,7 +4,7 @@ import { jwtVerify } from 'jose';
 import { NextRequest } from 'next/server';
 
 export function GenerarUuid(cantiddad: number = 1): string {
-    var uuid = "";
+    let uuid = "";
     for (let i = 0; i < cantiddad; i++) {
         uuid += randomUUID();
     }

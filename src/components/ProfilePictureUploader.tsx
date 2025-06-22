@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { FiUpload, FiX, FiCheckCircle, FiImage } from 'react-icons/fi';
+import { FiUpload, FiX, FiCheckCircle } from 'react-icons/fi';
 import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface ProfilePictureUploaderProps {
@@ -20,7 +20,6 @@ export function ProfilePictureUploader({
   onImageClick
 }: ProfilePictureUploaderProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -58,18 +57,14 @@ export function ProfilePictureUploader({
 
   const validateAndSetFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      setError('Solo se permiten imágenes (JPEG, PNG)');
       ErrorMsj('Tipo de archivo no válido');
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen debe ser menor a 5MB');
       ErrorMsj('Imagen demasiado grande');
       return;
     }
-
-    setError('');
     setFile(file);
     setImageUrl(URL.createObjectURL(file));
     SuccessMsj('Imagen lista para subir');
@@ -86,7 +81,6 @@ export function ProfilePictureUploader({
     if (!file) return;
     
     setIsLoading(true);
-    setError('');
     
     try {
       const formData = new FormData();
@@ -114,7 +108,6 @@ export function ProfilePictureUploader({
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al subir la imagen';
-      setError(message);
       ErrorMsj(message);
     } finally {
       setIsLoading(false);

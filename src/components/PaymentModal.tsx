@@ -264,7 +264,7 @@ export function PaymentModal({
                   </div>
                 </div>
                 <p className="text-sm text-blue-600 dark:text-blue-400">
-                  Vista previa del comprobante. Haz clic en "Enviar" para confirmar.
+                  Vista previa del comprobante. Haz clic en &quot;Enviar&quot; para confirmar.
                 </p>
               </div>
             ) : (

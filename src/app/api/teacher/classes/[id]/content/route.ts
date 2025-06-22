@@ -1,44 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
+import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { getDayName, getLevelName, mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
-
-interface SupportMaterial {
-  id: string;
-  description: string;
-  link: string;
-  fileName?: string;
-}
-
-interface IClassContent {
-  welcomeMessage: string;
-  whatsappLink: string;
-  resources: SupportMaterial[];
-}
-
-interface ClassContent {
-  _id: string;
-  classId: string;
-  teacher: {
-    name: string;
-    country: string;
-    whatsapp: string;
-    email: string;
-    photo: string;
-  };
-  class: {
-    name: string;
-    level: string;
-    selectedDays: string;
-    startTime: string;
-    endTime: string;
-    price: number;
-  };
-  welcomeMessage: string;
-  whatsappLink: string;
-  resources: SupportMaterial[];
-  durationWeeks: number;
-}
 
 export async function PATCH(
   request: Request,
@@ -46,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const classId = params.id;
-    const classContent: IClassContent = await request.json();
+    const classContent: ClassContent = await request.json();
 
     const classContentCollection = await getCollection('class_contents');
     const result = await classContentCollection.updateOne(

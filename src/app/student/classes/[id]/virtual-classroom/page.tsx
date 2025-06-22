@@ -11,7 +11,7 @@ import { useCountries } from '@/providers';
 import { FaWhatsapp } from 'react-icons/fa';
 import { formatInputDateToLong, parseInputDate } from '@/utils/GeneralTools';
 import Link from 'next/link';
-import { WeekContent, ClassContent } from '@/interfaces/VirtualClassroom';
+import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { differenceInDays, isAfter } from 'date-fns';
 import { FileUploader } from '@/components/FileUploader';
@@ -27,16 +27,78 @@ interface StudentAssignment {
   message: string;
 }
 
+interface TeacherInfo {
+  name: string;
+  country: string;
+  whatsapp: string;
+  email: string;
+  photo: string;
+}
+
+interface ClassInfo {
+  name: string;
+  level: string;
+  selectedDays: string;
+  startTime: string;
+  endTime: string;
+  price: number;
+}
+
+export interface ClassContentResponse {
+  _id: string;
+  classId: string;
+  teacher: TeacherInfo;
+  class: ClassInfo;
+  welcomeMessage?: string;
+  whatsappLink?: string;
+  resources?: SupportMaterial[];
+  durationWeeks: number;
+}
+
+export interface ClassContentApiResponse {
+  success: boolean;
+  data: ClassContentResponse;
+}
+
+interface SupportMaterial {
+  id: string;
+  description: string;
+  link: string;
+  fileName?: string;
+}
+
+export interface WeekDataResponse {
+  content?: {
+    meetingLink?: string;
+    recordingLink?: string;
+    supportMaterials?: SupportMaterial[];
+    assignment?: {
+      dueDate: string; // Formateado como string para el front
+      description: string;
+      hasAudio?: boolean;
+      fileLink?: string;
+      fileName?: string;
+    } | null;
+  } | null;
+}
+
+export interface WeekGetApiResponse {
+  success: boolean;
+  data: WeekDataResponse;
+}
+
 export default function VirtualClassroom({ params }: { params: { id: string } }) {
   const { getCountryByCode } = useCountries();
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const classId = params.id;
   const [content, setContent] = useState<ClassContent | null>(null);
-  const [weekContent, setWeekContent] = useState<WeekContent>({
-    meetingLink: '',
-    recordingLink: '',
-    supportMaterials: [],
-    assignment: null
+  const [weekContent, setWeekContent] = useState<WeekDataResponse>({
+    content: {
+      meetingLink: '',
+      recordingLink: '',
+      supportMaterials: [],
+      assignment: null
+    }
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,7 +158,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const data = await FetchData(`/api/teacher/classes/${classId}/content`, {}, 'GET');
+        const data = await FetchData<ClassContentApiResponse>(`/api/teacher/classes/${classId}/content`, {}, 'GET');
         console.log(data);
         if (data.success && data.data) {
           setContent(
@@ -105,9 +167,9 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
               classId: data.data.classId,
               teacher: data.data.teacher,
               class: data.data.class,
-              welcomeMessage: data.data.welcomeMessage,
-              whatsappLink: data.data.whatsappLink,
-              resources: data.data.resources,
+              welcomeMessage: data.data.welcomeMessage || '',
+              whatsappLink: data.data.whatsappLink || '',
+              resources: data.data.resources || [],
               durationWeeks: data.data.durationWeeks
             }
           );
@@ -126,17 +188,19 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
   useEffect(() => {
     const fetchWeekContent = async () => {
       try {
-        const response = await FetchData(
+        const response = await FetchData<WeekGetApiResponse>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
           {},
           'GET'
         );
 
         const content = response.data || {
-          meetingLink: '',
-          recordingLink: '',
-          supportMaterials: [],
-          assignment: null
+          content: {
+            meetingLink: '',
+            recordingLink: '',
+            supportMaterials: [],
+            assignment: null
+          }
         };
         setWeekContent(content);
       } catch (error) {
@@ -395,16 +459,16 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       <FiLink className="text-blue-600 dark:text-blue-400" />
                       <span>Link de la reunión:</span>
                     </div>
-                    <Input value={weekContent.meetingLink}
+                    <Input value={weekContent.content?.meetingLink}
                       disabled={true}
-                      onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, content: { ...weekContent.content, meetingLink: e.target.value } })} />
                     <div className="font-medium text-center flex items-center justify-center gap-2">
                       <FiLink className="text-blue-600 dark:text-blue-400" />
                       <span>Link de la grabación:</span>
                     </div>
-                    <Input value={weekContent.recordingLink}
+                    <Input value={weekContent.content?.recordingLink}
                       disabled={true}
-                      onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, content: { ...weekContent.content, recordingLink: e.target.value } })} />
                   </div>
                 </div>
 
@@ -417,13 +481,13 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     </div>
                   </div>
                   <div className="space-y-3">
-                    {weekContent.supportMaterials.length === 0 ? (
+                    {weekContent.content?.supportMaterials?.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-2 py-4">
                         <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
                         <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
                       </div>
                     ) : (
-                      weekContent.supportMaterials.map(material => (
+                      weekContent.content?.supportMaterials?.map(material => (
                         <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
@@ -448,33 +512,33 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Asignación de la semana {selectedWeek}</h3>
                   </div>
-                  {weekContent.assignment ? (
+                  {weekContent.content?.assignment ? (
                     <div className="space-y-2">
                       <div className="grid md:grid-cols-12 gap-2">
                         <div className="flex flex-col gap-1 md:col-span-5">
                           <span className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</span>
                           <span className="font-semibold">
-                            {formatInputDateToLong(weekContent.assignment.dueDate)}
+                            {formatInputDateToLong(weekContent.content?.assignment.dueDate)}
                           </span>
                         </div>
                         <div className="flex flex-col gap-1 md:col-span-7">
                           <span className="text-sm text-gray-500 dark:text-gray-300 text-center">Estado:</span>
-                          <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold text-center ${getTimeRemainingMessage(weekContent.assignment.dueDate).color}`}>
-                            {getTimeRemainingMessage(weekContent.assignment.dueDate).message}
+                          <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold text-center ${getTimeRemainingMessage(weekContent.content?.assignment.dueDate).color}`}>
+                            {getTimeRemainingMessage(weekContent.content?.assignment.dueDate).message}
                           </span>
                         </div>
                       </div>
-                      {weekContent.assignment.fileLink && (
+                      {weekContent.content?.assignment.fileLink && (
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-500 dark:text-gray-300">Archivo:</span>
                           <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
-                            {getFileIcon(weekContent.assignment.fileName)}
+                            {getFileIcon(weekContent.content?.assignment.fileName)}
                             <Link
-                              href={weekContent.assignment.fileLink}
+                              href={weekContent.content?.assignment.fileLink}
                               target="_blank"
                               className="text-blue-500 hover:underline"
                             >
-                              {weekContent.assignment.fileName}
+                              {weekContent.content?.assignment.fileName}
                             </Link>
                           </span>
                         </div>
@@ -482,7 +546,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                       <div className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={weekContent.assignment.hasAudio}
+                          checked={weekContent.content?.assignment.hasAudio}
                           readOnly
                           className="rounded text-blue-500"
                         />
@@ -573,7 +637,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
         title={`Asignación Semana ${selectedWeek}`}
         className='w-auto max-w-6xl'
       >
-        {weekContent.assignment && (
+        {weekContent.content?.assignment && (
           <div className="">
             {/* Grid principal */}
             <div className="grid md:grid-cols-2">
@@ -588,32 +652,32 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
                     <div className="md:col-span-5">
                       <p className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</p>
                       <p className="font-semibold">
-                        {formatInputDateToLong(weekContent.assignment.dueDate)}
+                        {formatInputDateToLong(weekContent.content?.assignment.dueDate)}
                       </p>
                     </div>
                     <div className="md:col-span-7">
                       <p className="text-sm text-gray-500 dark:text-gray-300">Estado:</p>
-                      <p className={`${getTimeRemainingMessage(weekContent.assignment.dueDate).color}`}>
-                        {getTimeRemainingMessage(weekContent.assignment.dueDate).message}
+                      <p className={`${getTimeRemainingMessage(weekContent.content?.assignment.dueDate).color}`}>
+                        {getTimeRemainingMessage(weekContent.content?.assignment.dueDate).message}
                       </p>
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <p className="text-sm text-gray-500 dark:text-gray-300">Descripción:</p>
-                    <p className="whitespace-pre-line">{weekContent.assignment.description}</p>
+                    <p className="whitespace-pre-line">{weekContent.content?.assignment.description}</p>
                   </div>
 
-                  {weekContent.assignment.fileLink && (
+                  {weekContent.content?.assignment.fileLink && (
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Archivo adjunto:</p>
                       <Link
-                        href={weekContent.assignment.fileLink}
+                        href={weekContent.content?.assignment.fileLink}
                         target="_blank"
                         className="flex bg-gray-200 dark:bg-gray-700 rounded items-center gap-2 text-blue-500 hover:underline w-fit p-1 px-4"
                       >
-                        {getFileIcon(weekContent.assignment.fileName)}
-                        {weekContent.assignment.fileName}
+                        {getFileIcon(weekContent.content?.assignment.fileName)}
+                        {weekContent.content?.assignment.fileName}
                       </Link>
                     </div>
                   )}
@@ -666,7 +730,7 @@ export default function VirtualClassroom({ params }: { params: { id: string } })
               </div>
 
               {/* Sección 3: Audio */}
-              {weekContent.assignment.hasAudio && (
+              {weekContent.content?.assignment.hasAudio && (
                 <div className="space-y-4 pt-3 md:border-r-2 md:border-r-blue-500 border-b-2 pb-4 md:pb-0 border-b-blue-500 md:border-b-0">
                   <div className="flex items-center gap-2">
                     <FiMic className="text-blue-500 text-lg" />

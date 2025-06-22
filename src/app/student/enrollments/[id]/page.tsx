@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, MonthlyPaymentSection, PaymentModal } from '@/components';
-import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiDollarSign, FiFileText } from 'react-icons/fi';
-import { FetchData, ErrorMsj, SuccessMsj, formatDate, getLevelName, getDayName } from '@/utils/Tools.tsx';
+import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiDollarSign } from 'react-icons/fi';
+import { FetchData, ErrorMsj, formatDate, getLevelName, getDayName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatCurrency } from '@/utils/GeneralTools';
+import { useCallback } from 'react';
 
 // Interfaz para la inscripción
 interface Enrollment {
@@ -28,6 +29,21 @@ interface Enrollment {
     selectedDays: string[];
     startTime: string;
     endTime: string;
+  };
+}
+
+interface EnrollmentApiResponse {
+  success: boolean;
+  enrollment: Enrollment & {
+    class: {
+      _id: string;
+      name: string;
+      startTime: string;
+      endTime: string;
+      selectedDays: string[];
+      price: number;
+      level: string;
+    } | null;
   };
 }
 
@@ -70,20 +86,15 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [currentPaymentType, setCurrentPaymentType] = useState<'enrollment' | 'monthly'>('enrollment');
   const [currentPaymentId, setCurrentPaymentId] = useState<string | undefined>(undefined);
+
   const enrollmentId = params.id;
 
-  useEffect(() => {
-    if (enrollmentId) {
-      fetchEnrollmentDetails();
-    }
-  }, [enrollmentId]);
-
-  const fetchEnrollmentDetails = async () => {
+  const fetchEnrollmentDetails = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await FetchData(`/api/student/enrollments/${enrollmentId}`, {}, 'GET');
-      if (response.success) {
-        setEnrollment(response.enrollment);
+      const data = await FetchData<EnrollmentApiResponse>(`/api/student/enrollments/${enrollmentId}`, {}, 'GET');
+      if (data.success) {
+        setEnrollment(data.enrollment);
       } else {
         ErrorMsj('Error al cargar los detalles de la inscripción');
         router.push('/student/enrollments');
@@ -96,7 +107,13 @@ export default function EnrollmentDetails({ params }: { params: { id: string } }
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [enrollmentId]);
+
+  useEffect(() => {
+    if (enrollmentId) {
+      fetchEnrollmentDetails();
+    }
+  }, [enrollmentId]);
 
   // El ID de la inscripción ya está definido arriba
 

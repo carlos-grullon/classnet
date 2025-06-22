@@ -26,7 +26,7 @@ export const DaysCheckboxGroup = ({ selectedDays, onChange }: DaysCheckboxGroupP
       .map(String)
       .filter(day => day.trim() !== '');
       
-    let newSelectedDays = isChecked
+    const newSelectedDays = isChecked
       ? [...cleanSelectedDays, dayId] // Agregar día si está marcado
       : cleanSelectedDays.filter(id => id !== dayId); // Remover si está desmarcado
 

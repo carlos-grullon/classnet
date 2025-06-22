@@ -2,24 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { formatDateToInput, parseInputDate } from '@/utils/GeneralTools';
-
-interface SupportMaterial {
-  id: string;
-  description: string;
-  link: string;
-  fileName?: string;
-}
-
-interface Assignment {
-  id?: string;
-  createdAt: string;
-  updatedAt: string;
-  dueDate: string;
-  description: string;
-  hasAudio: boolean;
-  fileLink: string;
-  fileName: string;
-}
+import { WeekContent } from '@/interfaces/VirtualClassroom';
 
 export async function POST(
   request: Request,
@@ -82,23 +65,27 @@ export async function GET(
   try {
     const { searchParams } = new URL(request.url);
     const weekNumber = Number(searchParams.get('week'));
-    const weeksCollection = await getCollection('weeks');
+    const weeksCollection = await getCollection<WeekContent>('weeks');
     
     const weekData = await weeksCollection.findOne({
       classId: new ObjectId(params.id),
       weekNumber
     });
+    if (!weekData) {
+      return NextResponse.json({ success: true, data: null });
+    }
     // convertir la fecha a string para mostrarla
-    if (weekData?.content?.assignment) {
+    if (weekData.content.assignment && weekData.content.assignment.dueDate instanceof Date) {
       weekData.content.assignment.dueDate = formatDateToInput(weekData.content.assignment.dueDate);
     }
 
     return NextResponse.json({
       success: true,
-      data: weekData?.content || null
+      data: weekData.content || null
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
+    console.error('Error al obtener contenido de semana:', error);
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }

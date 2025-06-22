@@ -1,7 +1,5 @@
 'use client';
 
-import { useState, useEffect } from "react";
-
 interface SelectProps {
   id?: string;
   name?: string;
@@ -11,7 +9,6 @@ interface SelectProps {
   options: { value: string; label: string }[];
   error?: string;
   placeholder?: string;
-  trigger?: number;
 }
 
 export function Select({
@@ -23,18 +20,7 @@ export function Select({
   options,
   error,
   placeholder,
-  trigger = 0
 }: SelectProps) {
-
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    if (error) {
-      setHasError(true);
-    } else {
-      setHasError(false);
-    }
-  }, [error, trigger]);
 
   return (
     <div className="mb-4">

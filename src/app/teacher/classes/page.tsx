@@ -2,27 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Badge } from '@/components';
-import { FiClock, FiBookOpen, FiXCircle, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { FiClock, FiBookOpen, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
+import { ObjectId } from 'mongodb';
 
 // Interfaces para tipar los datos
-interface Class {
+export interface Class {
   _id: string;
-  subjectName: string;
-  level: string;
-  teacherName: string;
+  subjectName?: string;
+  level?: string;
+  teacherName?: string;
   startTime: string;
   endTime: string;
   selectedDays: string[];
-  maxStudents: number;
-  price: number;
-  status: 'ready_to_start' | 'in_progress' | 'completed' | 'cancelled';
-  startDate?: string;
+  maxStudents?: number;
+  price?: number;
+  status?: 'ready_to_start' | 'in_progress' | 'completed' | 'cancelled';
   students_enrolled: number;
-  currency: string;
-  paymentFrequency: string;
-  paymentDay: number;
+  currency?: string;
+  paymentFrequency?: string;
+  paymentDay?: number;
 }
 
 interface Student {
@@ -32,26 +32,78 @@ interface Student {
   profilePicture?: string;
 }
 
+interface TeacherProfileResponse {
+  name: string;
+  image: string;
+  description: string;
+  subjects: string[];
+  country: string;
+  classes?: {
+    _id: ObjectId;
+    startTime: string;
+    endTime: string;
+    selectedDays: string[];
+    students_enrolled: number;
+  }[];
+}
+
+interface StudentResponse {
+  _id: string;
+  username: string;
+  email: string;
+  profilePicture?: string;
+}
+
+interface APIResponse {
+  students: StudentResponse[];
+  error?: string;
+}
+
+// Helper function to convert API response to Class
+export function toClass(item: { _id: ObjectId; startTime: string; endTime: string; selectedDays: string[]; students_enrolled: number }): Class {
+  return {
+    _id: item._id.toString(),
+    startTime: item.startTime,
+    endTime: item.endTime,
+    selectedDays: item.selectedDays,
+    students_enrolled: item.students_enrolled,
+    // Default values for optional fields
+    subjectName: '',
+    level: '',
+    teacherName: '',
+    maxStudents: 0,
+    price: 0,
+    status: 'ready_to_start',
+    currency: 'DOP',
+    paymentFrequency: 'monthly',
+    paymentDay: 1
+  };
+}
+
 export default function MisClases() {
   const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [classStudents, setClassStudents] = useState<Student[]>([]);
-  const [showStudentsModal, setShowStudentsModal] = useState<boolean>(false);
-  const [startingClass, setStartingClass] = useState<boolean>(false);
+  const [showStudentsModal, setShowStudentsModal] = useState(false);
+  const [startingClass, setStartingClass] = useState(false);
   const [startClassId, setStartClassId] = useState<string | null>(null);
-  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const filteredClasses = classes?.filter(cls =>
+    statusFilter === 'all' || cls.status === statusFilter
+  ) || [];
 
   // Función para obtener las clases del profesor
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      const response = await FetchData('/api/teacher/profile?needClasses=true', {}, 'GET');
+      const response = await FetchData<TeacherProfileResponse>('/api/teacher/profile?needClasses=true', {}, 'GET');
       if (response.classes) {
-        setClasses(response.classes);
+        setClasses(response.classes.map(toClass));
       }
       setError(null);
     } catch (err) {
@@ -66,7 +118,7 @@ export default function MisClases() {
   // Función para obtener los estudiantes de una clase
   const fetchClassStudents = async (classId: string) => {
     try {
-      const response = await FetchData(`/api/teacher/classes/${classId}/students`, {}, 'GET');
+      const response = await FetchData<APIResponse>(`/api/teacher/classes/${classId}/students`, {}, 'GET');
       if (response.students) {
         setClassStudents(response.students);
       }
@@ -82,9 +134,9 @@ export default function MisClases() {
   const startClass = async (classId: string) => {
     setStartingClass(true);
     setStartClassId(classId);
-    
+
     try {
-      const response = await FetchData(`/api/teacher/classes/${classId}/start`, {}, 'POST');
+      const response = await FetchData<{ success: boolean}>(`/api/teacher/classes/${classId}/start`, {}, 'POST');
       if (response.success) {
         SuccessMsj('Clase iniciada correctamente');
         fetchClasses(); // Recargar las clases para actualizar el estado
@@ -103,11 +155,6 @@ export default function MisClases() {
   useEffect(() => {
     fetchClasses();
   }, []);
-
-  // Filtrar las clases según el estado seleccionado
-  const filteredClasses = statusFilter === 'all' 
-    ? classes 
-    : classes.filter(cls => cls.status === statusFilter);
 
   // Función para mostrar los detalles de los estudiantes
   const showStudents = async (classItem: Class) => {
@@ -148,11 +195,11 @@ export default function MisClases() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Mis Clases</h1>
-        
+
         {/* Filtro de estado */}
         <div className="flex items-center space-x-2">
           <FiFilter className="text-gray-600 dark:text-gray-300" />
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -184,15 +231,15 @@ export default function MisClases() {
               <p className="text-sm text-yellow-700">
                 No tienes clases {statusFilter !== 'all' ? `con estado "${getStatusText(statusFilter)}"` : ''}.
                 {statusFilter !== 'all' ? (
-                  <button 
-                    onClick={() => setStatusFilter('all')} 
+                  <button
+                    onClick={() => setStatusFilter('all')}
                     className="font-medium underline ml-1 focus:outline-none"
                   >
                     Ver todas las clases
                   </button>
                 ) : (
-                  <button 
-                    onClick={() => router.push('/teacher/classes/create')} 
+                  <button
+                    onClick={() => router.push('/teacher/classes/create')}
                     className="font-medium underline ml-1 focus:outline-none"
                   >
                     Crear una nueva clase
@@ -211,39 +258,39 @@ export default function MisClases() {
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
                     {classItem.subjectName}
                   </h3>
-                  <Badge className={getStatusBadgeColor(classItem.status)}>
-                    {getStatusText(classItem.status)}
+                  <Badge className={getStatusBadgeColor(classItem.status || '') }>
+                    {getStatusText(classItem.status || '')}
                   </Badge>
                 </div>
-                
+
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  <span className="font-medium">Nivel:</span> {getLevelName(classItem.level)}
+                  <span className="font-medium">Nivel:</span> {getLevelName(classItem.level || '')}
                 </p>
-                
+
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
                   <FiCalendar className="mr-2" />
                   <span>
                     {getDayName(classItem.selectedDays)}
                   </span>
                 </div>
-                
+
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
                   <FiClock className="mr-2" />
                   <span>{classItem.startTime} - {classItem.endTime}</span>
                 </div>
-                
+
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
                   <FiUsers className="mr-2" />
                   <span>{classItem.students_enrolled}/{classItem.maxStudents} estudiantes</span>
                 </div>
-                
+
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-4">
                   <FiDollarSign className="mr-2" />
                   <span>{classItem.price} {classItem.currency}</span>
                 </div>
-                
+
                 <div className="flex justify-between mt-4">
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => showStudents(classItem)}
                     className="flex items-center"
@@ -251,9 +298,9 @@ export default function MisClases() {
                     <FiUsers className="mr-2" />
                     Estudiantes
                   </Button>
-                  
+
                   {classItem.status === 'ready_to_start' && (
-                    <Button 
+                    <Button
                       onClick={() => confirmStartClass(classItem._id)}
                       className="flex items-center bg-green-500 hover:bg-green-600 text-white"
                       disabled={startingClass && startClassId === classItem._id}
@@ -271,9 +318,9 @@ export default function MisClases() {
                       )}
                     </Button>
                   )}
-                  
+
                   {classItem.status === 'in_progress' && (
-                    <Button 
+                    <Button
                       variant="primary"
                       onClick={() => router.push(`/teacher/classes/${classItem._id}/virtual-classroom`)}
                       className="flex items-center"
@@ -304,15 +351,15 @@ export default function MisClases() {
             ) : (
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {classStudents.map((student) => (
-                  <div 
-                    key={student._id} 
+                  <div
+                    key={student._id}
                     className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
                   >
                     <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3">
                       {student.profilePicture ? (
-                        <img 
-                          src={student.profilePicture} 
-                          alt={student.username} 
+                        <img
+                          src={student.profilePicture}
+                          alt={student.username}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
@@ -344,13 +391,13 @@ export default function MisClases() {
             ¿Estás seguro de que deseas iniciar esta clase? Esta acción no se puede deshacer y activará el sistema de pagos mensuales para todos los estudiantes inscritos.
           </p>
           <div className="flex justify-end space-x-3">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowConfirmModal(false)}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={() => startClassId && startClass(startClassId)}
               className="bg-green-500 hover:bg-green-600 text-white"
               disabled={startingClass}

@@ -15,7 +15,7 @@ export async function createIndexes(): Promise<void> {
       await usersCollection.dropIndex('U_Email');
       await usersCollection.dropIndex('Username');
     } catch (error) {
-      console.log('Índices no encontrados');
+      console.error('Índices no encontrados', error);
     }
 
     await usersCollection.createIndex({ email: 1 }, { unique: true, name: 'U_Email' });

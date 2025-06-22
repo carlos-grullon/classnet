@@ -37,7 +37,7 @@ export default function TeacherProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await FetchData('/api/teacher/profile', {}, 'GET');
+        const data: TeacherProfileProps = await FetchData('/api/teacher/profile', {}, 'GET');
         setInitialData(data);
         setFormData({
           name: data.name,
@@ -47,6 +47,7 @@ export default function TeacherProfile() {
           country: data.country || ''
         });
       } catch (error) {
+        console.error(error);
         ErrorMsj('Error cargando perfil');
       }
     };
@@ -66,14 +67,10 @@ export default function TeacherProfile() {
     setEditMode(false);
   };
 
-  const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    handleInputChange(e, formData, setFormData);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await FetchData('/api/teacher/profile', {
+      const data = await FetchData<{success: boolean, message: string}>('/api/teacher/profile', {
         name: formData.name,
         description: formData.description,
         subjects: formData.subjects,
@@ -126,9 +123,10 @@ export default function TeacherProfile() {
               <Button
                 type="button"
                 onClick={() => setEditMode(true)}
-                children="Editar"
                 icon={<FiEdit />}
-              />
+              >
+                Editar
+              </Button>
             </div>
           )}
 
@@ -137,16 +135,18 @@ export default function TeacherProfile() {
               <div className="flex gap-2 mb-4">
                 <Button
                   type="submit"
-                  children="Guardar"
                   icon={<FiSave />}
-                />
+                >
+                  Guardar
+                </Button>
                 <Button
                   type="button"
                   onClick={handleCancel}
-                  children="Cancelar"
                   icon={<FiX />}
                   variant="danger"
-                />
+                >
+                  Cancelar
+                </Button>
               </div>
             )}
 
@@ -181,7 +181,7 @@ export default function TeacherProfile() {
                 type="text"
                 label="Nombre"
                 value={formData.name}
-                onChange={handleLocalInputChange}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
                 placeholder="Tu nombre completo"
                 disabled={!editMode}
               />
@@ -194,7 +194,7 @@ export default function TeacherProfile() {
               label="Descripción Breve"
               placeholder="Escribe una breve descripción de ti"
               value={formData.description}
-              onChange={handleLocalInputChange}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
               rows={4}
               disabled={!editMode}
             />

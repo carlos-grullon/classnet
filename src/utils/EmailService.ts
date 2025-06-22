@@ -157,7 +157,7 @@ export async function sendEmail(
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     return true;
   } catch (error) {
     console.error('Error al enviar correo:', error);

@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, Suspense, lazy } from 'react';
-import { FetchData, SuccessMsj, ErrorMsj, handleInputChange } from '@/utils/Tools.tsx';
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
 import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
@@ -15,7 +15,11 @@ export interface StudentProfileProps {
   description: string;
   country: string;
 }
-
+interface StudentPostResponse {
+  success: boolean;
+  message: string;
+  updatedFields: { name: string; description: string; country: string };
+}
 export default function StudentProfile() {
 
   const [initialData, setInitialData] = useState<StudentProfileProps | null>(null);
@@ -32,9 +36,9 @@ export default function StudentProfile() {
   useEffect(() => {
     async function GetStudentData() {
       try {
-        const profileRes = await FetchData('/api/student/profile', {}, 'GET')
+        const profileRes = await FetchData<StudentProfileProps>('/api/student/profile', {}, 'GET')
         if (profileRes) {
-          const datos: StudentProfileProps = {
+          const datos = {
             name: profileRes.name,
             image: profileRes.image,
             description: profileRes.description || '',
@@ -51,14 +55,10 @@ export default function StudentProfile() {
     GetStudentData();
   }, []);
 
-  const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    handleInputChange(e, formData, setFormData);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await FetchData('/api/student/profile', {
+      const data = await FetchData<StudentPostResponse>('/api/student/profile', {
         name: formData.name,
         description: formData.description,
         country: formData.country
@@ -91,7 +91,7 @@ export default function StudentProfile() {
 
   const handleUploadSuccess = async (url: string) => {
     try {
-      const updatedData: StudentProfileProps = {
+      const updatedData = {
         ...formData,
         image: url
       };
@@ -114,9 +114,10 @@ return (
             <Button
               type="button"
               onClick={() => setEditMode(true)}
-              children="Editar"
               icon={<FiEdit />}
-            />
+            >
+              Editar
+            </Button>
           </div>
         )}
 
@@ -125,16 +126,18 @@ return (
             <div className="flex gap-2 mb-4">
               <Button
                 type="submit"
-                children="Guardar"
                 icon={<FiSave />}
-              />
+              >
+                Guardar
+              </Button>
               <Button
                 type="button"
                 onClick={handleCancel}
-                children="Cancelar"
                 icon={<FiX />}
                 variant="danger"
-              />
+              >
+                Cancelar
+              </Button>
             </div>
           )}
 
@@ -166,7 +169,7 @@ return (
               type="text"
               label="Nombre"
               value={formData.name}
-              onChange={handleLocalInputChange}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Tu nombre completo"
               disabled={!editMode}
             />
@@ -179,7 +182,7 @@ return (
             label="Descripción Breve"
             placeholder="Escribe una breve descripción de ti"
             value={formData.description}
-            onChange={handleLocalInputChange}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={4}
             disabled={!editMode}
           />
