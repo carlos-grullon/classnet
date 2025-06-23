@@ -71,8 +71,9 @@ export function mongoTimeToTimeString12h(date: Date): string {
  * @param dateString Fecha en formato yyyy-mm-dd (ej. "2025-06-19")
  * @returns String en formato "dd/Mes/yyyy" (ej. "19/Junio/2025")
  */
-export function formatInputDateToLong(dateString: string): string {
-    const [year, month, day] = dateString.split('-').map(Number);
+export function formatInputDateToLong(dateString: string | Date): string {
+    const date = dateString instanceof Date ? formatDateToInput(dateString) : dateString;
+    const [year, month, day] = date.split('-').map(Number);
     if (isNaN(year) || isNaN(month) || isNaN(day) || 
         month < 1 || month > 12 || day < 1 || day > 31) {
         throw new Error('Formato de fecha inválido. Se esperaba yyyy-mm-dd');
