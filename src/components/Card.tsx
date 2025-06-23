@@ -34,13 +34,13 @@ export function Card({
   icon,
 }: CardProps) {
   // Base classes para todos los cards
-  const baseClasses = 'rounded-xl transition-all duration-200';
+  const baseClasses = 'rounded-xl transition-all duration-200 border border-black/30';
   
   // Clases según la variante
   const variantClasses = {
-    default: 'bg-white dark:bg-gray-800 shadow-md border border-gray-100 dark:border-gray-700 hover:shadow-lg',
-    elevated: 'bg-white dark:bg-gray-800 shadow-xl border border-gray-100 dark:border-gray-700 hover:shadow-2xl',
-    outlined: 'bg-transparent border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
+    default: 'bg-white dark:bg-gray-800 shadow-md dark:border-gray-700 hover:shadow-lg',
+    elevated: 'bg-white dark:bg-gray-800 shadow-xl dark:border-gray-700 hover:shadow-2xl',
+    outlined: 'bg-transparent dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
     flat: 'bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800',
   };
   

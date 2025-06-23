@@ -5,7 +5,6 @@ import { Card, Button, Modal, Badge } from '@/components';
 import { FiClock, FiBookOpen, FiUsers, FiFilter, FiPlay, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
-import { ObjectId } from 'mongodb';
 
 // Interfaces para tipar los datos
 export interface Class {
@@ -38,13 +37,7 @@ interface TeacherProfileResponse {
   description: string;
   subjects: string[];
   country: string;
-  classes?: {
-    _id: ObjectId;
-    startTime: string;
-    endTime: string;
-    selectedDays: string[];
-    students_enrolled: number;
-  }[];
+  classes?: Class[];
 }
 
 interface StudentResponse {
@@ -57,27 +50,6 @@ interface StudentResponse {
 interface APIResponse {
   students: StudentResponse[];
   error?: string;
-}
-
-// Helper function to convert API response to Class
-function toClass(item: { _id: ObjectId; startTime: string; endTime: string; selectedDays: string[]; students_enrolled: number }): Class {
-  return {
-    _id: item._id.toString(),
-    startTime: item.startTime,
-    endTime: item.endTime,
-    selectedDays: item.selectedDays,
-    students_enrolled: item.students_enrolled,
-    // Default values for optional fields
-    subjectName: '',
-    level: '',
-    teacherName: '',
-    maxStudents: 0,
-    price: 0,
-    status: 'ready_to_start',
-    currency: 'DOP',
-    paymentFrequency: 'monthly',
-    paymentDay: 1
-  };
 }
 
 export default function MisClases() {
@@ -103,7 +75,7 @@ export default function MisClases() {
     try {
       const response = await FetchData<TeacherProfileResponse>('/api/teacher/profile?needClasses=true', {}, 'GET');
       if (response.classes) {
-        setClasses(response.classes.map(toClass));
+        setClasses(response.classes);
       }
       setError(null);
     } catch (err) {
@@ -256,7 +228,7 @@ export default function MisClases() {
               <div className="p-5">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                    {classItem.subjectName}
+                    {classItem.subjectName} - {getLevelName(classItem.level || '')}
                   </h3>
                   <Badge className={getStatusBadgeColor(classItem.status || '') }>
                     {getStatusText(classItem.status || '')}
