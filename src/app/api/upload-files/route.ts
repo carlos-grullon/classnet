@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
@@ -10,16 +10,21 @@ const s3 = new S3Client({
   },
 });
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File;
-
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
+    const path = formData.get('path') as string | null;
+    console.log('path recibido en endpoint:', path); // Verificar valor
+    
     if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json(
+        { error: "No se proporcionó ningún archivo" },
+        { status: 400 }
+      );
     }
 
-    // Validar tipos de archivo permitidos
+    // Validar tipos de archivo (manteniendo tu lista existente)
     const allowedTypes = [
       // Imágenes
       'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
@@ -57,13 +62,13 @@ export async function POST(req: Request) {
        file.type === 'audio/webm' ? 'webm' : 
        file.type === 'audio/mpeg' ? 'mp3' : 'bin');
     
-    const key = `${uuidv4()}.${extension}`;
+    const key = path ? `${path}/${uuidv4()}.${extension}` : `${uuidv4()}.${extension}`;
 
     const uploadParams = {
-      Bucket: process.env.AWS_BUCKET_NAME!,
+        Bucket: process.env.AWS_BUCKET_NAME!,
       Key: key,
-      Body: buffer,
-      ContentType: file.type,
+        Body: buffer,
+        ContentType: file.type,
     };
 
     await s3.send(new PutObjectCommand(uploadParams));

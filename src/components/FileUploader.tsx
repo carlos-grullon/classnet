@@ -6,9 +6,10 @@ import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface FileUploaderProps {
   onUploadSuccess?: (result: { url: string, fileName: string }) => void;
+  path?: string; // Nueva prop para la ruta de organización
 }
 
-export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
+export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -85,43 +86,29 @@ export function FileUploader({ onUploadSuccess }: FileUploaderProps) {
   const handleUpload = async () => {
     if (!file) return;
     
-    setIsLoading(true);
-    setError('');
-    
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/upload-files", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
+      setIsLoading(true);
+      setError('');
       
-      if (res.ok) {
-        SuccessMsj('Archivo subido correctamente');
-        // Limpiar después de subir
-        setFile(null);
-        if (inputRef.current) inputRef.current.value = '';
-        // Ejecutar callback si existe
-        if (onUploadSuccess) {
-          onUploadSuccess({
-            url: data.url,
-            fileName: file.name
-          });
-        }
-      } else {
-        throw new Error(data.error || 'Error al subir el archivo');
-      }
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', path); // Enviamos la ruta al endpoint
+      
+      const response = await fetch('/api/upload-files', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) throw new Error('Upload failed');
+      
+      const result = await response.json();
+      onUploadSuccess?.({
+        url: result.url,
+        fileName: file.name
+      });
+      
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-        ErrorMsj(err.message);
-      } else {
-        setError('Error al subir el archivo');
-        ErrorMsj('Error al subir el archivo');
-      }
+      setError(err instanceof Error ? err.message : 'Upload error');
     } finally {
       setIsLoading(false);
     }

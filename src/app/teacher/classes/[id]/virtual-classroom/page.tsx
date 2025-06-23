@@ -21,7 +21,7 @@ import { useParams } from 'next/navigation';
 
 export default function VirtualClassroom() {
   const params = useParams();
-  const classId = params?.id as string;
+  const classId = params.id as string;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>({
     meetingLink: '',
@@ -30,10 +30,10 @@ export default function VirtualClassroom() {
     assignment: null
   });
   const [originalWeekContent, setOriginalWeekContent] = useState<WeekContent>({
-      meetingLink: '',
-      recordingLink: '',
-      supportMaterials: [],
-      assignment: null
+    meetingLink: '',
+    recordingLink: '',
+    supportMaterials: [],
+    assignment: null
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -111,7 +111,6 @@ export default function VirtualClassroom() {
           supportMaterials: [],
           assignment: null
         };
-        console.log(content);
         setOriginalWeekContent(content);
         setWeekContent(content);
       } catch (error) {
@@ -187,12 +186,12 @@ export default function VirtualClassroom() {
     const updatedContent = {
       ...weekContent,
       assignment: {
-          dueDate: assignmentForm.dueDate,
-          description: assignmentForm.description,
-          hasAudio: assignmentForm.hasAudio,
-          fileLink: assignmentForm.fileLink,
-          fileName: assignmentForm.fileName
-        }
+        dueDate: assignmentForm.dueDate,
+        description: assignmentForm.description,
+        hasAudio: assignmentForm.hasAudio,
+        fileLink: assignmentForm.fileLink,
+        fileName: assignmentForm.fileName
+      }
     };
     setWeekContent(updatedContent);
     setIsAssignmentModalOpen(false);
@@ -840,6 +839,7 @@ export default function VirtualClassroom() {
 
           {resourceType === 'file' ? (
             <FileUploader
+              path={`classes/${classId}/teacher`}
               onUploadSuccess={(result: { url: string; fileName: string }) => {
                 setNewResource({ ...newResource, link: result.url, fileName: result.fileName });
               }}
@@ -908,12 +908,12 @@ export default function VirtualClassroom() {
                 setWeekContent({
                   ...weekContent,
                   supportMaterials: [
-                      ...weekContent.supportMaterials.map(m => ({
-                        ...m,
-                        fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                      })),
-                      newMaterial
-                    ]
+                    ...weekContent.supportMaterials.map(m => ({
+                      ...m,
+                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                    })),
+                    newMaterial
+                  ]
                 });
 
                 setMaterialData({ link: '', title: '', file: null });
@@ -958,18 +958,19 @@ export default function VirtualClassroom() {
                 onChange={(e) => setMaterialData({ ...materialData, title: e.target.value })}
               />
               <FileUploader
+                path={`classes/${classId}/teacher`}
                 onUploadSuccess={({ url, fileName }) => {
                   setWeekContent({
                     ...weekContent,
                     supportMaterials: [
-                        ...weekContent.supportMaterials,
-                        {
-                          id: Date.now().toString(),
-                          description: materialData.title || fileName || 'Documento',
-                          link: url,
-                          fileName: fileName
-                        }
-                      ]
+                      ...weekContent.supportMaterials,
+                      {
+                        id: Date.now().toString(),
+                        description: materialData.title || fileName || 'Documento',
+                        link: url,
+                        fileName: fileName
+                      }
+                    ]
                   });
                   setMaterialData({ link: '', title: '', file: null });
                   setMaterialType(null);
@@ -998,12 +999,12 @@ export default function VirtualClassroom() {
               setWeekContent({
                 ...weekContent,
                 supportMaterials: [
-                    ...weekContent.supportMaterials.map(m => ({
-                      ...m,
-                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                    })),
-                    newMaterial
-                  ]
+                  ...weekContent.supportMaterials.map(m => ({
+                    ...m,
+                    fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                  })),
+                  newMaterial
+                ]
               });
 
               setMaterialData({ link: '', title: '', file: null });
@@ -1074,6 +1075,7 @@ export default function VirtualClassroom() {
           />
 
           <FileUploader
+            path={`classes/${classId}/teacher`}
             onUploadSuccess={handleAssignmentFileUpload}
           />
 
