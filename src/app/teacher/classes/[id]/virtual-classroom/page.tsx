@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiDownload, FiEdit, FiPlus, FiSave, FiTrash2 } from 'react-icons/fi';
+import { FiDownload, FiEdit, FiPlus, FiSave, FiTrash2, FiX } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getFileIcon } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { Modal } from '@/components/Modal';
@@ -36,7 +36,6 @@ export default function VirtualClassroom() {
     assignment: null
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
-  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
   const [materialType, setMaterialType] = useState<'link' | 'file' | null>(null);
@@ -45,7 +44,6 @@ export default function VirtualClassroom() {
     title: '',
     file: null as File | null
   });
-  const [isEditingWeek, setIsEditingWeek] = useState(false);
   const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState<{
     id?: string;
@@ -72,7 +70,26 @@ export default function VirtualClassroom() {
   });
   const [resourceType, setResourceType] = useState<'file' | 'link'>('file');
   const [isEditingResources, setIsEditingResources] = useState(false);
+  const [isEditingLinks, setIsEditingLinks] = useState(false);
   const { getCountryByCode } = useCountries();
+
+  // Ref para el modal pequeñito
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setIsAddMaterialModalOpen(false);
+        setIsAssignmentModalOpen(false);
+        setShowResourceModal(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Cargar contenido inicial
   useEffect(() => {
@@ -125,50 +142,17 @@ export default function VirtualClassroom() {
     return <VirtualClassroomSkeleton />;
   }
 
-  const handleSaveWeekContent = async () => {
-    setIsSaving(true);
-    try {
-      const response = await FetchData<{ success: boolean }>(
-        `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
-        {
-          weekNumber: selectedWeek,
-          content: weekContent
-        },
-        'POST'
-      );
-
-      if (response.success) {
-        SuccessMsj('Contenido semanal guardado');
-        setIsEditingWeek(false);
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error guardando contenido';
-      ErrorMsj(message);
-      console.error(error);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setWeekContent({
-      meetingLink: originalWeekContent.meetingLink,
-      recordingLink: originalWeekContent.recordingLink,
-      supportMaterials: originalWeekContent.supportMaterials,
-      assignment: originalWeekContent.assignment
-    });
-    setIsEditingWeek(false);
-  };
-
   const handleWeekChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedWeek(parseInt(e.target.value));
   };
 
   const handleRemoveSupportMaterial = (id: string) => {
-    setWeekContent({
+    const updated = {
       ...weekContent,
       supportMaterials: weekContent.supportMaterials.filter(m => m.id !== id)
-    });
+    }
+    setWeekContent(updated);
+    handleSaveWeekContent(updated);
   };
 
   const handleOpenAssignmentModal = () => {
@@ -194,6 +178,7 @@ export default function VirtualClassroom() {
       }
     };
     setWeekContent(updatedContent);
+    handleSaveWeekContent(updatedContent);
     setIsAssignmentModalOpen(false);
   };
 
@@ -264,6 +249,34 @@ export default function VirtualClassroom() {
       SuccessMsj('Recursos guardados correctamente');
       setIsEditingResources(false);
     }
+  };
+
+  const handleSaveWeekContent = async (weekContent: WeekContent) => {
+    setIsEditingLinks(false);
+    try {
+      const response = await FetchData<{ success: boolean }>(
+        `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
+        {
+          ...weekContent,
+          weekNumber: selectedWeek,
+        },
+        'POST'
+      );
+
+      if (response.success) {
+        setOriginalWeekContent(weekContent);
+        SuccessMsj('Contenido semanal actualizado');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error guardando contenido';
+      ErrorMsj(message);
+      console.error(error);
+    }
+  };
+
+  const handleCancelEditingWeekContent = () => {
+    setWeekContent(originalWeekContent);
+    setIsEditingLinks(false);
   };
 
   return (
@@ -518,47 +531,38 @@ export default function VirtualClassroom() {
             </TabContent>
 
             <TabContent id="week" activeId={activeId} className="mt-4">
-              <div className="flex justify-end gap-2 mb-4">
-                {isEditingWeek ? (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancel}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      onClick={handleSaveWeekContent}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? 'Guardando...' : 'Guardar'}
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    onClick={() => setIsEditingWeek(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <FiEdit />
-                    Editar
-                  </Button>
-                )}
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Sección Reunión */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <h3 className="text-lg font-semibold mb-3 text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                    Reunión Semana {selectedWeek}
-                  </h3>
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                      Reunión Semana {selectedWeek}
+                    </h3>
+                    <div className="flex gap-2">
+                      {isEditingLinks ? (
+                        <>
+                        <Button variant="outline" size="sm" onClick={handleCancelEditingWeekContent}>
+                          <FiX className="mr-1" /> Cancelar
+                        </Button>
+                        <Button size="sm" onClick={() => handleSaveWeekContent(weekContent)}>
+                          <FiSave className="mr-1" /> Guardar
+                        </Button>
+                        </>
+                      ) : (
+                        <Button size="sm" onClick={() => setIsEditingLinks(true)}>
+                          <FiEdit className="mr-1" /> Editar
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <div className="space-y-3">
                     <div className="font-medium text-center">Link de la reunión:</div>
                     <Input value={weekContent.meetingLink}
-                      disabled={!isEditingWeek}
+                      disabled={!isEditingLinks}
                       onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
                     <div className="font-medium text-center">Link de la grabación:</div>
                     <Input value={weekContent.recordingLink}
-                      disabled={!isEditingWeek}
+                      disabled={!isEditingLinks}
                       onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
                   </div>
                 </div>
@@ -569,44 +573,44 @@ export default function VirtualClassroom() {
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                       Material de Apoyo
                     </h3>
-                    {isEditingWeek && (
-                      <div className="relative">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex items-center gap-1"
-                          onClick={() => setIsAddMaterialModalOpen(!isAddMaterialModalOpen)}
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                          Agregar
-                        </Button>
+                    <div className="relative">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex items-center gap-1"
+                        onClick={() => setIsAddMaterialModalOpen(!isAddMaterialModalOpen)}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Agregar
+                      </Button>
 
-                        {isAddMaterialModalOpen && (
-                          <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
-                            <button
-                              onClick={() => {
-                                setMaterialType('link');
-                                setIsAddMaterialModalOpen(false);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              Agregar enlace
-                            </button>
-                            <button
-                              onClick={() => {
-                                setMaterialType('file');
-                                setIsAddMaterialModalOpen(false);
-                              }}
-                              className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-                            >
-                              Subir archivo
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      {isAddMaterialModalOpen && (
+                        <div 
+                          ref={modalRef}
+                          className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                          <button
+                            onClick={() => {
+                              setMaterialType('link');
+                              setIsAddMaterialModalOpen(false);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            Agregar enlace
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMaterialType('file');
+                              setIsAddMaterialModalOpen(false);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            Subir archivo
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-3">
                     {weekContent.supportMaterials.length === 0 ? (
@@ -628,11 +632,9 @@ export default function VirtualClassroom() {
                               )}
                             </div>
                           </div>
-                          {isEditingWeek && (
-                            <Button size="sm" onClick={() => handleRemoveSupportMaterial(material.id)}>
-                              Eliminar
-                            </Button>
-                          )}
+                          <Button size="sm" onClick={() => handleRemoveSupportMaterial(material.id)}>
+                            Eliminar
+                          </Button>
                         </div>
                       ))
                     )}
@@ -646,11 +648,9 @@ export default function VirtualClassroom() {
                       <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                         Asignación
                       </h3>
-                      {isEditingWeek && (
-                        <Button size="sm" variant="outline" onClick={handleOpenAssignmentModal}>
-                          <FiEdit className="mr-1" /> Editar
-                        </Button>
-                      )}
+                      <Button size="sm" variant="outline" onClick={handleOpenAssignmentModal}>
+                        <FiEdit className="mr-1" /> Editar
+                      </Button>
                     </div>
                     {weekContent.assignment ? (
                       <div className="space-y-2">
@@ -872,7 +872,7 @@ export default function VirtualClassroom() {
 
       {/* Modal para enlace */}
       <Modal
-        isOpen={materialType === 'link' && isEditingWeek}
+        isOpen={materialType === 'link'}
         onClose={() => {
           setMaterialType(null);
           setIsAddMaterialModalOpen(false);
@@ -904,8 +904,7 @@ export default function VirtualClassroom() {
                   link: materialData.link,
                   fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
                 };
-
-                setWeekContent({
+                const updatedContent = {
                   ...weekContent,
                   supportMaterials: [
                     ...weekContent.supportMaterials.map(m => ({
@@ -914,11 +913,12 @@ export default function VirtualClassroom() {
                     })),
                     newMaterial
                   ]
-                });
-
+                } 
+                setWeekContent(updatedContent);
                 setMaterialData({ link: '', title: '', file: null });
                 setMaterialType(null);
                 setIsAddMaterialModalOpen(false);
+                handleSaveWeekContent(updatedContent);
               }
             }}>
               Subir
@@ -929,7 +929,7 @@ export default function VirtualClassroom() {
 
       {/* Modal para archivo */}
       <Modal
-        isOpen={materialType === 'file' && isEditingWeek}
+        isOpen={materialType === 'file'}
         onClose={() => {
           setMaterialType(null);
           setIsAddMaterialModalOpen(false);
@@ -960,7 +960,7 @@ export default function VirtualClassroom() {
               <FileUploader
                 path={`classes/${classId}/teacher`}
                 onUploadSuccess={({ url, fileName }) => {
-                  setWeekContent({
+                  const updatedContent = {
                     ...weekContent,
                     supportMaterials: [
                       ...weekContent.supportMaterials,
@@ -971,11 +971,12 @@ export default function VirtualClassroom() {
                         fileName: fileName
                       }
                     ]
-                  });
+                  };
+                  setWeekContent(updatedContent);
+                  handleSaveWeekContent(updatedContent);
                   setMaterialData({ link: '', title: '', file: null });
                   setMaterialType(null);
                   setIsAddMaterialModalOpen(false);
-                  SuccessMsj('Material agregado correctamente');
                 }}
               />
             </>
@@ -995,8 +996,7 @@ export default function VirtualClassroom() {
                 link: materialData.link,
                 fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
               };
-
-              setWeekContent({
+              const updatedContent = {
                 ...weekContent,
                 supportMaterials: [
                   ...weekContent.supportMaterials.map(m => ({
@@ -1005,8 +1005,9 @@ export default function VirtualClassroom() {
                   })),
                   newMaterial
                 ]
-              });
-
+              };
+              setWeekContent(updatedContent);
+              handleSaveWeekContent(updatedContent);
               setMaterialData({ link: '', title: '', file: null });
               setMaterialType(null);
             }

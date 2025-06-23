@@ -6,7 +6,7 @@ import { ErrorMsj, SuccessMsj } from '@/utils/Tools.tsx';
 
 interface FileUploaderProps {
   onUploadSuccess?: (result: { url: string, fileName: string }) => void;
-  path?: string; // Nueva prop para la ruta de organización
+  path?: string;
 }
 
 export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {

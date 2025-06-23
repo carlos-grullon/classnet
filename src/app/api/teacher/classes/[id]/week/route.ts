@@ -10,13 +10,13 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const classId = (await params).id;
-    const { weekNumber, content } = await request.json();
+    const data = await request.json();
     const weeksCollection = await getCollection('weeks');
     // convertir la fecha a Date para guardarla
-    if (content.assignment) {
-      content.assignment.dueDate = parseInputDate(content.assignment.dueDate);
+    if (data.assignment) {
+      data.assignment.dueDate = parseInputDate(data.assignment.dueDate);
       // Validar que la fecha no sea anterior a la actual
-      if (content.assignment.dueDate < new Date()) {
+      if (data.assignment.dueDate < new Date()) {
         return NextResponse.json(
           { success: false, error: 'La fecha de entrega no puede ser anterior a la fecha actual' },
           { status: 400 }
@@ -25,7 +25,7 @@ export async function POST(
     }
     const filter = { 
       classId: new ObjectId(classId), 
-      weekNumber: Number(weekNumber) 
+      weekNumber: Number(data.weekNumber) 
     };
     
     const existingWeek = await weeksCollection.findOne(filter);
@@ -35,15 +35,24 @@ export async function POST(
         filter,
         { 
           $set: { 
-            content,
+            weekNumber: data.weekNumber,
+            meetingLink: data.meetingLink,
+            recordingLink: data.recordingLink,
+            supportMaterials: data.supportMaterials,
+            assignment: data.assignment,
             updatedAt: new Date() 
           } 
         }
       );
+      return NextResponse.json({ success: true});
     } else {
       await weeksCollection.insertOne({
-        ...filter,
-        ...content,
+        classId: new ObjectId(classId),
+        weekNumber: Number(data.weekNumber),
+        meetingLink: data.meetingLink,
+        recordingLink: data.recordingLink,
+        supportMaterials: data.supportMaterials,
+        assignment: data.assignment,
         createdAt: new Date(),
         updatedAt: new Date()
       });
