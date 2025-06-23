@@ -43,7 +43,7 @@ export async function POST(
     } else {
       await weeksCollection.insertOne({
         ...filter,
-        content,
+        ...content,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -77,13 +77,13 @@ export async function GET(
       return NextResponse.json({ success: true, data: null });
     }
     // convertir la fecha a string para mostrarla
-    if (weekData.content.assignment && weekData.content.assignment.dueDate instanceof Date) {
-      weekData.content.assignment.dueDate = formatDateToInput(weekData.content.assignment.dueDate);
+    if (weekData.assignment && weekData.assignment.dueDate instanceof Date) {
+      weekData.assignment.dueDate = formatDateToInput(weekData.assignment.dueDate);
     }
 
     return NextResponse.json({
       success: true,
-      data: weekData.content || null
+      data: weekData || null
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';

@@ -45,6 +45,8 @@ export default function TeacherClasses() {
           setClasses(data.classes || []);
           if (data.subjects.length > 0) {
             setTeacherSubjects(data.subjects);
+          } else {
+            ErrorMsj('Debes agregar al menos una materia en tu perfil');
           }
         }
       } catch (error) {

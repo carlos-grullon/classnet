@@ -31,17 +31,21 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
 
   const fetchCountries = async () => {
     try {
-      const data = await FetchData<{countries: Country[]}>('/api/countries', {}, 'GET');
+      const data = await FetchData<Country[]>('/api/countries', {}, 'GET');
+
+      if (!data) {
+        throw new Error('Formato de respuesta inválido');
+      }
 
       const cache: CachedCountries = {
-        data: data.countries,
+        data: data,
         timestamp: Date.now()
       };
       
       localStorage.setItem('countriesCache', JSON.stringify(cache));
-      setCountries(data.countries);
+      setCountries(data);
     } catch (error) {
-      console.error('Error fetching countries:', error);
+      console.error('Error en fetchCountries:', error);
       // Lista de respaldo por si falla el endpoint
       const backupCountries = [
         { cca2: 'US', name: { common: 'United States' }, flag: '🇺🇸' },
@@ -62,7 +66,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       const { data, timestamp }: CachedCountries = JSON.parse(cachedData);
       const isExpired = Date.now() - timestamp > 7 * 24 * 60 * 60 * 1000;
       
-      if (!isExpired) {
+      if (!isExpired && data) {
         setCountries(data);
         setLoading(false);
         return;

@@ -15,43 +15,25 @@ import { FiFileText, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMai
 import { FaWhatsapp } from 'react-icons/fa';
 import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { formatInputDateToLong } from '@/utils/GeneralTools';
-import { SupportMaterial, WeekContent, Assignment } from '@/interfaces/VirtualClassroom';
+import { SupportMaterial, WeekContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { useParams } from 'next/navigation';
 
-interface WeekContentForm {
-  content: {
-    meetingLink: string;
-    recordingLink: string;
-    supportMaterials: SupportMaterial[];
-    assignment: Assignment | null;
-  };
-}
-
 export default function VirtualClassroom() {
-  const { getCountryByCode } = useCountries();
   const params = useParams();
   const classId = params?.id as string;
   const [content, setContent] = useState<ClassContent | null>(null);
-  const [weekContent, setWeekContent] = useState<WeekContentForm>({
-    content: {
-      meetingLink: '',
-      recordingLink: '',
-      supportMaterials: [],
-      assignment: null
-    }
+  const [weekContent, setWeekContent] = useState<WeekContent>({
+    meetingLink: '',
+    recordingLink: '',
+    supportMaterials: [],
+    assignment: null
   });
   const [originalWeekContent, setOriginalWeekContent] = useState<WeekContent>({
-    _id: '',
-    classId: '',
-    weekNumber: 0,
-    content: {
       meetingLink: '',
       recordingLink: '',
       supportMaterials: [],
       assignment: null
-    },
-    updatedAt: new Date()
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,14 +72,15 @@ export default function VirtualClassroom() {
   });
   const [resourceType, setResourceType] = useState<'file' | 'link'>('file');
   const [isEditingResources, setIsEditingResources] = useState(false);
+  const { getCountryByCode } = useCountries();
 
   // Cargar contenido inicial
   useEffect(() => {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const data = await FetchData<{success: boolean, data: ClassContent}>(`/api/teacher/classes/${classId}/content`, {}, 'GET');
-        
+        const data = await FetchData<{ success: boolean, data: ClassContent }>(`/api/teacher/classes/${classId}/content`, {}, 'GET');
+
         if (data.success && data.data) {
           setContent(data.data);
         } else {
@@ -117,33 +100,20 @@ export default function VirtualClassroom() {
   useEffect(() => {
     const fetchWeekContent = async () => {
       try {
-        const response = await FetchData<{success: boolean, data: WeekContent | null}>(
+        const response = await FetchData<{ success: boolean, data: WeekContent | null }>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
           {},
           'GET'
         );
         const content = response.data || {
-          _id: '',
-          classId: '',
-          weekNumber: 0,
-          content: {
-            meetingLink: '',
-            recordingLink: '',
-            supportMaterials: [],
-            assignment: null
-          },
-          updatedAt: new Date()
+          meetingLink: '',
+          recordingLink: '',
+          supportMaterials: [],
+          assignment: null
         };
-
+        console.log(content);
         setOriginalWeekContent(content);
-        setWeekContent({
-          content: {
-            meetingLink: content.content.meetingLink,
-            recordingLink: content.content.recordingLink,
-            supportMaterials: content.content.supportMaterials,
-            assignment: content.content.assignment
-          }
-        });
+        setWeekContent(content);
       } catch (error) {
         console.error('Error loading week content:', error);
       }
@@ -155,15 +125,15 @@ export default function VirtualClassroom() {
   if (isLoading || !content) {
     return <VirtualClassroomSkeleton />;
   }
-  
+
   const handleSaveWeekContent = async () => {
     setIsSaving(true);
     try {
-      const response = await FetchData<{success: boolean}>(
+      const response = await FetchData<{ success: boolean }>(
         `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
         {
           weekNumber: selectedWeek,
-          content: weekContent.content
+          content: weekContent
         },
         'POST'
       );
@@ -183,12 +153,10 @@ export default function VirtualClassroom() {
 
   const handleCancel = () => {
     setWeekContent({
-      content: {
-        meetingLink: originalWeekContent.content.meetingLink,
-        recordingLink: originalWeekContent.content.recordingLink,
-        supportMaterials: originalWeekContent.content.supportMaterials,
-        assignment: originalWeekContent.content.assignment
-      }
+      meetingLink: originalWeekContent.meetingLink,
+      recordingLink: originalWeekContent.recordingLink,
+      supportMaterials: originalWeekContent.supportMaterials,
+      assignment: originalWeekContent.assignment
     });
     setIsEditingWeek(false);
   };
@@ -199,36 +167,32 @@ export default function VirtualClassroom() {
 
   const handleRemoveSupportMaterial = (id: string) => {
     setWeekContent({
-      content: {
-        ...weekContent.content,
-        supportMaterials: weekContent.content.supportMaterials.filter(m => m.id !== id)
-      }
+      ...weekContent,
+      supportMaterials: weekContent.supportMaterials.filter(m => m.id !== id)
     });
   };
 
   const handleOpenAssignmentModal = () => {
     setAssignmentForm({
-      dueDate: typeof weekContent.content.assignment?.dueDate === 'string' ? weekContent.content.assignment.dueDate : '',
-      description: weekContent.content.assignment?.description || '',
-      hasAudio: weekContent.content.assignment?.hasAudio || false,
-      fileLink: weekContent.content.assignment?.fileLink || '',
-      fileName: weekContent.content.assignment?.fileName || ''
+      dueDate: typeof weekContent.assignment?.dueDate === 'string' ? weekContent.assignment.dueDate : '',
+      description: weekContent.assignment?.description || '',
+      hasAudio: weekContent.assignment?.hasAudio || false,
+      fileLink: weekContent.assignment?.fileLink || '',
+      fileName: weekContent.assignment?.fileName || ''
     });
     setIsAssignmentModalOpen(true);
   };
 
   const handleAddAssignment = () => {
     const updatedContent = {
-      content: {
-        ...weekContent.content,
-        assignment: {
+      ...weekContent,
+      assignment: {
           dueDate: assignmentForm.dueDate,
           description: assignmentForm.description,
           hasAudio: assignmentForm.hasAudio,
           fileLink: assignmentForm.fileLink,
           fileName: assignmentForm.fileName
         }
-      }
     };
     setWeekContent(updatedContent);
     setIsAssignmentModalOpen(false);
@@ -244,7 +208,7 @@ export default function VirtualClassroom() {
 
   const handleSaveContent = async () => {
     try {
-      const response = await FetchData<{success: boolean}>(`/api/teacher/classes/${classId}/content`, {
+      const response = await FetchData<{ success: boolean }>(`/api/teacher/classes/${classId}/content`, {
         welcomeMessage: content.welcomeMessage,
         whatsappLink: content.whatsappLink,
         resources: content.resources
@@ -529,7 +493,7 @@ export default function VirtualClassroom() {
                         size="sm"
                         onClick={() => setIsEditingWelcomeMessage(true)}
                       >
-                        <FiEdit className="text-blue-500 mr-2"/> Editar
+                        <FiEdit className="text-blue-500 mr-2" /> Editar
                       </Button>
                     )}
                   </div>
@@ -590,13 +554,13 @@ export default function VirtualClassroom() {
                   </h3>
                   <div className="space-y-3">
                     <div className="font-medium text-center">Link de la reunión:</div>
-                    <Input value={weekContent.content.meetingLink}
+                    <Input value={weekContent.meetingLink}
                       disabled={!isEditingWeek}
-                      onChange={(e) => setWeekContent({ ...weekContent, content: { ...weekContent.content, meetingLink: e.target.value } })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
                     <div className="font-medium text-center">Link de la grabación:</div>
-                    <Input value={weekContent.content.recordingLink}
+                    <Input value={weekContent.recordingLink}
                       disabled={!isEditingWeek}
-                      onChange={(e) => setWeekContent({ ...weekContent, content: { ...weekContent.content, recordingLink: e.target.value } })} />
+                      onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
                   </div>
                 </div>
 
@@ -646,13 +610,13 @@ export default function VirtualClassroom() {
                     )}
                   </div>
                   <div className="space-y-3">
-                    {weekContent.content.supportMaterials.length === 0 ? (
+                    {weekContent.supportMaterials.length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-2 py-4">
                         <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
                         <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
                       </div>
                     ) : (
-                      weekContent.content.supportMaterials.map(material => (
+                      weekContent.supportMaterials.map(material => (
                         <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
@@ -689,30 +653,30 @@ export default function VirtualClassroom() {
                         </Button>
                       )}
                     </div>
-                    {weekContent.content.assignment ? (
+                    {weekContent.assignment ? (
                       <div className="space-y-2">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-500">Fecha de Entrega:</span>
                           <span className="font-semibold">
-                            {typeof weekContent.content.assignment.dueDate === 'string' ? formatInputDateToLong(weekContent.content.assignment.dueDate) : ''}
+                            {typeof weekContent.assignment.dueDate === 'string' ? formatInputDateToLong(weekContent.assignment.dueDate) : ''}
                           </span>
                         </div>
-                        {weekContent.content.assignment.fileLink && (
+                        {weekContent.assignment.fileLink && (
                           <div className="flex flex-col gap-1">
                             <span className="text-sm text-gray-500">Archivo:</span>
                             <Link
-                              href={weekContent.content.assignment.fileLink}
+                              href={weekContent.assignment.fileLink}
                               target="_blank"
                               className="text-blue-500 hover:underline"
                             >
-                              {weekContent.content.assignment.fileName}
+                              {weekContent.assignment.fileName}
                             </Link>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={weekContent.content.assignment.hasAudio}
+                            checked={weekContent.assignment.hasAudio}
                             readOnly
                             className="rounded text-blue-500"
                           />
@@ -742,7 +706,7 @@ export default function VirtualClassroom() {
             <TabContent id="resources" activeId={activeId} className="mt-4">
               <div className="p-4 border rounded-lg">
                 <div className="flex justify-between items-center mb-4">
-                  <div className="flex justify-between items-center gap-4"> 
+                  <div className="flex justify-between items-center gap-4">
                     <h2 className="text-xl font-semibold flex items-center">Recursos de la clase</h2>
                     {isEditingResources && (
                       <Button
@@ -783,8 +747,8 @@ export default function VirtualClassroom() {
                 {content.resources.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {content.resources.map(resource => (
-                      <div 
-                        key={resource.id} 
+                      <div
+                        key={resource.id}
                         className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-start gap-3">
@@ -797,18 +761,18 @@ export default function VirtualClassroom() {
                             </h3>
                             <div className="mt-2">
                               {resource.fileName ? (
-                                <Link 
-                                  href={resource.link} 
-                                  target="_blank" 
+                                <Link
+                                  href={resource.link}
+                                  target="_blank"
                                   className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
                                 >
                                   <FiDownload className="text-sm" />
                                   {resource.fileName}
                                 </Link>
                               ) : (
-                                <Link 
-                                  href={resource.link} 
-                                  target="_blank" 
+                                <Link
+                                  href={resource.link}
+                                  target="_blank"
                                   className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
                                 >
                                   <FiExternalLink className="text-sm" />
@@ -818,7 +782,7 @@ export default function VirtualClassroom() {
                             </div>
                           </div>
                           {isEditingResources && (
-                            <button 
+                            <button
                               onClick={() => handleRemoveResource(resource.id)}
                               className="text-gray-400 hover:text-red-500 transition-colors"
                             >
@@ -943,16 +907,13 @@ export default function VirtualClassroom() {
 
                 setWeekContent({
                   ...weekContent,
-                  content: {
-                    ...weekContent.content,
-                    supportMaterials: [
-                      ...weekContent.content.supportMaterials.map(m => ({
+                  supportMaterials: [
+                      ...weekContent.supportMaterials.map(m => ({
                         ...m,
                         fileName: m.fileName || m.link.split('/').pop() || 'Link'
                       })),
                       newMaterial
                     ]
-                  }
                 });
 
                 setMaterialData({ link: '', title: '', file: null });
@@ -1000,10 +961,8 @@ export default function VirtualClassroom() {
                 onUploadSuccess={({ url, fileName }) => {
                   setWeekContent({
                     ...weekContent,
-                    content: {
-                      ...weekContent.content,
-                      supportMaterials: [
-                        ...weekContent.content.supportMaterials,
+                    supportMaterials: [
+                        ...weekContent.supportMaterials,
                         {
                           id: Date.now().toString(),
                           description: materialData.title || fileName || 'Documento',
@@ -1011,7 +970,6 @@ export default function VirtualClassroom() {
                           fileName: fileName
                         }
                       ]
-                    }
                   });
                   setMaterialData({ link: '', title: '', file: null });
                   setMaterialType(null);
@@ -1039,16 +997,13 @@ export default function VirtualClassroom() {
 
               setWeekContent({
                 ...weekContent,
-                content: {
-                  ...weekContent.content,
-                  supportMaterials: [
-                    ...weekContent.content.supportMaterials.map(m => ({
+                supportMaterials: [
+                    ...weekContent.supportMaterials.map(m => ({
                       ...m,
                       fileName: m.fileName || m.link.split('/').pop() || 'Link'
                     })),
                     newMaterial
                   ]
-                }
               });
 
               setMaterialData({ link: '', title: '', file: null });
@@ -1065,7 +1020,7 @@ export default function VirtualClassroom() {
         isOpen={isAssignmentModalOpen}
         className='max-w-6xl'
         onClose={() => setIsAssignmentModalOpen(false)}
-        title={weekContent.content.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
+        title={weekContent.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
       >
         <div className="space-y-4">
           <div className="flex items-start gap-4">

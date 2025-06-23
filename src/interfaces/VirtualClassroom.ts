@@ -1,5 +1,3 @@
-import { ObjectId } from 'mongodb';
-
 export interface SupportMaterial {
   id: string;
   description: string;
@@ -17,16 +15,10 @@ export interface Assignment {
 }
 
 export interface WeekContent {
-_id: ObjectId | string;
-  classId: ObjectId | string;
-  weekNumber: number;
-  content: {
-    meetingLink: string;
-    recordingLink: string;
-    supportMaterials: SupportMaterial[];
-    assignment: Assignment | null;
-  };
-  updatedAt: Date;
+  meetingLink: string;
+  recordingLink: string;
+  supportMaterials: SupportMaterial[];
+  assignment: Assignment | null;
 }
 
 export interface ClassContent {
