@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { formatDateToInput, parseInputDate } from '@/utils/GeneralTools';
-import { WeekContent } from '@/interfaces/VirtualClassroom';
+import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
+import { getUserId } from '@/utils/Tools.ts';
 
 export async function POST(
   request: Request,
@@ -23,28 +24,28 @@ export async function POST(
         );
       }
     }
-    const filter = { 
-      classId: new ObjectId(classId), 
-      weekNumber: Number(data.weekNumber) 
+    const filter = {
+      classId: new ObjectId(classId),
+      weekNumber: Number(data.weekNumber)
     };
-    
+
     const existingWeek = await weeksCollection.findOne(filter);
-    
+
     if (existingWeek) {
       await weeksCollection.updateOne(
         filter,
-        { 
-          $set: { 
+        {
+          $set: {
             weekNumber: data.weekNumber,
             meetingLink: data.meetingLink,
             recordingLink: data.recordingLink,
             supportMaterials: data.supportMaterials,
             assignment: data.assignment,
-            updatedAt: new Date() 
-          } 
+            updatedAt: new Date()
+          }
         }
       );
-      return NextResponse.json({ success: true});
+      return NextResponse.json({ success: true });
     } else {
       await weeksCollection.insertOne({
         classId: new ObjectId(classId),
@@ -69,15 +70,16 @@ export async function POST(
 }
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const userId = await getUserId(request);
     const classId = (await params).id;
     const { searchParams } = new URL(request.url);
     const weekNumber = Number(searchParams.get('week'));
     const weeksCollection = await getCollection<WeekContent>('weeks');
-    
+
     const weekData = await weeksCollection.findOne({
       classId: new ObjectId(classId),
       weekNumber
@@ -90,9 +92,29 @@ export async function GET(
       weekData.assignment.dueDate = formatDateToInput(weekData.assignment.dueDate);
     }
 
+    let studentAssignment: StudentAssignment | null = null;
+
+    if (weekData.assignment) {
+      const submittedAssignmentsCollection = await getCollection('submittedAssignments');
+      const Assignment = await submittedAssignmentsCollection.findOne({
+        weekNumber,
+        classId: new ObjectId(classId),
+        studentId: new ObjectId(userId)
+      });
+      if (Assignment) {
+        studentAssignment = {
+          fileUrl: Assignment.fileUrl || null,
+          fileName: Assignment.fileName || null,
+          audioUrl: Assignment.audioUrl || null,
+          message: Assignment.message || null,
+        };
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: weekData || null
+      data: weekData || null,
+      studentAssignment: studentAssignment
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';

@@ -44,3 +44,10 @@ export interface ClassContent {
   resources: SupportMaterial[];
   durationWeeks: number;
 }
+
+export interface StudentAssignment {
+  fileUrl: string | null;
+  fileName: string | null;
+  audioUrl: string | null;
+  message: string;
+}

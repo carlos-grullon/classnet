@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
-import { Button, Modal } from '@/components';
+import { Button } from '@/components';
 import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
-import { FetchData, ErrorMsj, getFileIcon } from '@/utils/Tools.tsx';
+import { FetchData, ErrorMsj, getFileIcon, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
-import { Input } from '@/components';
 import { useCountries } from '@/providers';
 import { FaWhatsapp } from 'react-icons/fa';
 import { formatInputDateToLong, parseInputDate } from '@/utils/GeneralTools';
@@ -20,14 +19,7 @@ import { AudioPlayer } from '@/components/AudioPlayer';
 import { Textarea } from '@/components/Textarea';
 import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
-import { WeekContent } from '@/interfaces/VirtualClassroom';
-
-interface StudentAssignment {
-  fileUrl: string | null;
-  fileName: string | null;
-  audioUrl: string | null;
-  message: string;
-}
+import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
 
 interface TeacherInfo {
   name: string;
@@ -73,7 +65,6 @@ export default function VirtualClassroom() {
   const params = useParams();
   const classId = params?.id as string;
   const { getCountryByCode } = useCountries();
-  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>({
     meetingLink: '',
@@ -169,14 +160,16 @@ export default function VirtualClassroom() {
   useEffect(() => {
     const fetchWeekContent = async () => {
       try {
-        const response = await FetchData<{ success: boolean, data: WeekContent }>(
+        const response = await FetchData<{ success: boolean, data: WeekContent, studentAssignment: StudentAssignment }>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
           {},
           'GET'
         );
         if (response.success && response.data) {
           setWeekContent(response.data);
-          console.log(response);
+          if (response.studentAssignment) {
+            setStudentAssignment(response.studentAssignment);
+          }
         }
       } catch (error) {
         console.error('Error loading week content:', error);
@@ -198,50 +191,38 @@ export default function VirtualClassroom() {
   });
 
   const handleFileChange = ({ url, fileName }: { url: string; fileName: string }) => {
-    setStudentAssignment(prev => ({
-      ...prev,
+    const updatedContent = {
+      ...studentAssignment,
       fileUrl: url,
       fileName: fileName
-    }));
+    };
+    setStudentAssignment(updatedContent);
+    handleAssignmentSubmit(updatedContent);
   };
 
   const handleAudioRecordingComplete = (audioUrl: string) => {
-    setStudentAssignment(prev => ({ ...prev, audioUrl }));
+    const updatedContent = {
+      ...studentAssignment,
+      audioUrl: audioUrl
+    };
+    setStudentAssignment(updatedContent);
+    handleAssignmentSubmit(updatedContent);
   };
 
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setStudentAssignment(prev => ({ ...prev, message: e.target.value }));
-  };
-
-  const handleFileUpload = async () => {
-    console.log(studentAssignment);
-    // if (!studentAssignment.fileUrl) return;
-
-    // try {
-    //   const response = await fetch(`/api/student/classes/${classId}/assignments/${weekContent.assignment?.id}/submit`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       fileUrl: studentAssignment.fileUrl,
-    //       audioUrl: weekContent.assignment?.hasAudio ? studentAssignment.audioUrl : null,
-    //       message: studentAssignment.message
-    //     })
-    //   });
-
-    //   const data = await response.json();
-
-    //   if (response.ok) {
-    //     SuccessMsj('Asignación enviada correctamente');
-    //     setIsAssignmentModalOpen(false);
-    //     setStudentAssignment({ fileUrl: null, audioUrl: null, message: '' });
-    //   } else {
-    //     throw new Error(data.error || 'Error al subir la asignación');
-    //   }
-    // } catch (error: any) {
-    //   ErrorMsj(error.message);
-    // }
+  const handleAssignmentSubmit = async (studentAssignment: StudentAssignment) => {
+    try {
+      const response = await FetchData<{ success: boolean }>(`/api/student/classes/assignment-submit`, {
+        classId: classId,
+        weekNumber: selectedWeek,
+        ...studentAssignment
+      }, 'POST');
+      if (response.success) {
+        SuccessMsj('Asignación actualizada correctamente');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al enviar la asignación';
+      ErrorMsj(message);
+    }
   };
 
   if (isLoading || !content) {
@@ -682,7 +663,12 @@ export default function VirtualClassroom() {
                     <Textarea
                       id="message"
                       value={studentAssignment.message}
-                      onChange={handleMessageChange}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                        setStudentAssignment({
+                          ...studentAssignment,
+                          message: e.target.value
+                        });
+                      }}
                       placeholder="Escribe un mensaje..."
                       rows={4}
                     />
@@ -691,10 +677,9 @@ export default function VirtualClassroom() {
                   {/* Submit Button */}
                   <div className="flex justify-end mt-4">
                     <Button
-                      onClick={handleFileUpload}
-                      disabled={!studentAssignment.fileUrl}
+                      onClick={() => handleAssignmentSubmit(studentAssignment)}
                     >
-                      Enviar Asignación
+                      Enviar Mensaje
                     </Button>
                   </div>
                 </div>
