@@ -19,6 +19,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [time, setTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -41,6 +43,14 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     gainNode.gain.value = 0; // Silenciar inicialmente
     gainNodeRef.current = gainNode;
     
+    // Pre-warm audio processing with dummy oscillator
+    const oscillator = ctx.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 440;
+    oscillator.connect(gainNode);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.1);
+    
     return () => {
       if (ctx.state !== 'closed') {
         try {
@@ -56,54 +66,73 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     try {
       if (!audioCtxRef.current) return;
       
-      // Activar el audio context si está suspendido (requerido en algunos navegadores)
-      if (audioCtxRef.current.state === 'suspended') {
-        await audioCtxRef.current.resume();
+      // Mostrar cuenta regresiva visual (3...2...1)
+      setCountdown(3);
+      
+      // Iniciar la configuración del audio EN PARALELO con el contador
+      const setupPromise = (async () => {
+        if (audioCtxRef.current?.state === 'suspended') {
+          await audioCtxRef.current.resume();
+        }
+        
+        if (gainNodeRef.current) {
+          gainNodeRef.current.gain.value = 2.0;
+        }
+        
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
+
+        const audioContext = audioCtxRef.current;
+        if (!audioContext) {
+          throw new Error('AudioContext no está disponible');
+        }
+
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyserRef.current = analyser;
+        dataArrayRef.current = dataArray;
+
+        source.connect(gainNodeRef.current!);
+        gainNodeRef.current!.connect(analyser);
+
+        const recorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = recorder;
+        audioChunksRef.current = [];
+
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunksRef.current.push(e.data);
+        };
+
+        recorder.onstop = async () => {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          setAudioBlob(blob);
+          setAudioUrl(URL.createObjectURL(blob));
+        };
+      })();
+      
+      // Animación del contador visual
+      for (let i = 3; i > 0; i--) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setCountdown(i - 1);
       }
       
-      // Configurar ganancia ahora que el usuario ha interactuado
-      if (gainNodeRef.current) {
-        gainNodeRef.current.gain.value = 2.0; // Aplicar ganancia
-      }
+      // Esperar que termine la configuración del audio si no ha terminado
+      await setupPromise;
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const source = audioCtxRef.current.createMediaStreamSource(stream);
-      const analyser = audioCtxRef.current.createAnalyser();
-      analyser.fftSize = 64;
-
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-      analyserRef.current = analyser;
-      dataArrayRef.current = dataArray;
-
-      source.connect(gainNodeRef.current!);
-      gainNodeRef.current!.connect(analyser);
-
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-
-      recorder.onstop = async () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const trimmedBlob = await trimAudio(blob, 1);
-        setAudioBlob(trimmedBlob);
-        setAudioUrl(URL.createObjectURL(trimmedBlob));
-      };
-
+      setCountdown(null);
       setIsRecording(true);
       setIsPaused(false);
       setTime(0);
-
-      recorder.start();
-      intervalRef.current = setInterval(() => setTime((prev) => prev + 1), 1000);
+      
+      mediaRecorderRef.current?.start();
+      intervalRef.current = setInterval(() => setTime(prev => prev + 1), 1000);
       drawWaves();
     } catch (error) {
+      setCountdown(null);
       const message = error instanceof Error ? error.message : 'Error al acceder al micrófono';
       ErrorMsj(message);
       console.error('Error al acceder al micrófono:', error);
@@ -135,39 +164,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     setIsPaused(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-  };
-
-  const trimAudio = async (blob: Blob, secondsToSkip: number): Promise<Blob> => {
-    const arrayBuffer = await blob.arrayBuffer();
-    const audioCtx = new AudioContext();
-    const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-    const sampleRate = decoded.sampleRate;
-    const newBuffer = audioCtx.createBuffer(
-      decoded.numberOfChannels,
-      decoded.length - secondsToSkip * sampleRate,
-      sampleRate
-    );
-
-    for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
-      const oldData = decoded.getChannelData(ch);
-      const newData = newBuffer.getChannelData(ch);
-      newData.set(oldData.subarray(secondsToSkip * sampleRate));
-    }
-
-    const offlineCtx = new OfflineAudioContext(
-      newBuffer.numberOfChannels,
-      newBuffer.length,
-      newBuffer.sampleRate
-    );
-    const bufferSource = offlineCtx.createBufferSource();
-    bufferSource.buffer = newBuffer;
-    bufferSource.connect(offlineCtx.destination);
-    bufferSource.start();
-
-    const rendered = await offlineCtx.startRendering();
-    const wavBlob = await bufferToBlob(rendered);
-
-    return wavBlob;
   };
 
   const bufferToBlob = async (buffer: AudioBuffer): Promise<Blob> => {
@@ -222,8 +218,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const drawWaves = () => {
     const canvas = canvasRef.current;
     const canvasCtx = canvas?.getContext('2d');
-    if (!canvas || !canvasCtx || !analyserRef.current || !dataArrayRef.current) return;
-
+    if (!canvas || !canvasCtx || !analyserRef.current || !dataArrayRef.current || countdown !== null) return;
+    
     const draw = () => {
       analyserRef.current!.getByteFrequencyData(dataArrayRef.current!);
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
@@ -267,6 +263,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (!audioBlob) return;
     
     try {
+      setIsUploading(true);
       const formData = new FormData();
       const audioFile = new File([audioBlob], 'audio-recording.wav', {
         type: 'audio/wav'
@@ -289,6 +286,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     } catch (error: unknown) {
       toast.error('Error al subir el audio: ' + (error as Error).message);
       console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -304,12 +303,24 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         </div>
       </div>
       
-      <canvas 
-        ref={canvasRef} 
-        width={300} 
-        height={80} 
-        className="w-full h-20 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-4" 
-      />
+      <div className="relative">
+        <canvas 
+          ref={canvasRef} 
+          width={300} 
+          height={80} 
+          className="w-full h-20 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 mb-4"
+        />
+        
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-black bg-opacity-70 px-4 py-2 rounded-full">
+              <span className="text-white text-2xl font-bold">
+                {countdown > 0 ? `Comenzando en ${countdown}...` : '¡Grabando!'}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
       
       <div className="flex flex-col items-center gap-3">
         {/* Estado: Inactivo */}
@@ -360,10 +371,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
               <button
                 onClick={sendAudio}
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                disabled={!audioBlob}
+                disabled={!audioBlob || isUploading}
               >
-                <FiUpload />
-                Subir Audio
+                {isUploading ? (
+                  <>
+                    <FiRefreshCw className="animate-spin" />
+                    Subiendo...
+                  </>
+                ) : (
+                  <>
+                    <FiUpload />
+                    Subir Audio
+                  </>
+                )}
               </button>
               
               <button
