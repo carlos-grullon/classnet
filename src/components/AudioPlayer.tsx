@@ -5,16 +5,16 @@ import { FiPlay, FiPause, FiTrash2, FiMic } from 'react-icons/fi';
 
 interface AudioPlayerProps {
   audioUrl: string;
-  className?: string;
   onDelete?: () => void;
   onNewRecording?: () => void;
+  className?: string;
 }
 
-export const AudioPlayer = ({ 
-  audioUrl, 
-  className = '',
+export const AudioPlayer = ({
+  audioUrl,
   onDelete,
-  onNewRecording
+  onNewRecording,
+  className = ''
 }: AudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);

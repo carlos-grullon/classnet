@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { FiLoader } from 'react-icons/fi';
 
 export interface ButtonProps {
@@ -16,7 +16,7 @@ export interface ButtonProps {
   icon?: React.ReactNode;
 }
 
-export function Button({
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   children,
   type = 'button',
   variant = 'primary',
@@ -27,7 +27,7 @@ export function Button({
   onClick,
   className = '',
   icon,
-}: ButtonProps) {
+}, ref) => {
   // Clases base que se aplicarán a todos los botones
   const baseClasses = 'font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
   
@@ -54,6 +54,7 @@ export function Button({
   return (
     <button
       type={type}
+      ref={ref}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${widthClasses} ${disabled || isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
       disabled={disabled || isLoading}
       onClick={onClick}
@@ -71,4 +72,6 @@ export function Button({
       )}
     </button>
   );
-}
+});
+
+Button.displayName = 'Button';

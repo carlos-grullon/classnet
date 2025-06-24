@@ -20,6 +20,7 @@ import { Textarea } from '@/components/Textarea';
 import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
 import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 
 interface TeacherInfo {
   name: string;
@@ -75,6 +76,12 @@ export default function VirtualClassroom() {
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedDescription, setExpandedDescription] = useState(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationConfig, setConfirmationConfig] = useState({
+    action: () => {},
+    title: 'AVISO',
+    message: '',
+  });
 
   const getTimeRemainingMessage = (dueDate: string | Date, submittedAt?: string | Date) => {
     const now = new Date();
@@ -232,6 +239,23 @@ export default function VirtualClassroom() {
       const message = error instanceof Error ? error.message : 'Error al enviar la asignación';
       ErrorMsj(message);
     }
+  };
+
+  const handleConfirmChangeFile = () => {
+    setStudentAssignment(prev => ({
+      ...prev,
+      fileUrl: null,
+      fileName: null
+    }));
+  };
+
+  const handleRequestAction = (action: () => void, message: string) => {
+    setConfirmationConfig({
+      action,
+      title: 'AVISO',
+      message
+    });
+    setShowConfirmation(true);
   };
 
   if (isLoading || !content) {
@@ -540,7 +564,7 @@ export default function VirtualClassroom() {
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">Archivo:</span>
                                 {weekContent?.assignment?.fileLink ? (
-                                  <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
+                                  <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
                                     {getFileIcon(weekContent?.assignment?.fileName)}
                                     <Link
                                       href={weekContent?.assignment?.fileLink}
@@ -606,7 +630,7 @@ export default function VirtualClassroom() {
                   </div>
 
                   {/* File Upload */}
-                  <div className="space-y-4 mb-4">
+                  <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
                     <div className="flex items-center gap-2">
                       <FiUpload className="text-blue-500 text-lg" />
                       <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
@@ -628,11 +652,7 @@ export default function VirtualClassroom() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => setStudentAssignment(prev => ({
-                            ...prev,
-                            fileUrl: null,
-                            fileName: null
-                          }))}
+                          onClick={() => handleRequestAction(handleConfirmChangeFile, '¿Estás seguro de que deseas cambiar el archivo?')}
                         >
                           <FiEdit className="mr-2" />
                           Cambiar Archivo
@@ -645,17 +665,22 @@ export default function VirtualClassroom() {
 
                   {/* Audio Recording - if required */}
                   {weekContent?.assignment?.hasAudio && (
-                    <div className="space-y-4 mb-4">
+                    <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
                       <div className="flex items-center gap-2">
                         <FiMic className="text-blue-500 text-lg" />
                         <h4 className="text-blue-500 font-semibold">Grabación de Audio</h4>
                       </div>
-
                       {studentAssignment.audioUrl ? (
                         <AudioPlayer
                           audioUrl={studentAssignment.audioUrl}
-                          onDelete={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
-                          onNewRecording={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
+                          onNewRecording={() => handleRequestAction(
+                            () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                            '¿Estás seguro de que deseas grabar un nuevo audio?'
+                          )}
+                          onDelete={() => handleRequestAction(
+                            () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                            '¿Estás seguro de que deseas eliminar el audio?'
+                          )}
                         />
                       ) : (
                         <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} path={`classes/${classId}/student/${selectedWeek}`} />
@@ -753,6 +778,15 @@ export default function VirtualClassroom() {
           </>
         )}
       </Tabs>
+      <ConfirmationModal
+        isOpen={showConfirmation}
+        onClose={() => setShowConfirmation(false)}
+        onConfirm={confirmationConfig.action}
+        title={confirmationConfig.title}
+        message={confirmationConfig.message}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 }
