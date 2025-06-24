@@ -96,10 +96,10 @@ export default function VirtualClassroom() {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const data = await FetchData<{ success: boolean, data: ClassContent }>(`/api/teacher/classes/${classId}/content`, {}, 'GET');
+        const data = await FetchData<{ success: boolean, content: ClassContent }>(`/api/teacher/classes/${classId}/content?userType=teacher`, {}, 'GET');
 
-        if (data.success && data.data) {
-          setContent(data.data);
+        if (data.success && data.content) {
+          setContent(data.content);
         } else {
           ErrorMsj('Error obteniendo datos del curso');
         }

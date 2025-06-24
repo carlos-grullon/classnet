@@ -51,7 +51,7 @@ export interface ClassContentResponse {
 
 export interface ClassContentApiResponse {
   success: boolean;
-  data: ClassContentResponse;
+  content: ClassContentResponse;
 }
 
 interface SupportMaterial {
@@ -131,24 +131,26 @@ export default function VirtualClassroom() {
     const fetchContent = async () => {
       try {
         setIsLoading(true);
-        const data = await FetchData<ClassContentApiResponse>(`/api/teacher/classes/${classId}/content`, {}, 'GET');
-        if (data.success && data.data) {
+        const data = await FetchData<ClassContentApiResponse>(`/api/teacher/classes/${classId}/content?userType=student`, {}, 'GET');
+        if (data.success && data.content) {
           setContent(
             {
-              _id: data.data._id,
-              classId: data.data.classId,
-              teacher: data.data.teacher,
-              class: data.data.class,
-              welcomeMessage: data.data.welcomeMessage || '',
-              whatsappLink: data.data.whatsappLink || '',
-              resources: data.data.resources || [],
-              durationWeeks: data.data.durationWeeks
+              _id: data.content._id,
+              classId: data.content.classId,
+              teacher: data.content.teacher,
+              class: data.content.class,
+              welcomeMessage: data.content.welcomeMessage || '',
+              whatsappLink: data.content.whatsappLink || '',
+              resources: data.content.resources || [],
+              durationWeeks: data.content.durationWeeks
             }
           );
+        } else {
+          ErrorMsj('Contenido no encontrado');
         }
       } catch (error) {
-        ErrorMsj('Error cargando contenido');
-        console.error('Error loading content:', error);
+        const message = error instanceof Error ? error.message : 'Error al obtener contenido';
+        ErrorMsj(message);
       } finally {
         setIsLoading(false);
       }
@@ -178,7 +180,8 @@ export default function VirtualClassroom() {
           }
         }
       } catch (error) {
-        console.error('Error loading week content:', error);
+        const message = error instanceof Error ? error.message : 'Error al obtener contenido';
+        ErrorMsj(message);
       }
     };
 

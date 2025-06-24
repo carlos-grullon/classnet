@@ -1,11 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { ClassContent } from '@/interfaces/VirtualClassroom';
+import { getUserId } from '@/utils/Tools.ts';
 import { getDayName, getLevelName, mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
@@ -48,12 +49,51 @@ export async function PATCH(
 }
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const userId = await getUserId(request);
     const classId = (await params).id;
+    const userType = request.nextUrl.searchParams.get('userType');
+
+    // Existe la clase?
     const classCollection = await getCollection('classes');
+    const classExists = await classCollection.countDocuments({
+      _id: new ObjectId(classId)
+    });
+    if (!classExists) {
+      return NextResponse.json(
+        { error: 'La clase no existe' },
+        { status: 404 }
+      );
+    }
+
+    // Validar que sea un estudiante inscrito o el profesor de la clase
+    if (userType === 'student') {
+      const enrollmentsCollection = await getCollection('enrollments');
+      const enrollment = await enrollmentsCollection.findOne({
+        student_id: new ObjectId(userId),
+        class_id: new ObjectId(classId)
+      });
+      if (!enrollment) {
+        return NextResponse.json(
+          { error: 'No tienes acceso a esta clase' },
+          { status: 403 }
+        );
+      }
+    } else if (userType === 'teacher') {
+      const teacherInClass = await classCollection.findOne({
+        _id: new ObjectId(classId),
+        teacher_id: new ObjectId(userId)
+      });
+      if (!teacherInClass) {
+        return NextResponse.json(
+          { error: 'No tienes acceso a esta clase' },
+          { status: 403 }
+        );
+      }
+    }
     const classData = await classCollection.findOne({
       _id: new ObjectId(classId)
     });
@@ -63,7 +103,10 @@ export async function GET(
     });
 
     if (!content || !classData) {
-      throw new Error('Contenido no encontrado');
+      return NextResponse.json(
+        { error: 'Contenido no encontrado' },
+        { status: 404 }
+      );
     }
     const usersCollection = await getCollection('users');
     const teacher = await usersCollection.findOne({
@@ -71,7 +114,10 @@ export async function GET(
     });
 
     if (!teacher) {
-      throw new Error('Profesor no encontrado');
+      return NextResponse.json(
+        { error: 'Profesor no encontrado' },
+        { status: 404 }
+      );
     }
 
     content._id = content._id.toString();
@@ -93,10 +139,18 @@ export async function GET(
       price: classData.price,
     };
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
-      data: content
+      content: content || null
     });
+
+    // Configurar cache (60 segundos)
+    response.headers.set(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=30'
+    );
+
+    return response;
 
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error al obtener contenido';
