@@ -83,6 +83,7 @@ export default function VirtualClassroom() {
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [expandedDescription, setExpandedDescription] = useState(false);
 
   const getTimeRemainingMessage = (dueDate: string | Date, submittedAt?: string | Date) => {
     const now = new Date();
@@ -421,138 +422,181 @@ export default function VirtualClassroom() {
             </TabContent>
 
             <TabContent id="week" activeId={activeId} className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="gap-4 grid md:grid-cols-12">
                 {/* Sección Reunión */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FiVideo className="text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Reunión Semana {selectedWeek}</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="font-medium text-center flex items-center justify-center gap-2">
-                      <span>Link de la reunión:</span>
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                  <div className="col-span-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <FiVideo className="text-blue-600 dark:text-blue-400" />
+                      <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Reunión Semana {selectedWeek}</h3>
                     </div>
-                    {weekContent?.meetingLink ? (
-                      <div className="flex justify-center">
-                        <Link 
-                          href={weekContent.meetingLink} 
-                          target="_blank"
-                          className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
-                        >
-                          <FiExternalLink />
-                          {weekContent.meetingLink}
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
-                        <FiAlertCircle className="text-red-600 dark:text-red-400" />
-                        <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de reunión</p>
-                      </div>
-                    )}
-                    <div className="font-medium text-center flex items-center justify-center gap-2 mt-4">
-                      <span>Link de la grabación:</span>
-                    </div>
-                    {weekContent?.recordingLink ? (
-                      <div className="flex justify-center">
-                        <Link 
-                          href={weekContent.recordingLink} 
-                          target="_blank"
-                          className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
-                        >
-                          <FiExternalLink />
-                          {weekContent.recordingLink}
-                        </Link>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
-                        <FiAlertCircle className="text-red-600 dark:text-red-400" />
-                        <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de grabación</p>
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center mb-3 mt-4">
-                      <div className="flex items-center gap-2">
-                        <FiBookOpen className="text-blue-600 dark:text-blue-400" />
-                        <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {weekContent?.supportMaterials?.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center gap-2 py-4">
-                          <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
-                          <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
-                        </div>
-                      ) : (
-                        weekContent?.supportMaterials?.map(material => (
-                          <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
-                            <div className="flex items-center gap-2">
-                              {getFileIcon(material.link)}
-                              <div>
-                                <p className="font-medium">{material.description}</p>
-                                {material.fileName && (
-                                  <Link href={material.link} target="_blank" className="text-blue-500 hover:underline">
-                                    {material.fileName}
-                                  </Link>
-                                )}
+                    <table className="border border-black dark:border-gray-400 w-full">
+                      <thead>
+                        <tr>
+                          <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la reunión</th>
+                          <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la grabación</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-black dark:border-gray-400 p-2">
+                            {weekContent?.meetingLink ? (
+                              <div className="flex justify-center">
+                                <Link
+                                  href={weekContent.meetingLink}
+                                  target="_blank"
+                                  className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                >
+                                  <FiExternalLink />
+                                  {weekContent.meetingLink}
+                                </Link>
                               </div>
+                            ) : (
+                              <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
+                                <FiAlertCircle className="text-red-600 dark:text-red-400" />
+                                <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de reunión</p>
+                              </div>
+                            )}
+                          </td>
+                          <td className="border border-black dark:border-gray-400 p-2">
+                            {weekContent?.recordingLink ? (
+                              <div className="flex justify-center">
+                                <Link
+                                  href={weekContent.recordingLink}
+                                  target="_blank"
+                                  className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                >
+                                  <FiExternalLink />
+                                  {weekContent.recordingLink}
+                                </Link>
+                              </div>
+                            ) : (
+                              <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
+                                <FiAlertCircle className="text-red-600 dark:text-red-400" />
+                                <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de grabación</p>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {/* Sección Material de apoyo */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiBookOpen className="text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {weekContent?.supportMaterials?.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center gap-2 py-4 col-span-2">
+                        <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                        <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
+                      </div>
+                    ) : (
+                      weekContent?.supportMaterials?.map(material => (
+                        <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
+                          <div className="flex items-center gap-2">
+                            {getFileIcon(material.link)}
+                            <div>
+                              <p className="font-medium">{material.description}</p>
+                              {material.fileName && (
+                                <Link href={material.link} target="_blank" className="text-blue-500 hover:underline">
+                                  {material.fileName}
+                                </Link>
+                              )}
                             </div>
                           </div>
-                        ))
-                      )}
-                    </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
                 {/* Sección Asignación */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-3">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                  <div className="flex items-center justify-center text-center gap-2 mb-3">
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
-                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Asignación de la semana {selectedWeek}</h3>
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Información de la Asignación - Semana {selectedWeek}</h3>
                   </div>
                   {weekContent?.assignment ? (
                     <div className="space-y-2">
-                      <div className="grid md:grid-cols-12 gap-2">
-                        <div className="flex flex-col gap-1 md:col-span-5">
-                          <span className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</span>
-                          <span className="font-semibold">
-                            {formatInputDateToLong(weekContent?.assignment?.dueDate)}
-                          </span>
+                      <table className="w-full border border-black dark:border-gray-400">
+                        <thead>
+                          <tr className="border-b border-black dark:border-gray-400">
+                            <th className="p-2 border-r border-black text-center dark:border-gray-400">Fecha de Entrega</th>
+                            <th className="p-2 border-r border-black text-center dark:border-gray-400">Estado</th>
+                            <th className="p-2 text-center dark:border-gray-400">Estado del audio</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="p-2 border-r border-black dark:border-gray-400">
+                              {formatInputDateToLong(weekContent?.assignment?.dueDate)}
+                            </td>
+                            <td className="p-2 border-r border-black dark:border-gray-400">
+                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate).color}`}>
+                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate).message}
+                              </span>
+                            </td>
+                            <td className="p-2">
+                              <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded justify-center">
+                                1 día restante para la entrega
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan={3} className="p-2 border-t border-black dark:border-gray-400">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">Archivo:</span>
+                                {weekContent?.assignment?.fileLink ? (
+                                  <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
+                                    {getFileIcon(weekContent?.assignment?.fileName)}
+                                    <Link
+                                      href={weekContent?.assignment?.fileLink}
+                                      target="_blank"
+                                      className="text-blue-500 hover:underline"
+                                    >
+                                      {weekContent?.assignment?.fileName}
+                                    </Link>
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
+                                    <FiAlertCircle className="text-red-600 dark:text-red-400" />
+                                    <p className="text-gray-500 dark:text-gray-400">No se ha agregado un archivo</p>
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-500 dark:text-gray-300">Descripción:</p>
+                        <div
+                          className="bg-gray-100 dark:bg-gray-700 p-3 rounded overflow-hidden"
+                        >
+                          <div
+                            className="whitespace-pre-wrap relative"
+                            style={{
+                              maxHeight: expandedDescription ? 'none' : '8rem',
+                              maskImage: expandedDescription ? 'none' : 'linear-gradient(to bottom, black 70%, transparent 100%)'
+                            }}
+                          >
+                            {weekContent?.assignment?.description || 'No hay descripción disponible'}
+                          </div>
                         </div>
-                        <div className="flex flex-col gap-1 md:col-span-7">
-                          <span className="text-sm text-gray-500 dark:text-gray-300 text-center">Estado:</span>
-                          <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate).color}`}>
-                            {getTimeRemainingMessage(weekContent?.assignment?.dueDate).message}
-                          </span>
-                        </div>
+                        {weekContent?.assignment?.description && weekContent.assignment.description.length > 100 && (
+                          <button
+                            className="mt-1 w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            onClick={() => setExpandedDescription(!expandedDescription)}
+                          >
+                            {expandedDescription ? 'Ver menos' : '... Ver más'}
+                          </button>
+                        )}
                       </div>
-                      {weekContent?.assignment?.fileLink && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm text-gray-500 dark:text-gray-300">Archivo:</span>
-                          <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded">
-                            {getFileIcon(weekContent?.assignment?.fileName)}
-                            <Link
-                              href={weekContent?.assignment?.fileLink}
-                              target="_blank"
-                              className="text-blue-500 hover:underline"
-                            >
-                              {weekContent?.assignment?.fileName}
-                            </Link>
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={weekContent?.assignment?.hasAudio}
-                          readOnly
-                          className="rounded text-blue-500"
-                        />
-                        <span className="text-sm">Incluye audio</span>
-                      </div>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setIsAssignmentModalOpen(true)}
-                      >
-                        Ver Detalle
-                      </Button>
+
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-4">
@@ -564,9 +608,100 @@ export default function VirtualClassroom() {
                   )}
 
                 </div>
+                {/* Seccion Subir Asignación */}
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                  <div className="flex items-center justify-center text-center gap-2 mb-3">
+                    <FiEdit className="text-blue-600 dark:text-blue-400" />
+                    <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Enviar Asignación - Semana {selectedWeek}</h3>
+                  </div>
+
+                  {/* File Upload */}
+                  <div className="space-y-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <FiUpload className="text-blue-500 text-lg" />
+                      <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
+                    </div>
+
+                    {studentAssignment.fileUrl ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
+                          {getFileIcon(studentAssignment.fileName || '')}
+                          <Link
+                            href={studentAssignment.fileUrl}
+                            target="_blank"
+                            className="text-blue-500 hover:underline flex items-center gap-2"
+                          >
+                            <FiDownload className="text-sm" />
+                            <span className="font-medium">{studentAssignment.fileName}</span>
+                          </Link>
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setStudentAssignment(prev => ({
+                            ...prev,
+                            fileUrl: null,
+                            fileName: null
+                          }))}
+                        >
+                          <FiEdit className="mr-2" />
+                          Cambiar Archivo
+                        </Button>
+                      </div>
+                    ) : (
+                      <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
+                    )}
+                  </div>
+
+                  {/* Audio Recording - if required */}
+                  {weekContent?.assignment?.hasAudio && (
+                    <div className="space-y-4 mb-4">
+                      <div className="flex items-center gap-2">
+                        <FiMic className="text-blue-500 text-lg" />
+                        <h4 className="text-blue-500 font-semibold">Grabación de Audio</h4>
+                      </div>
+
+                      {studentAssignment.audioUrl ? (
+                        <AudioPlayer
+                          audioUrl={studentAssignment.audioUrl}
+                          onDelete={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
+                          onNewRecording={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
+                        />
+                      ) : (
+                        <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} />
+                      )}
+                    </div>
+                  )}
+
+                  {/* Optional Message */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <FiMessageSquare className="text-blue-500 text-lg" />
+                      <h4 className="text-blue-500 font-semibold">Mensaje para el Profesor (Opcional)</h4>
+                    </div>
+                    <Textarea
+                      id="message"
+                      value={studentAssignment.message}
+                      onChange={handleMessageChange}
+                      placeholder="Escribe un mensaje..."
+                      rows={4}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      onClick={handleFileUpload}
+                      disabled={!studentAssignment.fileUrl}
+                    >
+                      Enviar Asignación
+                    </Button>
+                  </div>
+                </div>
               </div>
             </TabContent>
 
+            {/* Sección Recursos */}
             <TabContent id="resources" activeId={activeId} className="mt-4">
               <div className="p-4 border rounded-lg">
                 <div className="flex justify-between items-center mb-4">
@@ -595,18 +730,16 @@ export default function VirtualClassroom() {
                                 <Link
                                   href={resource.link}
                                   target="_blank"
-                                  className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
+                                  className="text-blue-600 dark:text-blue-400 hover:underline"
                                 >
-                                  <FiDownload className="text-sm" />
                                   {resource.fileName}
                                 </Link>
                               ) : (
                                 <Link
                                   href={resource.link}
                                   target="_blank"
-                                  className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 text-sm"
+                                  className="text-blue-600 dark:text-blue-400 hover:underline"
                                 >
-                                  <FiExternalLink className="text-sm" />
                                   Click aquí para ir al enlace
                                 </Link>
                               )}
@@ -626,163 +759,6 @@ export default function VirtualClassroom() {
           </>
         )}
       </Tabs>
-      <Modal
-        isOpen={isAssignmentModalOpen}
-        onClose={() => setIsAssignmentModalOpen(false)}
-        title={`Asignación Semana ${selectedWeek}`}
-        className='w-auto max-w-6xl'
-      >
-        {weekContent?.assignment && (
-          <div className="">
-            {/* Grid principal */}
-            <div className="grid md:grid-cols-2">
-              {/* Sección 1: Información de la asignación */}
-              <div className="space-y-4 md:border-r-2 md:border-r-blue-500 pb-4 border-b-2 border-b-blue-500">
-                <div className="flex items-center gap-2">
-                  <FiInfo className="text-blue-500 text-lg" />
-                  <h3 className="text-blue-500 font-semibold text-lg">Información de la Asignación</h3>
-                </div>
-                <div className="md:ml-7 pr-5">
-                  <div className="grid md:grid-cols-12 mb-3">
-                    <div className="md:col-span-5">
-                      <p className="text-sm text-gray-500 dark:text-gray-300">Fecha de Entrega:</p>
-                      <p className="font-semibold">
-                        {formatInputDateToLong(weekContent?.assignment?.dueDate)}
-                      </p>
-                    </div>
-                    <div className="md:col-span-7">
-                      <p className="text-sm text-gray-500 dark:text-gray-300">Estado:</p>
-                      <p className={`${getTimeRemainingMessage(weekContent?.assignment?.dueDate).color}`}>
-                        {getTimeRemainingMessage(weekContent?.assignment?.dueDate).message}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <p className="text-sm text-gray-500 dark:text-gray-300">Descripción:</p>
-                    <p className="whitespace-pre-line">{weekContent?.assignment?.description}</p>
-                  </div>
-
-                  {weekContent?.assignment?.fileLink && (
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-300 mb-1">Archivo adjunto:</p>
-                      <Link
-                        href={weekContent?.assignment?.fileLink}
-                        target="_blank"
-                        className="flex bg-gray-200 dark:bg-gray-700 rounded items-center gap-2 text-blue-500 hover:underline w-fit p-1 px-4"
-                      >
-                        {getFileIcon(weekContent?.assignment?.fileName)}
-                        {weekContent?.assignment?.fileName}
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Sección 2: Subida de archivo */}
-              <div className="space-y-4 pb-4 border-b-2 border-b-blue-500 pl-3">
-                <div className="flex items-center gap-2">
-                  <FiUpload className="text-blue-500 text-lg" />
-                  <h3 className="text-blue-500 font-semibold text-lg">Subir Archivo</h3>
-                </div>
-
-                {studentAssignment.fileUrl ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
-                      {getFileIcon(studentAssignment.fileName || '')}
-                      <Link
-                        href={studentAssignment.fileUrl}
-                        target="_blank"
-                        className="text-blue-500 hover:underline flex items-center gap-2"
-                      >
-                        <FiDownload className="text-sm" />
-                        <span className="font-medium">{studentAssignment.fileName}</span>
-                      </Link>
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setStudentAssignment(prev => ({
-                        ...prev,
-                        fileUrl: null,
-                        fileName: null
-                      }))}
-                    >
-                      <FiEdit className="mr-2" />
-                      Cambiar Archivo
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-base text-gray-500 dark:text-gray-300 block">
-                      Aquí puedes subir tu asignación cuando la tengas lista.
-                    </div>
-                    <div className="md:ml-7">
-                      <FileUploader onUploadSuccess={handleFileChange} />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Sección 3: Audio */}
-              {weekContent?.assignment?.hasAudio && (
-                <div className="space-y-4 pt-3 md:border-r-2 md:border-r-blue-500 border-b-2 pb-4 md:pb-0 border-b-blue-500 md:border-b-0">
-                  <div className="flex items-center gap-2">
-                    <FiMic className="text-blue-500 text-lg" />
-                    <h3 className="text-blue-500 font-semibold text-lg">Grabación de Audio</h3>
-                  </div>
-                  {studentAssignment.audioUrl ? (
-                    <div className="pl-3 pr-5">
-                      <AudioPlayer
-                        audioUrl={studentAssignment.audioUrl}
-                        onDelete={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
-                        onNewRecording={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
-                      />
-                    </div>
-                  ) : (
-                    <div className="pl-3">
-                      <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Sección 4: Mensaje */}
-              <div className="space-y-4 pt-3 pl-3">
-                <div className="flex items-center gap-2">
-                  <FiMessageSquare className="text-blue-500 text-lg" />
-                  <h3 className="text-blue-500 font-semibold text-lg">Mensaje para el Profesor (Opcional)</h3>
-                </div>
-                <div className="md:ml-7">
-                  <Textarea
-                    id="message"
-                    value={studentAssignment.message}
-                    onChange={handleMessageChange}
-                    placeholder="Escribe un mensaje..."
-                    rows={4}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Botones de acción */}
-            <div className="flex justify-end gap-2 pt-6">
-              <Button
-                variant="secondary"
-                onClick={() => setIsAssignmentModalOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleFileUpload}
-                disabled={!studentAssignment.fileUrl}
-              >
-                Enviar Asignación
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

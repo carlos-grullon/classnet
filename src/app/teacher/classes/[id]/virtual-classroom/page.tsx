@@ -839,7 +839,7 @@ export default function VirtualClassroom() {
 
           {resourceType === 'file' ? (
             <FileUploader
-              path={`classes/${classId}/teacher`}
+              path={`classes/${classId}/teacher/${selectedWeek}`}
               onUploadSuccess={(result: { url: string; fileName: string }) => {
                 setNewResource({ ...newResource, link: result.url, fileName: result.fileName });
               }}
@@ -958,7 +958,7 @@ export default function VirtualClassroom() {
                 onChange={(e) => setMaterialData({ ...materialData, title: e.target.value })}
               />
               <FileUploader
-                path={`classes/${classId}/teacher`}
+                path={`classes/${classId}/teacher/${selectedWeek}`}
                 onUploadSuccess={({ url, fileName }) => {
                   const updatedContent = {
                     ...weekContent,
@@ -1076,7 +1076,7 @@ export default function VirtualClassroom() {
           />
 
           <FileUploader
-            path={`classes/${classId}/teacher`}
+            path={`classes/${classId}/teacher/${selectedWeek}`}
             onUploadSuccess={handleAssignmentFileUpload}
           />
 

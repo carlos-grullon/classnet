@@ -102,20 +102,20 @@ export const getFileIcon = (fileName?: string) => {
 
   const extension = fileName.split('.').pop()?.toLowerCase();
 
-  if (!extension) return <FiLink className="mr-2 text-4xl" />;
+  if (!extension) return <FiLink className="mr-2 text-3xl" />;
 
   switch (extension) {
     case 'pdf':
-      return <FiFileText className="mr-2 text-red-500 text-4xl" />;
+      return <FiFileText className="mr-2 text-red-500 text-3xl" />;
     case 'jpg':
     case 'jpeg':
     case 'png':
     case 'gif':
-      return <FiImage className="mr-2 text-blue-500 text-4xl" />;
+      return <FiImage className="mr-2 text-blue-500 text-3xl" />;
     case 'doc':
     case 'docx':
-      return <FiFileText className="mr-2 text-blue-600 text-4xl" />;
+      return <FiFileText className="mr-2 text-blue-600 text-3xl" />;
     default:
-      return <FiFile className="mr-2 text-4xl" />;
+      return <FiFile className="mr-2 text-3xl" />;
   }
 };
