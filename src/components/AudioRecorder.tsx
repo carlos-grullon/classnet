@@ -7,10 +7,12 @@ import { ErrorMsj } from '@/utils/Tools.tsx';
 
 interface AudioRecorderProps {
   onRecordingComplete?: (audioUrl: string) => void;
+  path?: string;
 }
 
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({ 
-  onRecordingComplete 
+  onRecordingComplete,
+  path = '' 
 }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -270,6 +272,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         type: 'audio/wav'
       });
       formData.append('file', audioFile);
+      formData.append('path', path);
       
       const response = await fetch('/api/upload-files', {
         method: 'POST',
@@ -279,8 +282,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       const data = await response.json();
       
       if (response.ok) {
-        toast.success('Audio subido correctamente');
-        console.log('Audio URL:', data.url);
         if (onRecordingComplete) onRecordingComplete(data.url);
       } else {
         throw new Error(data.error || 'Error al subir el audio');

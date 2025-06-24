@@ -74,7 +74,7 @@ export default function VirtualClassroom() {
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [expandedDescription, setExpandedDescription] = useState(false);
+  const [expandedDescription, setExpandedDescription] = useState(true);
 
   const getTimeRemainingMessage = (dueDate: string | Date, submittedAt?: string | Date) => {
     const now = new Date();
@@ -159,6 +159,12 @@ export default function VirtualClassroom() {
 
   useEffect(() => {
     const fetchWeekContent = async () => {
+      setStudentAssignment({
+        fileUrl: null,
+        fileName: null,
+        audioUrl: null,
+        message: ''
+      });
       try {
         const response = await FetchData<{ success: boolean, data: WeekContent, studentAssignment: StudentAssignment }>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
@@ -292,7 +298,7 @@ export default function VirtualClassroom() {
               <div className="grid md:grid-cols-12 gap-6">
 
                 {/* Teacher Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 md:col-span-6">
+                <div className="bg-white dark:bg-gray-800 border-black/30 dark:border-gray-700 rounded-xl shadow p-6 md:col-span-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
                     Profesor
                   </h2>
@@ -337,7 +343,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
                 {/* Class Information */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 md:col-span-6">
+                <div className="bg-white dark:bg-gray-800 border-black/30 dark:border-gray-700 rounded-xl shadow p-6 md:col-span-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
                     Información del Curso
                   </h2>
@@ -389,7 +395,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
                 {/* Welcome Message */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 md:col-span-12">
+                <div className="bg-white dark:bg-gray-800 border-black/30 dark:border-gray-700 rounded-xl shadow p-6 md:col-span-12">
                   <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100 dark:border-gray-700">
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                       Mensaje de Bienvenida
@@ -405,7 +411,7 @@ export default function VirtualClassroom() {
             <TabContent id="week" activeId={activeId} className="mt-4">
               <div className="gap-4 grid md:grid-cols-12">
                 {/* Sección Reunión */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-black/30 dark:border-gray-700 col-span-6">
                   <div className="col-span-5">
                     <div className="flex items-center gap-2 mb-3">
                       <FiVideo className="text-blue-600 dark:text-blue-400" />
@@ -464,7 +470,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
                 {/* Sección Material de apoyo */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-black/30 dark:border-gray-700 col-span-6">
                   <div className="flex items-center gap-2 mb-3">
                     <FiBookOpen className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
@@ -495,7 +501,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
                 {/* Sección Asignación */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-black/30 dark:border-gray-700 col-span-6">
                   <div className="flex items-center justify-center text-center gap-2 mb-3">
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Información de la Asignación - Semana {selectedWeek}</h3>
@@ -590,7 +596,7 @@ export default function VirtualClassroom() {
 
                 </div>
                 {/* Seccion Subir Asignación */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-black/30 dark:border-gray-700 col-span-6">
                   <div className="flex items-center justify-center text-center gap-2 mb-3">
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Enviar Asignación - Semana {selectedWeek}</h3>
@@ -649,7 +655,7 @@ export default function VirtualClassroom() {
                           onNewRecording={() => setStudentAssignment(prev => ({ ...prev, audioUrl: null }))}
                         />
                       ) : (
-                        <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} />
+                        <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} path={`classes/${classId}/student/${selectedWeek}`} />
                       )}
                     </div>
                   )}
