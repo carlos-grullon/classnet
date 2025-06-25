@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink } from 'react-icons/fi';
+import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink, FiSave } from 'react-icons/fi';
 import { FetchData, ErrorMsj, getFileIcon, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { useCountries } from '@/providers';
@@ -78,7 +78,7 @@ export default function VirtualClassroom() {
   const [expandedDescription, setExpandedDescription] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationConfig, setConfirmationConfig] = useState({
-    action: () => {},
+    action: () => { },
     title: 'AVISO',
     message: '',
   });
@@ -206,6 +206,8 @@ export default function VirtualClassroom() {
     message: ''
   });
 
+  const [isEditingMessage, setIsEditingMessage] = useState(false);
+
   const handleFileChange = ({ url, fileName }: { url: string; fileName: string }) => {
     const updatedContent = {
       ...studentAssignment,
@@ -227,6 +229,7 @@ export default function VirtualClassroom() {
 
   const handleAssignmentSubmit = async (studentAssignment: StudentAssignment) => {
     try {
+      setIsEditingMessage(false);
       const response = await FetchData<{ success: boolean }>(`/api/student/classes/assignment-submit`, {
         classId: classId,
         weekNumber: selectedWeek,
@@ -694,27 +697,49 @@ export default function VirtualClassroom() {
                       <FiMessageSquare className="text-blue-500 text-lg" />
                       <h4 className="text-blue-500 font-semibold">Mensaje para el Profesor (Opcional)</h4>
                     </div>
-                    <Textarea
-                      id="message"
-                      value={studentAssignment.message}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                        setStudentAssignment({
-                          ...studentAssignment,
-                          message: e.target.value
-                        });
-                      }}
-                      placeholder="Escribe un mensaje..."
-                      rows={4}
-                    />
-                  </div>
 
-                  {/* Submit Button */}
-                  <div className="flex justify-end mt-4">
-                    <Button
-                      onClick={() => handleAssignmentSubmit(studentAssignment)}
-                    >
-                      Enviar Mensaje
-                    </Button>
+                    {studentAssignment.message && !isEditingMessage ? (
+                      <div className="space-y-3">
+                        <p className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                          {studentAssignment.message}
+                        </p>
+                        <div className="flex justify-end mt-4">
+                          <Button
+                            size="sm"
+                            onClick={() => setIsEditingMessage(true)}
+                            className="flex items-center"
+                          >
+                            <FiEdit size={16} className='mr-1'/>
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className='space-y-3'>
+                        <Textarea
+                          id="message"
+                          value={studentAssignment.message}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                            setStudentAssignment({
+                              ...studentAssignment,
+                              message: e.target.value
+                            });
+                          }}
+                          placeholder="Escribe un mensaje..."
+                          rows={4}
+                        />
+                        <div className="flex justify-end mt-4">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAssignmentSubmit(studentAssignment)}
+                            className="flex items-center"
+                          >
+                            <FiSave size={16} className='mr-1'/>
+                            Guardar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
