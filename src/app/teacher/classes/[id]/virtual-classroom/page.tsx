@@ -345,12 +345,12 @@ export default function VirtualClassroom() {
                 Recursos
               </Tab>
               <Tab
-                id="chat"
+                id="grade"
                 activeId={activeId}
                 setActiveId={setActiveId}
                 className="px-4 py-2 font-medium text-sm focus:outline-none"
               >
-                Chat
+                Calificación
               </Tab>
             </div>
 
@@ -541,12 +541,12 @@ export default function VirtualClassroom() {
                     <div className="flex gap-2">
                       {isEditingLinks ? (
                         <>
-                        <Button variant="outline" size="sm" onClick={handleCancelEditingWeekContent}>
-                          <FiX className="mr-1" /> Cancelar
-                        </Button>
-                        <Button size="sm" onClick={() => handleSaveWeekContent(weekContent)}>
-                          <FiSave className="mr-1" /> Guardar
-                        </Button>
+                          <Button variant="outline" size="sm" onClick={handleCancelEditingWeekContent}>
+                            <FiX className="mr-1" /> Cancelar
+                          </Button>
+                          <Button size="sm" onClick={() => handleSaveWeekContent(weekContent)}>
+                            <FiSave className="mr-1" /> Guardar
+                          </Button>
                         </>
                       ) : (
                         <Button size="sm" onClick={() => setIsEditingLinks(true)}>
@@ -587,7 +587,7 @@ export default function VirtualClassroom() {
                       </Button>
 
                       {isAddMaterialModalOpen && (
-                        <div 
+                        <div
                           ref={modalRef}
                           className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
                           <button
@@ -800,9 +800,15 @@ export default function VirtualClassroom() {
               </div>
             </TabContent>
 
-            <TabContent id="chat" activeId={activeId} className="mt-4">
+            <TabContent id="grade" activeId={activeId} className="mt-4">
               <div className="p-4 border rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Chat de la clase</h2>
+                <h2 className="text-xl font-semibold mb-2">Asignaciones de los estudiantes</h2>
+                <Link
+                  href={`/teacher/classes/${classId}/grading`}
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Calificar Entregas
+                </Link>
               </div>
             </TabContent>
           </>
@@ -913,7 +919,7 @@ export default function VirtualClassroom() {
                     })),
                     newMaterial
                   ]
-                } 
+                }
                 setWeekContent(updatedContent);
                 setMaterialData({ link: '', title: '', file: null });
                 setMaterialType(null);

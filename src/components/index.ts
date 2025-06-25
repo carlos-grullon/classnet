@@ -24,3 +24,6 @@ export * from './FileUploader';
 export * from './AudioRecorder';
 export * from './ui/DateInput';
 export * from './ui/ToggleSwitch';
+export * from './ui/Tabs';
+export * from './GradeAssignmentForm'
+export * from './SubmissionDetailsView'
