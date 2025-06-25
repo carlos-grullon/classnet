@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink, FiSave } from 'react-icons/fi';
+import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink, FiSave, FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
 import { FetchData, ErrorMsj, getFileIcon, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { useCountries } from '@/providers';
@@ -17,11 +17,11 @@ import { FileUploader } from '@/components/FileUploader';
 import { AudioRecorder } from '@/components/AudioRecorder';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { Textarea } from '@/components/Textarea';
-import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
 import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Input } from '@/components/Input';
+import { GradesView } from '@/components';
 
 interface TeacherInfo {
   name: string;
@@ -102,7 +102,7 @@ export default function VirtualClassroom() {
   });
   const [linkUrl, setLinkUrl] = useState('');
 
-  const getTimeRemainingMessage = (dueDate: string | Date, submission?: {submittedAt?: string | Date | null, isGraded?: boolean, grade?: number | null}) => {
+  const getTimeRemainingMessage = (dueDate: string | Date, submission?: { submittedAt?: string | Date | null, isGraded?: boolean, grade?: number | null }) => {
     const now = new Date();
     const due = dueDate instanceof Date ? dueDate : parseInputDate(dueDate);
 
@@ -141,7 +141,7 @@ export default function VirtualClassroom() {
     // Caso 3: Pendiente de envío (fecha límite en futuro)
     if (isBefore(normalizedNow, normalizedDue)) {
       const daysRemaining = differenceInDays(normalizedDue, normalizedNow);
-      
+
       if (daysRemaining > 3) {
         return {
           message: `Pendiente de envío: ${daysRemaining} días restantes`,
@@ -207,7 +207,6 @@ export default function VirtualClassroom() {
         if (response.success && response.data) {
           setWeekContent(response.data);
           if (response.studentAssignment) {
-            console.log(response.studentAssignment);
             setStudentAssignment(response.studentAssignment);
             if (!response.studentAssignment.message) {
               setIsEditingMessage(true);
@@ -342,6 +341,14 @@ export default function VirtualClassroom() {
                 className="px-4 py-2 font-medium text-sm focus:outline-none"
               >
                 Recursos
+              </Tab>
+              <Tab
+                id="grades"
+                activeId={activeId}
+                setActiveId={setActiveId}
+                className="px-4 py-2 font-medium text-sm focus:outline-none"
+              >
+                Calificaciones
               </Tab>
             </div>
 
@@ -887,6 +894,10 @@ export default function VirtualClassroom() {
                   </p>
                 )}
               </div>
+            </TabContent>
+
+            <TabContent id="grades" activeId={activeId} className="mt-4">
+              <GradesView classId={classId as string} />
             </TabContent>
           </>
         )}
