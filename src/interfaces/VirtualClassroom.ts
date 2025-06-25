@@ -50,4 +50,14 @@ export interface StudentAssignment {
   fileName: string | null;
   audioUrl: string | null;
   message: string;
+  fileSubmission: {
+    submittedAt: string | Date | null;
+    isGraded: boolean;
+    grade: number | null;
+  };
+  audioSubmission: {
+    submittedAt: string | Date | null;
+    isGraded: boolean;
+    grade: number | null;
+  };
 }

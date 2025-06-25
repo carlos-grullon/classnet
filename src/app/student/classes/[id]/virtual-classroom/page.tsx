@@ -12,7 +12,7 @@ import { formatInputDateToLong, parseInputDate } from '@/utils/GeneralTools';
 import Link from 'next/link';
 import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
-import { differenceInDays, isAfter } from 'date-fns';
+import { differenceInDays, isAfter, isBefore } from 'date-fns';
 import { FileUploader } from '@/components/FileUploader';
 import { AudioRecorder } from '@/components/AudioRecorder';
 import { AudioPlayer } from '@/components/AudioPlayer';
@@ -88,11 +88,21 @@ export default function VirtualClassroom() {
     fileUrl: null,
     fileName: null,
     audioUrl: null,
-    message: ''
+    message: '',
+    fileSubmission: {
+      submittedAt: null,
+      isGraded: false,
+      grade: null
+    },
+    audioSubmission: {
+      submittedAt: null,
+      isGraded: false,
+      grade: null
+    }
   });
   const [linkUrl, setLinkUrl] = useState('');
 
-  const getTimeRemainingMessage = (dueDate: string | Date, submittedAt?: string | Date) => {
+  const getTimeRemainingMessage = (dueDate: string | Date, submission?: {submittedAt?: string | Date | null, isGraded?: boolean, grade?: number | null}) => {
     const now = new Date();
     const due = dueDate instanceof Date ? dueDate : parseInputDate(dueDate);
 
@@ -100,46 +110,57 @@ export default function VirtualClassroom() {
     const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const normalizedDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
 
-    if (submittedAt) {
-      const submitted = submittedAt instanceof Date ? submittedAt : parseInputDate(submittedAt);
+    // Caso 1: Asignación calificada
+    if (submission?.isGraded && submission?.submittedAt) {
+      return {
+        message: `Asignación calificada: ${submission.grade}/100`,
+        color: 'text-green-600 dark:text-green-400'
+      };
+    }
+
+    // Caso 2: Enviada pero pendiente de calificación
+    if (submission?.submittedAt) {
+      const submitted = submission.submittedAt instanceof Date ? submission.submittedAt : parseInputDate(submission.submittedAt);
       const normalizedSubmitted = new Date(submitted.getFullYear(), submitted.getMonth(), submitted.getDate());
 
       if (isAfter(normalizedSubmitted, normalizedDue)) {
         const daysLate = differenceInDays(normalizedSubmitted, normalizedDue);
         return {
-          message: `Asignación enviada ${daysLate} días tarde`,
-          color: 'text-red-600 dark:text-red-400'
+          message: `Enviada ${daysLate} días tarde (pendiente de calificación)`,
+          color: 'text-yellow-600 dark:text-yellow-400'
         };
       } else {
         const daysBefore = differenceInDays(normalizedDue, normalizedSubmitted);
         return {
-          message: `Asignación enviada ${daysBefore} días antes`,
-          color: 'text-green-600 dark:text-green-400'
+          message: `Enviada ${daysBefore} días antes (pendiente de calificación)`,
+          color: 'text-blue-600 dark:text-blue-400'
         };
       }
     }
 
-    if (isAfter(normalizedNow, normalizedDue)) {
-      const daysLate = differenceInDays(normalizedNow, normalizedDue);
-      return {
-        message: `¡Fecha límite pasada por ${daysLate} días!`,
-        color: 'text-red-600 dark:text-red-400'
-      };
+    // Caso 3: Pendiente de envío (fecha límite en futuro)
+    if (isBefore(normalizedNow, normalizedDue)) {
+      const daysRemaining = differenceInDays(normalizedDue, normalizedNow);
+      
+      if (daysRemaining > 3) {
+        return {
+          message: `Pendiente de envío: ${daysRemaining} días restantes`,
+          color: 'text-yellow-700 dark:text-yellow-400'
+        };
+      } else {
+        return {
+          message: `Pendiente de envío: ${daysRemaining} días restantes`,
+          color: 'text-red-600 dark:text-red-400'
+        };
+      }
     }
 
-    const daysRemaining = differenceInDays(normalizedDue, normalizedNow);
-
-    if (daysRemaining > 3) {
-      return {
-        message: `${daysRemaining} días restantes para la entrega`,
-        color: 'text-yellow-700 dark:text-yellow-400'
-      };
-    } else {
-      return {
-        message: `${daysRemaining} días restantes para la entrega`,
-        color: 'text-red-600 dark:text-red-400'
-      };
-    }
+    // Caso 4: Asignación atrasada (no enviada y fecha límite pasada)
+    const daysLate = differenceInDays(normalizedNow, normalizedDue);
+    return {
+      message: `Asignación atrasada por ${daysLate} días`,
+      color: 'text-red-600 dark:text-red-400'
+    };
   };
 
   // Cargar contenido inicial
@@ -177,12 +198,6 @@ export default function VirtualClassroom() {
 
   useEffect(() => {
     const fetchWeekContent = async () => {
-      setStudentAssignment({
-        fileUrl: null,
-        fileName: null,
-        audioUrl: null,
-        message: ''
-      });
       try {
         const response = await FetchData<{ success: boolean, data: WeekContent, studentAssignment: StudentAssignment }>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
@@ -192,6 +207,7 @@ export default function VirtualClassroom() {
         if (response.success && response.data) {
           setWeekContent(response.data);
           if (response.studentAssignment) {
+            console.log(response.studentAssignment);
             setStudentAssignment(response.studentAssignment);
             if (!response.studentAssignment.message) {
               setIsEditingMessage(true);
@@ -524,7 +540,11 @@ export default function VirtualClassroom() {
                             <div>
                               <p className="font-medium">{material.description}</p>
                               {material.fileName && (
-                                <Link href={material.link} target="_blank" className="text-blue-500 hover:underline">
+                                <Link
+                                  href={material.link}
+                                  target="_blank"
+                                  className="text-blue-500 hover:underline"
+                                >
                                   {material.fileName}
                                 </Link>
                               )}
@@ -557,13 +577,13 @@ export default function VirtualClassroom() {
                               {formatInputDateToLong(weekContent?.assignment?.dueDate)}
                             </td>
                             <td className="p-2 border-r border-black dark:border-gray-400">
-                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate).color}`}>
-                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate).message}
+                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.fileSubmission).color}`}>
+                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.fileSubmission).message}
                               </span>
                             </td>
                             <td className="p-2">
-                              <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded justify-center">
-                                1 día restante para la entrega
+                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.audioSubmission).color}`}>
+                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.audioSubmission).message}
                               </span>
                             </td>
                           </tr>
@@ -703,7 +723,7 @@ export default function VirtualClassroom() {
                         <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
                       ) : (
                         <div className="space-y-4">
-                          <Input 
+                          <Input
                             label="URL"
                             placeholder="https://ejemplo.com"
                             type="url"
@@ -711,8 +731,8 @@ export default function VirtualClassroom() {
                             onChange={(e) => setLinkUrl(e.target.value)}
                             pattern="https://.*"
                           />
-                          
-                          <Button 
+
+                          <Button
                             variant="primary"
                             className="w-full"
                             onClick={() => {

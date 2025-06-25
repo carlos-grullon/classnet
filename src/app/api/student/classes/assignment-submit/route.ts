@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
                 classId: new ObjectId(data.classId),
                 studentId: new ObjectId(userId),
                 ...submissionData,
-                createdAt: new Date(),
+                submittedAt: new Date(),
                 fileGrade: null,
                 fileFeedback: null,
                 audioGrade: null,

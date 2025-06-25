@@ -107,6 +107,16 @@ export async function GET(
           fileName: Assignment.fileName || null,
           audioUrl: Assignment.audioUrl || null,
           message: Assignment.message || null,
+          fileSubmission: {
+            submittedAt: Assignment.fileUrl ? formatDateToInput(Assignment.submittedAt) || null : null,
+            isGraded: Assignment.fileUrl ? Assignment.isGraded || false : false,
+            grade: Assignment.fileGrade || null
+          },
+          audioSubmission: {
+            submittedAt: Assignment.audioUrl ? formatDateToInput(Assignment.submittedAt) || null : null,
+            isGraded: Assignment.audioUrl ? Assignment.isGraded || false : false,
+            grade: Assignment.audioGrade || null
+          }
         };
       }
     }
