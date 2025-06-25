@@ -21,6 +21,7 @@ import { FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
 import { useParams } from 'next/navigation';
 import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
+import { Input } from '@/components/Input';
 
 interface TeacherInfo {
   name: string;
@@ -82,6 +83,14 @@ export default function VirtualClassroom() {
     title: 'AVISO',
     message: '',
   });
+  const [assignmentType, setAssignmentType] = useState('file');
+  const [studentAssignment, setStudentAssignment] = useState<StudentAssignment>({
+    fileUrl: null,
+    fileName: null,
+    audioUrl: null,
+    message: ''
+  });
+  const [linkUrl, setLinkUrl] = useState('');
 
   const getTimeRemainingMessage = (dueDate: string | Date, submittedAt?: string | Date) => {
     const now = new Date();
@@ -198,13 +207,6 @@ export default function VirtualClassroom() {
   const handleWeekChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedWeek(parseInt(e.target.value));
   };
-
-  const [studentAssignment, setStudentAssignment] = useState<StudentAssignment>({
-    fileUrl: null,
-    fileName: null,
-    audioUrl: null,
-    message: ''
-  });
 
   const [isEditingMessage, setIsEditingMessage] = useState(false);
 
@@ -632,11 +634,43 @@ export default function VirtualClassroom() {
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Enviar Asignación - Semana {selectedWeek}</h3>
                   </div>
 
-                  {/* File Upload */}
+                  {/* File or Link Upload */}
                   <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
-                    <div className="flex items-center gap-2">
-                      <FiUpload className="text-blue-500 text-lg" />
-                      <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
+                    <div className="flex justify-between">
+                      {assignmentType === 'file' ? (
+                        <div className="flex items-center gap-2">
+                          <FiUpload className="text-blue-500 text-lg" />
+                          <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <FiLink className="text-blue-500 text-lg" />
+                          <h4 className="text-blue-500 font-semibold">Subir Link</h4>
+                        </div>
+                      )}
+                      {!studentAssignment.fileUrl && (
+                        assignmentType === 'file' ? (
+                          <Button
+                            variant='outline'
+                            size="sm"
+                            onClick={() => setAssignmentType('link')}
+                            className="flex items-center"
+                          >
+                            <FiLink size={16} className='mr-1' />
+                            Subir Link
+                          </Button>
+                        ) : (
+                          <Button
+                            variant='outline'
+                            size="sm"
+                            onClick={() => setAssignmentType('file')}
+                            className="flex items-center"
+                          >
+                            <FiUpload size={16} className='mr-1' />
+                            Subir Archivo
+                          </Button>
+                        )
+                      )}
                     </div>
 
                     {studentAssignment.fileUrl ? (
@@ -658,11 +692,42 @@ export default function VirtualClassroom() {
                           onClick={() => handleRequestAction(handleConfirmChangeFile, '¿Estás seguro de que deseas cambiar el archivo?')}
                         >
                           <FiEdit className="mr-2" />
-                          Cambiar Archivo
+                          {assignmentType === 'file' ? 'Cambiar Archivo' : 'Cambiar Link'}
                         </Button>
                       </div>
                     ) : (
-                      <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
+                      assignmentType === 'file' ? (
+                        <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
+                      ) : (
+                        <div className="space-y-4">
+                          <Input 
+                            label="URL"
+                            placeholder="https://ejemplo.com"
+                            type="url"
+                            value={linkUrl}
+                            onChange={(e) => setLinkUrl(e.target.value)}
+                            pattern="https://.*"
+                          />
+                          
+                          <Button 
+                            variant="primary"
+                            className="w-full"
+                            onClick={() => {
+                              const updatedAssignment = {
+                                ...studentAssignment,
+                                fileUrl: linkUrl,
+                                fileName: 'Enlace compartido'
+                              };
+                              setStudentAssignment(updatedAssignment);
+                              handleAssignmentSubmit(updatedAssignment);
+                              setLinkUrl('');
+                            }}
+                          >
+                            <FiSave className="mr-2" />
+                            Guardar Link
+                          </Button>
+                        </div>
+                      )
                     )}
                   </div>
 
@@ -709,7 +774,7 @@ export default function VirtualClassroom() {
                             onClick={() => setIsEditingMessage(true)}
                             className="flex items-center"
                           >
-                            <FiEdit size={16} className='mr-1'/>
+                            <FiEdit size={16} className='mr-1' />
                             Editar
                           </Button>
                         </div>
@@ -718,7 +783,7 @@ export default function VirtualClassroom() {
                       <div className='space-y-3'>
                         <Textarea
                           id="message"
-                          value={studentAssignment.message}
+                          value={studentAssignment.message || ''}
                           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                             setStudentAssignment({
                               ...studentAssignment,
@@ -734,7 +799,7 @@ export default function VirtualClassroom() {
                             onClick={() => handleAssignmentSubmit(studentAssignment)}
                             className="flex items-center"
                           >
-                            <FiSave size={16} className='mr-1'/>
+                            <FiSave size={16} className='mr-1' />
                             Guardar
                           </Button>
                         </div>
