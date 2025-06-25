@@ -17,21 +17,19 @@ export async function POST(request: NextRequest) {
         const userId = await getUserId(request);
         const data: SubmissionData = await request.json();
 
-        // if (!data.fileUrl && !data.audioUrl) {
-        //     return NextResponse.json(
-        //         { error: 'Se requiere un archivo o audio' },
-        //         { status: 400 }
-        //     );
-        // }
+        if (!data.fileUrl && !data.audioUrl) {
+            return NextResponse.json(
+                { error: 'Se requiere un archivo o audio' },
+                { status: 400 }
+            );
+        }
 
         const submissionData = {
-            classId: new ObjectId(data.classId),
             weekNumber: data.weekNumber,
-            studentId: new ObjectId(userId),
             fileUrl: data.fileUrl,
             audioUrl: data.audioUrl || null,
             fileName: data.fileName || null,
-            message: data.message || null,
+            message: data.message || '',
             updatedAt: new Date()
         };
 
@@ -50,11 +48,18 @@ export async function POST(request: NextRequest) {
                 { $set: submissionData}
             );
         } else {
-            await submittedAssignmentsCollection.insertOne({ 
+            await submittedAssignmentsCollection.insertOne({
+                classId: new ObjectId(data.classId),
+                studentId: new ObjectId(userId),
                 ...submissionData,
                 createdAt: new Date(),
-                grade: null,
-                isGraded: false
+                fileGrade: null,
+                fileFeedback: null,
+                audioGrade: null,
+                audioFeedback: null,
+                isGraded: false,
+                overallGrade: null,
+                overallFeedback: null
             });
         }
 
