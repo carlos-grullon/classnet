@@ -95,7 +95,7 @@ export async function POST(
     // Crear el contenido de la clase
     const classContentCollection = await getCollection('class_contents');
     await classContentCollection.insertOne({
-      classId: classId,
+      classId: new ObjectId(classId),
       welcomeMessage: '',
       whatsappLink: '',
       resources: [],

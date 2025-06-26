@@ -27,8 +27,7 @@ export function SideMenu() {
 
   return (
     <>
-      {/* Botón del menú */}
-      <button
+      {/* Botón del menú */}      <button
         onClick={() => setIsOpen(true)}
         className="fixed top-4 right-4 z-40 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
@@ -45,9 +44,8 @@ export function SideMenu() {
 
       {/* Menú lateral */}
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 z-50 transform transition-transform duration-300 ease-in-out shadow-lg ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 z-50 transform transition-transform duration-300 ease-in-out shadow-lg ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         {/* Cabecera del menú */}
         <div className="flex justify-between items-center h-16 px-4 border-b">
@@ -59,7 +57,6 @@ export function SideMenu() {
             <FiX className="w-5 h-5" />
           </button>
         </div>
-
         {/* Contenido del menú */}
         <div className="p-4 space-y-4">
           {/* Botón de logout */}

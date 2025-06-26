@@ -665,177 +665,190 @@ export default function VirtualClassroom() {
                   </div>
 
                   {/* File or Link Upload */}
-                  <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
-                    <div className="flex justify-between">
-                      {assignmentType === 'file' ? (
-                        <div className="flex items-center gap-2">
-                          <FiUpload className="text-blue-500 text-lg" />
-                          <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
+                  {weekContent.assignment ? (
+                    <>
+                      <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+                        <div className="flex justify-between">
+                          {assignmentType === 'file' ? (
+                            <div className="flex items-center gap-2">
+                              <FiUpload className="text-blue-500 text-lg" />
+                              <h4 className="text-blue-500 font-semibold">Subir Archivo</h4>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <FiLink className="text-blue-500 text-lg" />
+                              <h4 className="text-blue-500 font-semibold">Subir Link</h4>
+                            </div>
+                          )}
+                          {!studentAssignment.fileUrl && (
+                            assignmentType === 'file' ? (
+                              <Button
+                                variant='outline'
+                                size="sm"
+                                onClick={() => setAssignmentType('link')}
+                                className="flex items-center"
+                              >
+                                <FiLink size={16} className='mr-1' />
+                                Subir Link
+                              </Button>
+                            ) : (
+                              <Button
+                                variant='outline'
+                                size="sm"
+                                onClick={() => setAssignmentType('file')}
+                                className="flex items-center"
+                              >
+                                <FiUpload size={16} className='mr-1' />
+                                Subir Archivo
+                              </Button>
+                            )
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <FiLink className="text-blue-500 text-lg" />
-                          <h4 className="text-blue-500 font-semibold">Subir Link</h4>
-                        </div>
-                      )}
-                      {!studentAssignment.fileUrl && (
-                        assignmentType === 'file' ? (
-                          <Button
-                            variant='outline'
-                            size="sm"
-                            onClick={() => setAssignmentType('link')}
-                            className="flex items-center"
-                          >
-                            <FiLink size={16} className='mr-1' />
-                            Subir Link
-                          </Button>
+
+                        {studentAssignment.fileUrl ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
+                              {getFileIcon(studentAssignment.fileName || '')}
+                              <Link
+                                href={studentAssignment.fileUrl}
+                                target="_blank"
+                                className="text-blue-500 hover:underline flex items-center gap-2"
+                              >
+                                <FiDownload className="text-sm" />
+                                <span className="font-medium">{studentAssignment.fileName}</span>
+                              </Link>
+                            </div>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => handleRequestAction(handleConfirmChangeFile, '¿Estás seguro de que deseas cambiar el archivo?')}
+                            >
+                              <FiEdit className="mr-2" />
+                              {assignmentType === 'file' ? 'Cambiar Archivo' : 'Cambiar Link'}
+                            </Button>
+                          </div>
                         ) : (
-                          <Button
-                            variant='outline'
-                            size="sm"
-                            onClick={() => setAssignmentType('file')}
-                            className="flex items-center"
-                          >
-                            <FiUpload size={16} className='mr-1' />
-                            Subir Archivo
-                          </Button>
-                        )
-                      )}
-                    </div>
+                          assignmentType === 'file' ? (
+                            <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
+                          ) : (
+                            <div className="space-y-4">
+                              <Input
+                                label="URL"
+                                placeholder="https://ejemplo.com"
+                                type="url"
+                                value={linkUrl}
+                                onChange={(e) => setLinkUrl(e.target.value)}
+                                pattern="https://.*"
+                              />
 
-                    {studentAssignment.fileUrl ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
-                          {getFileIcon(studentAssignment.fileName || '')}
-                          <Link
-                            href={studentAssignment.fileUrl}
-                            target="_blank"
-                            className="text-blue-500 hover:underline flex items-center gap-2"
-                          >
-                            <FiDownload className="text-sm" />
-                            <span className="font-medium">{studentAssignment.fileName}</span>
-                          </Link>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleRequestAction(handleConfirmChangeFile, '¿Estás seguro de que deseas cambiar el archivo?')}
-                        >
-                          <FiEdit className="mr-2" />
-                          {assignmentType === 'file' ? 'Cambiar Archivo' : 'Cambiar Link'}
-                        </Button>
+                              <Button
+                                variant="primary"
+                                className="w-full"
+                                onClick={() => {
+                                  const updatedAssignment = {
+                                    ...studentAssignment,
+                                    fileUrl: linkUrl,
+                                    fileName: 'Enlace compartido'
+                                  };
+                                  setStudentAssignment(updatedAssignment);
+                                  handleAssignmentSubmit(updatedAssignment);
+                                  setLinkUrl('');
+                                }}
+                              >
+                                <FiSave className="mr-2" />
+                                Guardar Link
+                              </Button>
+                            </div>
+                          )
+                        )}
                       </div>
-                    ) : (
-                      assignmentType === 'file' ? (
-                        <FileUploader path={`classes/${classId}/student/${selectedWeek}`} onUploadSuccess={handleFileChange} />
-                      ) : (
-                        <div className="space-y-4">
-                          <Input
-                            label="URL"
-                            placeholder="https://ejemplo.com"
-                            type="url"
-                            value={linkUrl}
-                            onChange={(e) => setLinkUrl(e.target.value)}
-                            pattern="https://.*"
-                          />
 
-                          <Button
-                            variant="primary"
-                            className="w-full"
-                            onClick={() => {
-                              const updatedAssignment = {
-                                ...studentAssignment,
-                                fileUrl: linkUrl,
-                                fileName: 'Enlace compartido'
-                              };
-                              setStudentAssignment(updatedAssignment);
-                              handleAssignmentSubmit(updatedAssignment);
-                              setLinkUrl('');
-                            }}
-                          >
-                            <FiSave className="mr-2" />
-                            Guardar Link
-                          </Button>
+                      {/* Audio Recording - if required */}
+                      {weekContent?.assignment?.hasAudio && (
+                        <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+                          <div className="flex items-center gap-2">
+                            <FiMic className="text-blue-500 text-lg" />
+                            <h4 className="text-blue-500 font-semibold">Grabación de Audio</h4>
+                          </div>
+                          {studentAssignment.audioUrl ? (
+                            <AudioPlayer
+                              audioUrl={studentAssignment.audioUrl}
+                              onNewRecording={() => handleRequestAction(
+                                () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                                '¿Estás seguro de que deseas grabar un nuevo audio?'
+                              )}
+                              onDelete={() => handleRequestAction(
+                                () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                                '¿Estás seguro de que deseas eliminar el audio?'
+                              )}
+                            />
+                          ) : (
+                            <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} path={`classes/${classId}/student/${selectedWeek}`} />
+                          )}
                         </div>
-                      )
-                    )}
-                  </div>
-
-                  {/* Audio Recording - if required */}
-                  {weekContent?.assignment?.hasAudio && (
-                    <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
-                      <div className="flex items-center gap-2">
-                        <FiMic className="text-blue-500 text-lg" />
-                        <h4 className="text-blue-500 font-semibold">Grabación de Audio</h4>
-                      </div>
-                      {studentAssignment.audioUrl ? (
-                        <AudioPlayer
-                          audioUrl={studentAssignment.audioUrl}
-                          onNewRecording={() => handleRequestAction(
-                            () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
-                            '¿Estás seguro de que deseas grabar un nuevo audio?'
-                          )}
-                          onDelete={() => handleRequestAction(
-                            () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
-                            '¿Estás seguro de que deseas eliminar el audio?'
-                          )}
-                        />
-                      ) : (
-                        <AudioRecorder onRecordingComplete={handleAudioRecordingComplete} path={`classes/${classId}/student/${selectedWeek}`} />
                       )}
+
+                      {/* Optional Message */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <FiMessageSquare className="text-blue-500 text-lg" />
+                          <h4 className="text-blue-500 font-semibold">Mensaje para el Profesor (Opcional)</h4>
+                        </div>
+
+                        {studentAssignment.message && !isEditingMessage ? (
+                          <div className="space-y-3">
+                            <p className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                              {studentAssignment.message}
+                            </p>
+                            <div className="flex justify-end mt-4">
+                              <Button
+                                size="sm"
+                                onClick={() => setIsEditingMessage(true)}
+                                className="flex items-center"
+                              >
+                                <FiEdit size={16} className='mr-1' />
+                                Editar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className='space-y-3'>
+                            <Textarea
+                              id="message"
+                              value={studentAssignment.message || ''}
+                              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                setStudentAssignment({
+                                  ...studentAssignment,
+                                  message: e.target.value
+                                });
+                              }}
+                              placeholder="Escribe un mensaje..."
+                              rows={4}
+                            />
+                            <div className="flex justify-end mt-4">
+                              <Button
+                                size="sm"
+                                onClick={() => handleAssignmentSubmit(studentAssignment)}
+                                className="flex items-center"
+                              >
+                                <FiSave size={16} className='mr-1' />
+                                Guardar
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 py-4">
+                      <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
+                      <span className="font-semibold text-gray-700 dark:text-gray-300">
+                        No hay asignación para esta semana
+                      </span>
                     </div>
                   )}
-
-                  {/* Optional Message */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <FiMessageSquare className="text-blue-500 text-lg" />
-                      <h4 className="text-blue-500 font-semibold">Mensaje para el Profesor (Opcional)</h4>
-                    </div>
-
-                    {studentAssignment.message && !isEditingMessage ? (
-                      <div className="space-y-3">
-                        <p className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                          {studentAssignment.message}
-                        </p>
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            size="sm"
-                            onClick={() => setIsEditingMessage(true)}
-                            className="flex items-center"
-                          >
-                            <FiEdit size={16} className='mr-1' />
-                            Editar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className='space-y-3'>
-                        <Textarea
-                          id="message"
-                          value={studentAssignment.message || ''}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                            setStudentAssignment({
-                              ...studentAssignment,
-                              message: e.target.value
-                            });
-                          }}
-                          placeholder="Escribe un mensaje..."
-                          rows={4}
-                        />
-                        <div className="flex justify-end mt-4">
-                          <Button
-                            size="sm"
-                            onClick={() => handleAssignmentSubmit(studentAssignment)}
-                            className="flex items-center"
-                          >
-                            <FiSave size={16} className='mr-1' />
-                            Guardar
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
             </TabContent>
