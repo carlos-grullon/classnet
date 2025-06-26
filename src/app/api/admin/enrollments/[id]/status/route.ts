@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Enrollment } from '@/interfaces/Enrollment';
 import { User } from '@/interfaces/User';
 import { ClassDatabase } from '@/interfaces/Class';
-import { deleteS3Object } from '@/utils/S3Service';
 
 const getDayName = (days: string[]): string => {
   const daysMap = {

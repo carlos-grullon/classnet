@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from '@/components';
-import { FiClock, FiBookOpen, FiUsers, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { FiClock, FiBookOpen, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
 import { FetchData, ErrorMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
 

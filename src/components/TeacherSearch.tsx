@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Modal } from '@/components/Modal';
 import { Input } from '@/components';
 import { FiSearch } from 'react-icons/fi';
@@ -16,13 +16,7 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
   const [teachers, setTeachers] = useState<{ _id: string; username: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchTeachers();
-    }
-  }, [isOpen]);
-
-  const fetchTeachers = async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
       const data = await FetchData<{success: boolean, teachers: { _id: string; username: string }[]}>('/api/teacher', { userName: searchTerm, onlyNameAndId: true }, "POST");
       setTeachers(data.teachers);
@@ -30,7 +24,13 @@ export function TeacherSearch({ isOpen, onClose, onSelect }: TeacherSearchProps)
       console.error('Failed to load teachers:', error);
       setTeachers([]);
     }
-  };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchTeachers();
+    }
+  }, [isOpen, fetchTeachers]);
 
   const filteredTeachers = teachers.filter(teacher =>
     teacher.username.toLowerCase().includes(searchTerm.toLowerCase())

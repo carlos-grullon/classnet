@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { GradeAssignmentForm, SubmissionDetailsView, Badge } from '@/components';
-import { FetchData } from '@/utils/Tools.tsx';
+import { ErrorMsj, FetchData, SuccessMsj } from '@/utils/Tools.tsx';
 
 type Submission = {
   _id: string;
@@ -21,7 +21,7 @@ export default function ClassGradingPage() {
   const { id: classId } = useParams();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
-  const [submissionDetails, setSubmissionDetails] = useState<any>(null);
+  const [submissionDetails, setSubmissionDetails] = useState<Submission | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
@@ -49,13 +49,13 @@ export default function ClassGradingPage() {
   // Obtener detalles de una entrega específica
   const fetchSubmissionDetails = async (submissionId: string) => {
     try {
-      const response = await FetchData<{success: boolean, data: Submission}>(
+      const response = await FetchData<{ success: boolean, data: Submission }>(
         `/api/assignments/submissions/${submissionId}`,
         {},
         'GET'
       );
-      if (response.success){
-      setSubmissionDetails(response.data);
+      if (response.success) {
+        setSubmissionDetails(response.data);
       }
     } catch (error) {
       console.error('Error fetching submission details:', error);
@@ -63,31 +63,41 @@ export default function ClassGradingPage() {
   };
 
   // Guardar calificación
-  const handleSaveGrade = async (gradeData: any) => {
+  const handleSaveGrade = async (gradeData: {
+    fileGrade?: number;
+    fileFeedback?: string;
+    audioGrade?: number;
+    audioFeedback?: string;
+    overallGrade?: number;
+    overallFeedback?: string;
+  }) => {
     try {
+      if (!selectedSubmission) return;
       await FetchData(
         `/api/assignments/grade`,
         {
-          submissionId: selectedSubmission?._id,
-          ...gradeData
-        },
-        'POST'
+          method: 'POST',
+          body: JSON.stringify({
+            submissionId: selectedSubmission._id,
+            ...gradeData
+          })
+        }
       );
-      
-      // Actualizar lista y detalles
-      const updatedSubmissions = submissions.map(sub => 
-        sub._id === selectedSubmission?._id ? 
-        { ...sub, isGraded: true } : sub
-      );
-      setSubmissions(updatedSubmissions);
-      setSubmissionDetails({
-        ...submissionDetails,
-        ...gradeData,
-        isGraded: true
-      });
+
+      // Actualizar el estado local
+      setSubmissions(prev => prev.map(sub =>
+        sub._id === selectedSubmission._id
+          ? { ...sub, ...gradeData }
+          : sub
+      ));
+      setSubmissionDetails(prev => prev ? { ...prev, ...gradeData } : null);
       setIsEditing(false);
+
+      // Mostrar notificación de éxito
+      SuccessMsj('Calificación guardada correctamente');
     } catch (error) {
       console.error('Error saving grade:', error);
+      ErrorMsj('Error al guardar la calificación');
     }
   };
 
@@ -101,9 +111,9 @@ export default function ClassGradingPage() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Calificaciones de la Clase</h1>
-      
+
       <div className="mb-6">
-        <select 
+        <select
           value={activeTab}
           onChange={(e) => setActiveTab(e.target.value)}
           className="p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
@@ -125,7 +135,7 @@ export default function ClassGradingPage() {
                 <p className="text-gray-500">No hay entregas {activeTab !== 'all' ? activeTab === 'graded' ? 'calificadas' : 'pendientes' : ''}</p>
               ) : (
                 filteredSubmissions.map(sub => (
-                  <div 
+                  <div
                     key={sub._id}
                     onClick={() => {
                       setSelectedSubmission(sub);

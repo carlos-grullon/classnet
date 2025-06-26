@@ -55,9 +55,6 @@ export async function POST(
         error: 'El archivo es demasiado grande. El tamaño máximo es 5MB' 
       }, { status: 400 });
     }
-     
-    // Generar nombre único para el archivo
-    const fileExtension = paymentProof.name.split('.').pop();
     
     // Subir a S3
     const fileUrl = await uploadToS3(paymentProof, 'enrollments');

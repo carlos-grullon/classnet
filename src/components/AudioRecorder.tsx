@@ -166,55 +166,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
   };
 
-  const bufferToBlob = async (buffer: AudioBuffer): Promise<Blob> => {
-    const numOfChan = buffer.numberOfChannels,
-      length = buffer.length * numOfChan * 2 + 44,
-      bufferArr = new ArrayBuffer(length),
-      view = new DataView(bufferArr),
-      sampleRate = buffer.sampleRate;
-
-    let offset = 0;
-
-    const writeString = (s: string) => {
-      for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
-      offset += s.length;
-    };
-
-    writeString('RIFF');
-    view.setUint32(offset, 36 + buffer.length * numOfChan * 2, true);
-    offset += 4;
-    writeString('WAVE');
-    writeString('fmt ');
-    view.setUint32(offset, 16, true);
-    offset += 4;
-    view.setUint16(offset, 1, true);
-    offset += 2;
-    view.setUint16(offset, numOfChan, true);
-    offset += 2;
-    view.setUint32(offset, sampleRate, true);
-    offset += 4;
-    view.setUint32(offset, sampleRate * 2 * numOfChan, true);
-    offset += 4;
-    view.setUint16(offset, numOfChan * 2, true);
-    offset += 2;
-    view.setUint16(offset, 16, true);
-    offset += 2;
-    writeString('data');
-    view.setUint32(offset, buffer.length * numOfChan * 2, true);
-    offset += 4;
-
-    for (let i = 0; i < buffer.length; i++) {
-      for (let ch = 0; ch < numOfChan; ch++) {
-        let sample = buffer.getChannelData(ch)[i];
-        sample = Math.max(-1, Math.min(1, sample));
-        view.setInt16(offset, sample * 0x7fff, true);
-        offset += 2;
-      }
-    }
-
-    return new Blob([view], { type: 'audio/wav' });
-  };
-
   const drawWaves = () => {
     const canvas = canvasRef.current;
     const canvasCtx = canvas?.getContext('2d');

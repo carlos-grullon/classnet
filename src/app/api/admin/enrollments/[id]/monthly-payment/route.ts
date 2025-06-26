@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { sendPaymentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
-import { deleteS3Object } from '@/utils/S3Service';
 import { addMonths } from 'date-fns';
 import { formatDateLong } from '@/utils/GeneralTools';
-import { Payment, EnrollmentUpdate } from '@/interfaces/Enrollment';
+import { Payment } from '@/interfaces/Enrollment';
 
 // GET /api/admin/enrollments/[id]/monthly-payment - Obtener información de pagos mensuales
 export async function GET(

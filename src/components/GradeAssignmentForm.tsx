@@ -12,7 +12,7 @@ type GradeAssignmentFormProps = {
         audioFeedback?: string;
         overallGrade?: number;
         overallFeedback?: string;
-    };
+    } | null;
     onCancel: () => void;
     onSave: (data: {
         fileGrade?: number;
