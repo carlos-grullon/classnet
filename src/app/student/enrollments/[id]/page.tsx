@@ -328,7 +328,7 @@ export default function EnrollmentDetails() {
           </Card>
 
           {/* Comprobante de pago (si existe) */}
-          {enrollment.paymentProof && (
+          {enrollment.paymentProof && enrollment.status != 'enrolled' && (
             <Card className="p-6 md:col-span-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold">Comprobante de Pago</h2>

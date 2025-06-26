@@ -2,13 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { getUserId } from '@/utils/Tools.ts';
 import { ObjectId } from 'mongodb';
-import { writeFile, mkdir, unlink } from 'fs/promises';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { uploadToS3, deleteS3Object } from '@/utils/S3Service';
 import { Enrollment } from '@/interfaces/Enrollment';
-
-// Directorio para guardar los comprobantes de pago
-const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads', 'payments');
 
 // POST /api/student/enrollments/[id]/payment-proof - Subir comprobante de pago
 export async function POST(
@@ -59,21 +55,12 @@ export async function POST(
         error: 'El archivo es demasiado grande. El tamaño máximo es 5MB' 
       }, { status: 400 });
     }
-    
-    // Crear directorio si no existe
-    await mkdir(UPLOADS_DIR, { recursive: true });
-
+     
     // Generar nombre único para el archivo
     const fileExtension = paymentProof.name.split('.').pop();
-    const fileName = `${paymentType}_${enrollmentId}_${Date.now()}.${fileExtension}`;
-    const filePath = path.join(UPLOADS_DIR, fileName);
     
-    // Guardar el archivo
-    const fileBuffer = await paymentProof.arrayBuffer();
-    await writeFile(filePath, Buffer.from(fileBuffer));
-    
-    // Ruta relativa para guardar en la base de datos
-    const relativePath = `/uploads/payments/${fileName}`;
+    // Subir a S3
+    const fileUrl = await uploadToS3(paymentProof, 'enrollments');
     
     // Lógica diferente según el tipo de pago
     if (paymentType === 'enrollment') {
@@ -87,18 +74,7 @@ export async function POST(
       
       // Si ya existe un comprobante anterior, intentar eliminarlo
       if ((enrollment.status === 'proof_submitted' || enrollment.status === 'proof_rejected') && enrollment.paymentProof) {
-        const oldProofUrl = enrollment.paymentProof;
-        const oldFilePath = path.join(process.cwd(), 'public', oldProofUrl);
-        
-        try {
-          // Intentar eliminar el archivo anterior
-          await unlink(oldFilePath);
-          console.log(`Archivo anterior eliminado: ${oldFilePath}`);
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Error desconocido';
-          // Si hay un error al eliminar, lo registramos pero continuamos
-          console.error(`Error al eliminar archivo anterior: ${message}`);
-        }
+        await deleteS3Object(enrollment.paymentProof);
       }
 
       // Actualizar inscripción con comprobante de pago
@@ -106,7 +82,7 @@ export async function POST(
         { _id: new ObjectId(enrollmentId) },
         { 
           $set: { 
-            paymentProof: relativePath,
+            paymentProof: fileUrl,
             paymentNotes: notes,
             status: 'proof_submitted',
             paymentSubmittedAt: new Date(),
@@ -118,7 +94,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         message: 'Comprobante de pago de inscripción enviado correctamente',
-        fileUrl: relativePath,
+        fileUrl: fileUrl,
         enrollment: {
           id: enrollment._id,
           status: 'proof_submitted',
@@ -154,18 +130,7 @@ export async function POST(
             existingPayment.paymentsMade[0] && 
             existingPayment.paymentsMade[0].proofUrl) {
           
-          const oldProofUrl = existingPayment.paymentsMade[0].proofUrl;
-          const oldFilePath = path.join(process.cwd(), 'public', oldProofUrl);
-          
-          try {
-            // Intentar eliminar el archivo anterior
-            await unlink(oldFilePath);
-            console.log(`Archivo anterior eliminado: ${oldFilePath}`);
-          } catch (error) {
-            const message = error instanceof Error ? error.message : 'Error desconocido';
-            // Si hay un error al eliminar (por ejemplo, el archivo no existe), lo registramos pero continuamos
-            console.error(`Error al eliminar archivo anterior: ${message}`);
-          }
+          await deleteS3Object(existingPayment.paymentsMade[0].proofUrl);
         }
         
         // Actualizar el registro con la nueva URL del comprobante
@@ -176,7 +141,7 @@ export async function POST(
           },
           { 
             $set: {
-              'paymentsMade.$.proofUrl': relativePath,
+              'paymentsMade.$.proofUrl': fileUrl,
               'paymentsMade.$.notes': notes,
               'paymentsMade.$.status': 'pending',
               'paymentsMade.$.adminNotes': '',
@@ -188,7 +153,7 @@ export async function POST(
         return NextResponse.json({ 
           success: true, 
           message: 'Comprobante de pago actualizado correctamente. Un administrador lo revisará pronto.',
-          fileUrl: relativePath,
+          fileUrl: fileUrl,
           paymentId: paymentId
         });
       } else {
@@ -203,7 +168,7 @@ export async function POST(
                 _id: newPaymentId,
                 amount: enrollment.paymentAmount || enrollment.priceAtEnrollment,
                 date: now,
-                proofUrl: relativePath,
+                proofUrl: fileUrl,
                 status: 'pending',
                 notes: notes,
                 submittedAt: now
@@ -215,17 +180,17 @@ export async function POST(
         return NextResponse.json({ 
           success: true, 
           message: 'Comprobante de pago mensual subido correctamente. Un administrador lo revisará pronto.',
-          fileUrl: relativePath,
+          fileUrl: fileUrl,
           paymentId: newPaymentId
         });
       }
     }
     
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error desconocido';
-    console.error('Error al subir comprobante de pago:', error);
+    const message = error instanceof Error ? error.message : 'Error al subir comprobante de pago';
+    console.error(message, error);
     return NextResponse.json({ 
-      error: 'Error al procesar la solicitud',
+      error: message,
       details: message
     }, { status: 500 });
   }
@@ -282,8 +247,8 @@ export async function GET(
 
     return NextResponse.json(paymentInfo);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Error desconocido';
-    console.error('Error al obtener información de pago mensual:', error);
-    return NextResponse.json({ error: 'Error al procesar la solicitud', details: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Error al obtener información de pago mensual';
+    console.error(message, error);
+    return NextResponse.json({ error: message, details: message }, { status: 500 });
   }
 }

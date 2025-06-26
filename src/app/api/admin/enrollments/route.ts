@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
     // Contar total para paginación
     const total = await enrollmentsCollection.countDocuments(filter);
     
-    return NextResponse.json({
+  return NextResponse.json({
       success: true,
       enrollments: populatedEnrollments,
       pagination: {

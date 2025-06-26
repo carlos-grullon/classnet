@@ -110,25 +110,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Pago no encontrado' }, { status: 404 });
     }
 
-    // Guardar la URL del comprobante para eliminarlo después
-    const proofUrl = enrollment.paymentsMade[paymentIndex].proofUrl;
-
-    // Preparar la actualización según el estado
-    const updateData: EnrollmentUpdate = {
-      paymentsMade: {
-        [paymentIndex]: {
-          status: status === 'approved' ? 'paid' : 
-                 status === 'rejected' ? 'rejected' : 'pending',
-          ...(status === 'approved' && { approvedAt: new Date() }),
-          ...(status === 'rejected' && { rejectedAt: new Date() }),
-          adminNotes: notes || ''
+    // Actualizar en la base de datos
+    await enrollmentsCollection.updateOne(
+      { _id: new ObjectId(enrollmentId), 'paymentsMade._id': paymentId },
+      {
+        $set: {
+          'paymentsMade.$.status': status === 'approved' ? 'paid' : status,
+          'paymentsMade.$.adminNotes': notes,
+          'paymentsMade.$.processedAt': new Date(),
+          'paymentsMade.$.paymentDueDate': enrollment.nextPaymentDueDate,
+          ...(status === 'approved' && { 
+            lastPaymentDate: enrollment.paymentsMade[paymentIndex].date,
+            nextPaymentDueDate: addMonths(enrollment.nextPaymentDueDate, 1)
+          })
         }
-      },
-      ...(status === 'approved' && {
-        lastPaymentDate: enrollment.paymentsMade[paymentIndex].date,
-        nextPaymentDueDate: addMonths(enrollment.nextPaymentDueDate, 1)
-      })
-    };
+      }
+    );
 
     // Enviar correo de confirmación de pago
     if (status === 'approved') {
@@ -136,7 +133,7 @@ export async function PATCH(
         // Verificar que tenemos la información del estudiante antes de enviar el correo
         if (student && student.email && student.username) {
           console.log(`Enviando correo de confirmación a: ${student.email} (${student.username})`);
-          
+
           await sendPaymentConfirmationEmail(
             student.email, // Usar directamente student.email sin optional chaining
             student.username, // Usar directamente student.username sin optional chaining
@@ -166,17 +163,6 @@ export async function PATCH(
       } catch (emailError) {
         console.error('Error al enviar correo de rechazo:', emailError);
       }
-    }
-
-    // Actualizar en la base de datos
-    await enrollmentsCollection.updateOne(
-      { _id: new ObjectId(enrollmentId) },
-      { $set: updateData }
-    );
-
-    // Eliminar el archivo de comprobante si el pago fue aprobado
-    if (status === 'approved') {
-      await deleteS3Object(proofUrl);
     }
 
     return NextResponse.json({

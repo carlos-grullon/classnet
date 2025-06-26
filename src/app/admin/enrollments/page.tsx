@@ -137,11 +137,11 @@ export default function AdminEnrollments() {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination, statusFilter]);
+  }, []);
 
   useEffect(() => {
     fetchEnrollments();
-  }, [fetchEnrollments]);
+  }, [pagination.page, pagination.limit, statusFilter]);
 
   const handleViewDetails = (enrollment: Enrollment) => {
     setDetailModal({

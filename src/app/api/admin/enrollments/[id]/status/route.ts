@@ -64,11 +64,6 @@ export async function PATCH(
     if (status === 'enrolled' && enrollment.status === 'proof_submitted') {
       // Enviar correo de confirmación de pago
       await sendConfirmationEmailToStudent(student!, classData!);
-      
-      // Eliminar el archivo de comprobante de pago (ya no es necesario)
-      if (enrollment.paymentProof) {
-        await deleteS3Object(enrollment.paymentProof);
-      }
     }
     
     // Si se está rechazando el comprobante
@@ -85,9 +80,6 @@ export async function PATCH(
     
     // Agregar notas si existen
     if (notes) updateData.notes = notes;
-    
-    // Si se aprueba el pago, eliminar la referencia al comprobante
-    if (status === 'enrolled') updateData.paymentProof = null;
     
     // Si se aprueba el pago y la clase está en progreso, configurar datos de facturación
     if (status === 'enrolled' && classData?.status === 'in_progress') {
@@ -145,7 +137,6 @@ export async function PATCH(
 // Función para enviar correo de confirmación de inscripción
 async function sendConfirmationEmailToStudent(student: User, classData: ClassDatabase) {
   try {
-    // Usar el nuevo servicio de correo electrónico
     await sendEnrollmentConfirmationEmail(
       student.email || '{ email del estudiante }',
       student.username || '{ nombre del estudiante }',
@@ -169,7 +160,6 @@ async function sendConfirmationEmailToStudent(student: User, classData: ClassDat
 // Función para enviar correo de rechazo de comprobante
 async function sendRejectionEmailToStudent(student: User, classData: ClassDatabase, notes: string) {
   try {
-    // Usar el nuevo servicio de correo electrónico
     await sendPaymentRejectionEmail(
       student.email || '{ email del estudiante }',
       student.username || '{ nombre del estudiante }',

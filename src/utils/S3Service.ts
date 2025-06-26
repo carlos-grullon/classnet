@@ -45,7 +45,8 @@ export async function uploadToS3(file: File, prefix: string): Promise<string> {
 
     return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileName}`;
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error uploading to S3';
     console.error('Error uploading to S3:', error);
-    throw new Error('Failed to upload file');
+    throw new Error(message);
   }
 }
