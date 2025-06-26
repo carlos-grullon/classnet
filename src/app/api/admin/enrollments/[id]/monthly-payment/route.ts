@@ -2,32 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { sendPaymentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
-import { unlink } from 'fs/promises';
-import path from 'path';
-import fs from 'fs';
+import { deleteS3Object } from '@/utils/S3Service';
 import { addMonths } from 'date-fns';
 import { formatDateLong } from '@/utils/GeneralTools';
 import { Payment, EnrollmentUpdate } from '@/interfaces/Enrollment';
-
-// Función auxiliar para eliminar archivo de comprobante de pago
-async function deletePaymentProofFile(proofUrl: string) {
-  try {
-    if (!proofUrl) return;
-
-    // Convertir la URL relativa a ruta absoluta del sistema de archivos
-    const filePath = path.join(process.cwd(), 'public', proofUrl);
-
-    // Verificar si el archivo existe antes de intentar eliminarlo
-    if (fs.existsSync(filePath)) {
-      await unlink(filePath);
-      console.log(`Archivo eliminado: ${filePath}`);
-    } else {
-      console.log(`El archivo no existe: ${filePath}`);
-    }
-  } catch (error) {
-    console.error('Error al eliminar archivo de comprobante:', error);
-  }
-}
 
 // GET /api/admin/enrollments/[id]/monthly-payment - Obtener información de pagos mensuales
 export async function GET(
@@ -198,7 +176,7 @@ export async function PATCH(
 
     // Eliminar el archivo de comprobante si el pago fue aprobado
     if (status === 'approved') {
-      await deletePaymentProofFile(proofUrl);
+      await deleteS3Object(proofUrl);
     }
 
     return NextResponse.json({

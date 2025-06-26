@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { PutObjectCommand, DeleteObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { uploadToS3, deleteS3Object } from '@/utils/S3Service';
 import { getCollection } from "@/utils/MongoDB";
 import { getUserId } from "@/utils/Tools.ts";
 import { ObjectId } from "mongodb";
@@ -42,54 +42,13 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: 'La imagen debe ser menor a 5MB' }, { status: 400 });
     }
 
-    // Initialize S3 client
-    const s3 = new S3Client({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
-    });
+    // Subir nueva imagen
+    const imageUrl = await uploadToS3(profilePictureFile, `profile-pictures/${userId}`);
 
-    // Delete old picture if exists
+    // Eliminar imagen anterior si existe
     if (oldImageUrl) {
-      try {
-        // Skip deletion for external URLs
-        if (!oldImageUrl.includes('amazonaws.com')) {
-          console.log('Skipping deletion of external image');
-        } else {
-          const urlParts = new URL(oldImageUrl);
-          const oldKey = urlParts.pathname.substring(1); // Remove leading slash
-          if (oldKey) {
-            await s3.send(
-              new DeleteObjectCommand({
-                Bucket: process.env.AWS_BUCKET_NAME!,
-                Key: oldKey,
-              })
-            );
-          }
-        }
-      } catch (error) {
-        console.error('Error deleting old image:', error);
-        // Continue with upload even if deletion fails
-      }
+      await deleteS3Object(oldImageUrl);
     }
-
-    // Process new upload
-    const buffer = Buffer.from(await profilePictureFile.arrayBuffer());
-    const extension = profilePictureFile.name.split('.').pop() || 'bin';
-    const key = `profile-pictures/${userId}.${extension}`;
-
-    const uploadParams = {
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-      Body: buffer,
-      ContentType: profilePictureFile.type,
-    };
-
-    await s3.send(new PutObjectCommand(uploadParams));
-
-    const url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
     // 6. Obtener la colección de usuarios
     const usersCollection = await getCollection('users');
@@ -97,15 +56,12 @@ export async function POST(request: NextRequest) {
     // 7. Actualizar el documento del usuario usando ObjectId
     const updateResult = await usersCollection.updateOne(
         { _id: new ObjectId(userId) }, // Buscar por ID
-        { $set: { image_path: url, updated_at: new Date() } }
+        { $set: { image_path: imageUrl, updated_at: new Date() } }
     );
 
     if (updateResult.matchedCount === 0) {
       // Rollback S3 upload if user not found
-      await s3.send(new DeleteObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME!,
-        Key: key,
-      }));
+      await deleteS3Object(imageUrl);
       return NextResponse.json(
         { message: 'Usuario no encontrado' },
         { status: 404 }
@@ -115,7 +71,7 @@ export async function POST(request: NextRequest) {
     // 9. Devolver la respuesta de éxito al frontend
     return NextResponse.json({
       message: 'Foto de perfil subida con éxito',
-      url: url // Devuelve la URL final al frontend
+      url: imageUrl // Devuelve la URL final al frontend
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';

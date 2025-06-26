@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '@/utils/Tools.ts';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
-import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
-import { v4 as uuidv4 } from 'uuid';
+import { uploadToS3 } from '@/utils/S3Service';
 
 // Configuración para permitir que Next.js maneje correctamente las solicitudes multipart/form-data
 export const config = {
@@ -72,28 +70,15 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Crear directorio para el estudiante si no existe
-    const studentDir = path.join(process.cwd(), 'public', 'uploads', 'payment-proofs', studentId);
-    await mkdir(studentDir, { recursive: true });
+    // Generar nombre único para el archivo en S3
+    const fileUrl = await uploadToS3(file, `payment-proofs/${studentId}`);
 
-    // Generar nombre único para el archivo
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${uuidv4()}.${fileExt}`;
-    const filePath = path.join(studentDir, fileName);
-    
-    // Guardar el archivo
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(filePath, buffer);
-    
-    // Crear URL relativa para acceder al archivo
-    const fileUrl = `/uploads/payment-proofs/${studentId}/${fileName}`;
-    
     return NextResponse.json({
       success: true,
       fileUrl,
-      message: 'Archivo subido correctamente'
+      message: 'Comprobante subido a S3 correctamente'
     });
-    
+
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
     console.error('Error al subir archivo:', error);

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
-import path from 'path';
-import { unlink } from 'fs/promises';
 import { mongoTimeToTimeString12h } from '@/utils/GeneralTools.ts';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
@@ -11,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Enrollment } from '@/interfaces/Enrollment';
 import { User } from '@/interfaces/User';
 import { ClassDatabase } from '@/interfaces/Class';
+import { deleteS3Object } from '@/utils/S3Service';
 
 const getDayName = (days: string[]): string => {
   const daysMap = {
@@ -67,15 +66,8 @@ export async function PATCH(
       await sendConfirmationEmailToStudent(student!, classData!);
       
       // Eliminar el archivo de comprobante de pago (ya no es necesario)
-      if (enrollment.paymentProof && enrollment.paymentProof.startsWith('/uploads/payments/')) {
-        try {
-          const filePath = path.join(process.cwd(), 'public', enrollment.paymentProof);
-          await unlink(filePath);
-          console.log(`Archivo eliminado: ${filePath}`);
-        } catch (error) {
-          console.error('Error al eliminar archivo de comprobante:', error);
-          // No interrumpimos el flujo si hay error al eliminar
-        }
+      if (enrollment.paymentProof) {
+        await deleteS3Object(enrollment.paymentProof);
       }
     }
     
