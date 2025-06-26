@@ -139,18 +139,17 @@ export function ProfilePictureUploader({
         </div>
 
         {editMode && (
-          <div className="flex-1 max-w-md overflow-hidden">
+          <div className="w-full px-2 sm:px-0">
             <div 
               onDragEnter={handleDrag}
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={() => inputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors
+              className={`border-2 border-dashed rounded-lg p-3 sm:p-4 text-center cursor-pointer transition-colors w-full
                 ${isDragActive ? 
                   'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 
-                  'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}
-                w-full overflow-hidden`}
+                  'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'}`}
             >
               <input 
                 ref={inputRef}
@@ -161,17 +160,17 @@ export function ProfilePictureUploader({
               />
               
               {!file ? (
-                <div className="flex flex-col items-center justify-center space-y-2 overflow-hidden">
+                <div className="flex flex-col items-center justify-center space-y-2">
                   <FiUpload className="w-8 h-8 text-gray-400" />
-                  <p className="text-sm text-gray-600 dark:text-gray-300 truncate w-full px-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Arrastra y suelta una imagen aquí o haz clic para seleccionar
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate w-full px-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     Formatos soportados: JPEG, PNG (máx. 5MB)
                   </p>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md w-full">
+                <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
                   <FiCheckCircle className="text-green-500 flex-shrink-0" />
                   <span className="text-sm font-medium truncate flex-1 min-w-0">{file.name}</span>
                   <button 
@@ -188,8 +187,8 @@ export function ProfilePictureUploader({
               <button
                 onClick={handleUpload}
                 disabled={isLoading}
-                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md
-                  disabled:opacity-50 disabled:cursor-not-allowed w-full truncate"
+                className="mt-4 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md
+                  disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Subiendo...' : 'Subir imagen'}
               </button>

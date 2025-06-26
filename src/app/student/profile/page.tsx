@@ -105,7 +105,7 @@ export default function StudentProfile() {
 };
 
 return (
-  <div className="grid grid-cols-3">
+  <div className="grid md:grid-cols-3">
     <div></div>
     <div className="min-h-screen flex pt-3 ">
       <Card title="Perfil del Estudiante" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">

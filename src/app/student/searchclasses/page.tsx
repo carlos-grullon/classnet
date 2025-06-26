@@ -162,9 +162,9 @@ export default function StudentClasses() {
   };
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen py-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Búsqueda Clases</h1>
+        <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white text-center md:text-left">Búsqueda Clases</h1>
         <Card
           title="Filtros de búsqueda"
           icon={<FiFilter className="text-blue-500" />}

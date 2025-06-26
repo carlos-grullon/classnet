@@ -23,7 +23,7 @@ export function Navbar() {
     { name: 'Perfil', path: '/student/profile' },
     { name: 'Mis Clases', path: '/student/classes' },
     { name: 'Buscar Clases', path: '/student/searchclasses' },
-    { name: 'Inscripciones', path: '/student/enrollments' }
+    { name: 'Inscripciones y Pagos', path: '/student/enrollments' }
   ] : isAdminRoute ? [
     { name: 'Dashboard', path: '/admin' },
     { name: 'Usuarios', path: '/admin/users' },
@@ -70,24 +70,26 @@ export function Navbar() {
       </div>
 
       {/* Menú móvil */}
-      <div className={`md:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`}>
-        <div className="space-y-1 px-2 pt-2 pb-3 bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
-                pathname === item.path
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-                  : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {item.name}
-            </Link>
-          ))}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+          <div className="px-2 pt-2 pb-3 space-y-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`block px-3 py-2 rounded-md text-base font-medium
+                  ${pathname === item.path 
+                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                    : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'}
+                  transition-colors duration-200`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }

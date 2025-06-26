@@ -228,7 +228,7 @@ export default function EnrollmentDetails() {
 
         <div className="grid md:grid-cols-12 gap-4 ">
           {/* Estado de la inscripción */}
-          <Card className="p-6 md:col-span-2">
+          <Card className="md:col-span-2">
 
             <h2 className="text-lg font-semibold mb-2">Estado de la Inscripción</h2>
             <div className="flex flex-col items-center justify-center">
@@ -290,7 +290,8 @@ export default function EnrollmentDetails() {
                   variant="primary"
                   className="w-full"
                 >
-                  Subir Comprobante de Pago
+                  <span className="sm:hidden">Subir Comprobante de Pago</span>
+                  <span className="hidden sm:inline">Subir Comprobante</span>
                 </Button>
               </div>
             )}
