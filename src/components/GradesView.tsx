@@ -56,7 +56,7 @@ export function GradesView({ classId }: { classId: string }) {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Lista de semanas */}
-            <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+            <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 overflow-y-auto max-h-[250px] md:max-h-none">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">Semanas</h3>
                     <button
@@ -67,7 +67,7 @@ export function GradesView({ classId }: { classId: string }) {
                         <FiRefreshCw size={18} />
                     </button>
                 </div>
-                <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+                <div className="space-y-2">
                     {weeks.map(week => {
                         const grade = grades.find(g => g.weekNumber === week);
                         return (

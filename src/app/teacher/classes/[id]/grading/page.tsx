@@ -14,7 +14,7 @@ type Submission = {
   message?: string;
   isGraded: boolean;
   overallGrade?: number;
-  createdAt: Date;
+  submittedAt: Date;
 };
 
 export default function ClassGradingPage() {
@@ -76,12 +76,10 @@ export default function ClassGradingPage() {
       await FetchData(
         `/api/assignments/grade`,
         {
-          method: 'POST',
-          body: JSON.stringify({
-            submissionId: selectedSubmission._id,
-            ...gradeData
-          })
-        }
+          submissionId: selectedSubmission._id,
+          ...gradeData
+        },
+        'POST'
       );
 
       // Actualizar el estado local
@@ -96,8 +94,9 @@ export default function ClassGradingPage() {
       // Mostrar notificación de éxito
       SuccessMsj('Calificación guardada correctamente');
     } catch (error) {
-      console.error('Error saving grade:', error);
-      ErrorMsj('Error al guardar la calificación');
+      const message = error instanceof Error ? error.message : 'Error al guardar la calificación';
+      console.error(message, error);
+      ErrorMsj(message);
     }
   };
 

@@ -6,7 +6,7 @@ type SubmissionDetails = {
   fileName?: string;
   audioUrl?: string;
   message?: string;
-  createdAt: Date;
+  submittedAt: Date;
   fileGrade?: number;
   fileFeedback?: string;
   audioGrade?: number;
@@ -29,7 +29,7 @@ export function SubmissionDetailsView({ submission, onGradeClick }: SubmissionDe
         <div>
           <h3 className="text-lg font-semibold">Detalles de la Entrega de <span className="text-blue-600 font-bold">{submission.studentName}</span></h3>
           <p className="text-sm text-gray-500">
-            Enviado el: {new Date(submission.createdAt).toLocaleDateString()}
+            Enviado el: {new Date(submission.submittedAt).toLocaleDateString()}
           </p>
         </div>
         <Badge className={`${submission.isGraded ? 'bg-green-500' : 'bg-yellow-500'}`}>

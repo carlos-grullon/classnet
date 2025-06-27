@@ -286,20 +286,20 @@ export default function VirtualClassroom() {
   }
 
   return (
-    <div className="p-4 mx-7">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Aula Virtual</h1>
+    <div className="md:p-4 md:mx-7 p-1">
+      <div className="flex flex-col md:flex-row justify-center md:justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-center md:text-left">Aula Virtual</h1>
       </div>
 
       <Tabs defaultActiveId="presentation">
         {(activeId, setActiveId) => (
           <>
-            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+            <div className="grid grid-cols-4 gap-0 border border-gray-500 dark:border-gray-200 mb-4 w-full bg-white dark:bg-gray-800/50 rounded-t-lg">
               <Tab
                 id="presentation"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Presentación
               </Tab>
@@ -307,19 +307,17 @@ export default function VirtualClassroom() {
                 id="week"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className={`px-4 py-2 font-medium text-sm focus:outline-none ${activeId === 'week' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`}
+                className="px-2 py-2 border-r border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
-                <div className="relative flex items-center">
-                  <span
-                    className="mr-7 cursor-pointer"
-                    onClick={() => setActiveId('week')}
-                  >
-                    Semana {selectedWeek}
+                <div className="relative flex justify-center items-center">
+                  <span className="truncate mr-5">
+                    <span className='md:hidden'>Sem {selectedWeek}</span>
+                    <span className='hidden md:block'>Semana {selectedWeek}</span>
                   </span>
                   <Select
                     value={selectedWeek.toString()}
                     onChange={handleWeekChange}
-                    className="w-5 opacity-0 absolute right-0"
+                    className="w-4 opacity-0 absolute right-0"
                   >
                     {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
                       <SelectItem key={week} value={week.toString()}>
@@ -328,7 +326,7 @@ export default function VirtualClassroom() {
                     ))}
                   </Select>
                   <div className="pointer-events-none absolute right-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -338,7 +336,7 @@ export default function VirtualClassroom() {
                 id="resources"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Recursos
               </Tab>
@@ -346,9 +344,10 @@ export default function VirtualClassroom() {
                 id="grades"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
-                Calificaciones
+                <span className='md:hidden'>Califs.</span>
+                <span className='hidden md:block'>Calificaciones</span>
               </Tab>
             </div>
 
@@ -444,9 +443,18 @@ export default function VirtualClassroom() {
                           <p className=" text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <FaWhatsapp className="text-green-500 text-xl" /> Link del grupo de whatsapp
                           </p>
-                          <p className="text-gray-700 dark:text-gray-300 break-all whitespace-normal overflow-hidden">
-                            {content.whatsappLink || 'Aún no se ha agregado un Link'}
-                          </p>
+                          {content.whatsappLink ? (
+                            <Link
+                              href={content.whatsappLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 dark:text-blue-400 hover:underline break-all whitespace-normal"
+                            >
+                              {content.whatsappLink}
+                            </Link>
+                          ) : (
+                            <span className="text-gray-700 dark:text-gray-300">Aún no se ha agregado un Link</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -469,66 +477,70 @@ export default function VirtualClassroom() {
             <TabContent id="week" activeId={activeId} className="mt-4">
               <div className="gap-4 grid md:grid-cols-12">
                 {/* Sección Reunión */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 col-span-6">
-                  <div className="col-span-5">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 md:col-span-6 col-span-12">
+                  <div className="md:col-span-5 col-span-12">
                     <div className="flex items-center gap-2 mb-3">
                       <FiVideo className="text-blue-600 dark:text-blue-400" />
                       <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Reunión Semana {selectedWeek}</h3>
                     </div>
-                    <table className="border border-black dark:border-gray-400 w-full">
-                      <thead>
-                        <tr>
-                          <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la reunión</th>
-                          <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la grabación</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td className="border border-black dark:border-gray-400 p-2">
-                            {weekContent?.meetingLink ? (
-                              <div className="flex justify-center">
-                                <Link
-                                  href={weekContent.meetingLink}
-                                  target="_blank"
-                                  className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
-                                >
-                                  <FiExternalLink />
-                                  {weekContent.meetingLink}
-                                </Link>
-                              </div>
-                            ) : (
-                              <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
-                                <FiAlertCircle className="text-red-600 dark:text-red-400" />
-                                <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de reunión</p>
-                              </div>
-                            )}
-                          </td>
-                          <td className="border border-black dark:border-gray-400 p-2">
-                            {weekContent?.recordingLink ? (
-                              <div className="flex justify-center">
-                                <Link
-                                  href={weekContent.recordingLink}
-                                  target="_blank"
-                                  className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
-                                >
-                                  <FiExternalLink />
-                                  {weekContent.recordingLink}
-                                </Link>
-                              </div>
-                            ) : (
-                              <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
-                                <FiAlertCircle className="text-red-600 dark:text-red-400" />
-                                <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de grabación</p>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    <div className="overflow-x-auto">
+                      <table className="border border-black dark:border-gray-400 w-full min-w-[300px]">
+                        <thead>
+                          <tr className="hidden md:table-row">
+                            <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la reunión</th>
+                            <th className="border border-black dark:border-gray-400 p-2 font-medium">Link de la grabación</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr className="flex flex-col md:table-row">
+                            <td className="border border-black dark:border-gray-400 p-2">
+                              <div className="md:hidden font-medium mb-1">Link de la reunión</div>
+                              {weekContent?.meetingLink ? (
+                                <div className="flex justify-center">
+                                  <Link
+                                    href={weekContent.meetingLink}
+                                    target="_blank"
+                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                  >
+                                    <FiExternalLink />
+                                    <span className="truncate max-w-[180px] md:max-w-none">{weekContent.meetingLink}</span>
+                                  </Link>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
+                                  <FiAlertCircle className="text-red-600 dark:text-red-400" />
+                                  <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de reunión</p>
+                                </div>
+                              )}
+                            </td>
+                            <td className="border border-black dark:border-gray-400 p-2">
+                              <div className="md:hidden font-medium mb-1">Link de la grabación</div>
+                              {weekContent?.recordingLink ? (
+                                <div className="flex justify-center">
+                                  <Link
+                                    href={weekContent.recordingLink}
+                                    target="_blank"
+                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                  >
+                                    <FiExternalLink />
+                                    <span className="truncate max-w-[180px] md:max-w-none">{weekContent.recordingLink}</span>
+                                  </Link>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center text-center items-center gap-2 bg-gray-200 dark:bg-gray-700 p-2 rounded w-fit mx-auto">
+                                  <FiAlertCircle className="text-red-600 dark:text-red-400" />
+                                  <p className="text-gray-500 dark:text-gray-400">No se ha agregado un link de grabación</p>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
                 {/* Sección Material de apoyo */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 md:col-span-6 col-span-12">
                   <div className="flex items-center gap-2 mb-3">
                     <FiBookOpen className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
@@ -563,7 +575,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
                 {/* Sección Asignación */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 md:col-span-6 col-span-12">
                   <div className="flex items-center justify-center text-center gap-2 mb-3">
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Información de la Asignación - Semana {selectedWeek}</h3>
@@ -658,13 +670,12 @@ export default function VirtualClassroom() {
 
                 </div>
                 {/* Seccion Subir Asignación */}
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 col-span-6">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 md:col-span-6 col-span-12">
                   <div className="flex items-center justify-center text-center gap-2 mb-3">
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Enviar Asignación - Semana {selectedWeek}</h3>
                   </div>
 
-                  {/* File or Link Upload */}
                   {weekContent.assignment ? (
                     <>
                       <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
@@ -763,7 +774,6 @@ export default function VirtualClassroom() {
                         )}
                       </div>
 
-                      {/* Audio Recording - if required */}
                       {weekContent?.assignment?.hasAudio && (
                         <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
                           <div className="flex items-center gap-2">
@@ -788,7 +798,6 @@ export default function VirtualClassroom() {
                         </div>
                       )}
 
-                      {/* Optional Message */}
                       <div className="space-y-4">
                         <div className="flex items-center gap-2">
                           <FiMessageSquare className="text-blue-500 text-lg" />

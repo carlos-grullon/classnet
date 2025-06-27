@@ -4,7 +4,7 @@ import React from 'react';
 
 export const VirtualClassroomSkeleton = () => {
   return (
-    <div className="p-4 mx-7 animate-pulse">
+    <div className="md:p-4 md:mx-7 p-2 animate-pulse">
       <div className="flex justify-between items-center mb-4">
         <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
       </div>
