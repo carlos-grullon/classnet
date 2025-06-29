@@ -18,7 +18,7 @@ let isConnecting = false;
  * Clase para manejar la conexión a MongoDB
  */
 class MongoDB {
-    private static instance: MongoDB | null = null;
+    private static instance: MongoDB | null = null; // Instancia única de la clase
     private connection: MongoDBConnection | null = null;
 
     /**
