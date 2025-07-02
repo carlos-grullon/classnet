@@ -7,6 +7,10 @@ export async function Register(
     user_type: 'E' | 'P',
     email: string,
 ) {
+    if (email !== 'carlos0012010vegano@gmail.com' && user_type === 'P') {
+        throw new Error('No se pueden ingresar como profesores todavía');
+    }
+    
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({ email });
     

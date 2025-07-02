@@ -6,15 +6,17 @@ interface AudioPlayerProps {
   audioUrl: string;
   onNewRecording?: () => void;
   onDelete?: () => void;
+  className?: string;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   audioUrl,
   onNewRecording,
-  onDelete
+  onDelete,
+  className = ''
 }) => {
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${className}`}>
       {/* Reproductor nativo */}
       <audio
         controls

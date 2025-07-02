@@ -22,8 +22,8 @@ export async function FetchData<T = unknown, U = Record<string, unknown>>(
   const responseJson: T = await response.json();
 
   if (!response.ok) {
-    const errorData = responseJson as { error?: string };
-    throw new Error(errorData.error || "Error al obtener datos");
+    const errorData = responseJson as { error?: string; message?: string };
+    throw new Error(errorData.message || errorData.error || "Error al obtener datos");
   }
 
   return responseJson;

@@ -63,17 +63,19 @@ interface SupportMaterial {
   fileName?: string;
 }
 
+const EmptyWeekContent: WeekContent = {
+  meetingLink: '',
+  recordingLink: '',
+  supportMaterials: [],
+  assignment: null
+}
+
 export default function VirtualClassroom() {
   const params = useParams();
   const classId = params?.id as string;
   const { getCountryByCode } = useCountries();
   const [content, setContent] = useState<ClassContent | null>(null);
-  const [weekContent, setWeekContent] = useState<WeekContent>({
-    meetingLink: '',
-    recordingLink: '',
-    supportMaterials: [],
-    assignment: null
-  });
+  const [weekContent, setWeekContent] = useState<WeekContent>(EmptyWeekContent);
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedDescription, setExpandedDescription] = useState(true);
@@ -204,8 +206,9 @@ export default function VirtualClassroom() {
           {},
           'GET'
         );
-        if (response.success && response.data) {
-          setWeekContent(response.data);
+        if (response.success) {
+          const content = response.data || EmptyWeekContent
+          setWeekContent(content);
           if (response.studentAssignment) {
             setStudentAssignment(response.studentAssignment);
             if (!response.studentAssignment.message) {
