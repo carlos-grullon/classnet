@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { FiMenu, FiX } from 'react-icons/fi';
+import { SideMenu } from './SideMenu';
 
 export function Navbar() {
   const pathname = usePathname();
@@ -36,8 +37,8 @@ export function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-30 border-b border-zinc-950 bg-white dark:bg-gray-800/95 dark:border-white/50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center">
           {/* Menú móvil y logo */}
           <div className="flex items-center">
             <button
@@ -48,13 +49,13 @@ export function Navbar() {
               {mobileMenuOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
             </button>
             
-            <div className="text-xl font-bold">
+            <div className="text-xl font-bold tracking-wide bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text italic text-transparent">
               ClassNet
             </div>
           </div>
 
           {/* Navegación desktop */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-6 mx-auto">
             {navItems.map((item) => (
               <Link key={item.path} href={item.path} className={`py-2 border-b-2 transition-colors ${pathname === item.path ? 'border-blue-500 text-blue-500' : 'border-transparent hover:border-gray-300 dark:hover:border-gray-500'}`}>
                 {item.name}
@@ -63,8 +64,9 @@ export function Navbar() {
           </div>
 
           {/* ThemeToggle con margen de 40px */}
-          <div className="flex items-center mr-10">
-            <ThemeToggle className="ml-4" />
+          <div className="flex items-center ml-auto">
+            <ThemeToggle className="ml-4 md:mr-4" />
+            <SideMenu />
           </div>
         </div>
       </div>

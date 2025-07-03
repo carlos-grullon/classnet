@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SideMenu, Navbar } from "@/components";
+import { Navbar } from "@/components";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CountryProvider } from '@/providers';
 import { ToastContainer } from 'react-toastify';
@@ -33,7 +33,6 @@ export default function RootLayout({
           <ThemeProvider attribute="class" enableSystem={false} defaultTheme="light">
             <main>
               <Navbar />
-              <SideMenu />
               <ToastContainer />
               <div className="min-h-screen mt-16">
                 {children}

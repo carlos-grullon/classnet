@@ -29,7 +29,7 @@ export function SideMenu() {
     <>
       {/* Botón del menú */}      <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-40 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="z-40 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <FiMenu className="w-6 h-6" />
       </button>
