@@ -28,7 +28,7 @@ export default function LoginPage() {
     }
   });
 
-  const { 
+  const {
     handleSubmit,
     formState: { errors },
     control
@@ -59,7 +59,12 @@ export default function LoginPage() {
   return (
     <>
       <ThemeToggle className="fixed top-4 right-4" />
-      <div className="min-h-screen flex items-center justify-center p-4 -mt-16">
+      <div className="min-h-screen flex items-center flex-col justify-center p-4 -mt-16">
+        <div className="text-center mb-6">
+          <h1 className="text-7xl lg:text-8xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent p-4 italic max-w-full break-words">
+            ClassNet
+          </h1>
+        </div>
         <Card title="Iniciar Sesión" icon={<FiLogIn className="text-blue-500" />}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Controller
@@ -74,7 +79,7 @@ export default function LoginPage() {
                 />
               )}
             />
-            
+
             <Controller
               name="password"
               control={control}
@@ -103,12 +108,12 @@ export default function LoginPage() {
                 <span className="px-2 transition-colors duration-200 bg-white dark:bg-gray-800 text-gray-500 dark:text-white">O continúa con</span>
               </div>
             </div>
-            
+
             <div className="mt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                fullWidth 
+              <Button
+                type="button"
+                variant="outline"
+                fullWidth
                 onClick={() => window.location.href = '/api/auth/google'}
                 className="flex items-center justify-center gap-2"
               >
@@ -116,7 +121,7 @@ export default function LoginPage() {
               </Button>
             </div>
           </div>
-          
+
           <div className="mt-4 text-center text-sm">
             ¿No tienes cuenta?
             <Link href="/register" className="text-blue-500 hover:text-blue-700 ml-1">

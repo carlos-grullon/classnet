@@ -45,8 +45,13 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="flex justify-center">
+    <div className="flex flex-col items-center justify-center">
       <ThemeToggle className="fixed top-4 right-4" />
+      <div className="text-center mb-6">
+        <h1 className="text-7xl lg:text-8xl font-bold text-center bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent p-4 italic max-w-full break-words">
+          ClassNet
+        </h1>
+      </div>
       <Card title="Registro" icon={<FiUserPlus />}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Controller
