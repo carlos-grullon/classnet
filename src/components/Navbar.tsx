@@ -5,15 +5,20 @@ import { useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { SideMenu } from './SideMenu';
+import Image from 'next/image';
+import { useUser } from '@/providers';
+import { useRouter } from 'next/navigation';
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  const { user } = useUser();
+  const router = useRouter(); 
+
   const isTeacherRoute = pathname?.startsWith('/teacher');
   const isStudentRoute = pathname?.startsWith('/student');
   const isAdminRoute = pathname?.startsWith('/admin');
-  
+
   const navItems = isTeacherRoute ? [
     { name: 'Dashboard', path: '/teacher' },
     { name: 'Perfil', path: '/teacher/profile' },
@@ -48,7 +53,7 @@ export function Navbar() {
             >
               {mobileMenuOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
             </button>
-            
+
             <div className="text-xl font-bold tracking-wide bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text italic text-transparent">
               ClassNet
             </div>
@@ -65,7 +70,18 @@ export function Navbar() {
 
           {/* ThemeToggle con margen de 40px */}
           <div className="flex items-center ml-auto">
-            <ThemeToggle className="ml-4 md:mr-4" />
+            <div className="h-12 w-12 border border-blue-500 rounded-full overflow-hidden cursor-pointer">
+              <div className="relative h-full w-full">
+                <Image
+                  src={user?.userImage || '/images/default-avatar.png'}
+                  alt="Foto de perfil"
+                  className="object-cover h-full w-full"
+                  fill={true}
+                  onClick={() => router.push('/student/profile')}
+                />
+              </div>
+            </div>
+            <ThemeToggle className="hidden md:block md:mx-3" />
             <SideMenu />
           </div>
         </div>
@@ -80,7 +96,7 @@ export function Navbar() {
                 key={item.path}
                 href={item.path}
                 className={`block px-3 py-2 rounded-md text-base font-medium
-                  ${pathname === item.path 
+                  ${pathname === item.path
                     ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
                     : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 dark:active:bg-gray-600'}
                   transition-colors duration-200`}

@@ -5,6 +5,7 @@ import { Navbar } from "@/components";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { CountryProvider } from '@/providers';
 import { ToastContainer } from 'react-toastify';
+import { UserProvider } from '@/providers/UserProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,19 +29,21 @@ export default function RootLayout({
 }>) {
   return (
     <CountryProvider>
-        <html lang="en" suppressHydrationWarning>
-          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ThemeProvider attribute="class" enableSystem={false} defaultTheme="light">
             <main>
-              <Navbar />
-              <ToastContainer />
-              <div className="min-h-screen mt-16">
-                {children}
-              </div>
+              <UserProvider>
+                <Navbar />
+                <ToastContainer />
+                <div className="min-h-screen mt-16">
+                  {children}
+                </div>
+              </UserProvider>
             </main>
           </ThemeProvider>
-          </body>
-        </html>
+        </body>
+      </html>
     </CountryProvider>
   );
 }

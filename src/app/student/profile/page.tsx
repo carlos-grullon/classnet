@@ -71,7 +71,6 @@ export default function StudentProfile() {
           description: formData.description,
           country: formData.country
         };
-
         setInitialData(updatedData);
         SuccessMsj(data.message);
         setEditMode(false);
@@ -142,16 +141,17 @@ return (
           )}
 
           {/* Sección de foto de perfil */}
-          <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Foto de perfil
-            </label>
+          <div className="space-y-4 p-4 flex flex-col items-center rounded-lg">
             <ProfilePictureUploader
               currentImageUrl={formData.image}
               onUploadSuccess={handleUploadSuccess}
               editMode={editMode}
               onImageClick={() => setIsImageModalOpen(true)}
+              className="h-48 w-48"
             />
+            <label className="block text-sm font-medium">
+              Foto de perfil
+            </label>
             {isImageModalOpen && (
               <ImageModal
                 imageUrl={formData.image}

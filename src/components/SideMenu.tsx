@@ -1,14 +1,23 @@
 'use client';
 import { useState } from 'react';
-import { FiMenu, FiX } from 'react-icons/fi';
-import { BiLogOut } from 'react-icons/bi';
+import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
 import { FetchData } from '@/utils/Tools.tsx';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTheme } from '@/providers/ThemeProvider';
+import { useUser } from '@/providers/UserProvider'; // Agregado
 
-export function SideMenu() {
+type MenuItem = {
+  icon: React.ReactNode;
+  text: string;
+  onClick: () => void;
+};
+
+export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { theme, toggleTheme } = useTheme();
+  const { user, setUser } = useUser(); // Agregado
 
   // Ocultar en rutas de login/register
   if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
@@ -17,56 +26,79 @@ export function SideMenu() {
 
   const handleLogout = async () => {
     try {
-      await FetchData('/api/logout');
-      setIsOpen(false);
+      await FetchData('/api/logout', {}, 'POST');
+      setUser(null); // Limpiamos el contexto
       router.push('/login');
+      router.refresh();
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
   };
 
+  const defaultItems: MenuItem[] = [
+    {
+      icon: <FiLogOut className="w-5 h-5" />,
+      text: 'Cerrar sesión',
+      onClick: handleLogout
+    }
+  ];
+
+  const allItems = [...items, ...defaultItems];
+
   return (
     <>
-      {/* Botón del menú */}      <button
+      {/* Botón del menú */}
+      <button
         onClick={() => setIsOpen(true)}
-        className="z-40 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="z-40 p-2 ml-3 md:ml-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <FiMenu className="w-6 h-6" />
       </button>
 
-      {/* Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/30 z-40 transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       {/* Menú lateral */}
       <div
-        className={`fixed top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 z-50 transform transition-transform duration-300 ease-in-out shadow-lg ${isOpen ? 'translate-x-0' : 'translate-x-full'
-          }`}
+        className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out 
+          ${isOpen ? 'visible bg-black/20' : 'invisible'}`}
+        onClick={() => setIsOpen(false)}
       >
-        {/* Cabecera del menú */}
-        <div className="flex justify-between items-center h-16 px-4 border-b">
-          <h2 className="text-lg font-semibold">Menú</h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <FiX className="w-5 h-5" />
-          </button>
-        </div>
-        {/* Contenido del menú */}
-        <div className="p-4 space-y-4">
-          {/* Botón de logout */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <BiLogOut className="w-5 h-5" />
-            <span>Cerrar sesión</span>
-          </button>
+        <div
+          className={`absolute top-0 right-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl transform transition-transform duration-300 ease-in-out 
+            ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Cabecera del menú */}
+          <div className="flex justify-between items-center h-16 px-4 border-b">
+            <h2 className="text-lg font-semibold">Menú</h2>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Contenido del menú */}
+          <div className="p-4 space-y-4">
+            <button
+              onClick={() => {
+                toggleTheme();
+              }}
+              className="flex md:hidden items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 active:bg-gray-300 dark:active:bg-gray-500 transition-colors"
+            >
+              {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+              <span>Modo {theme === 'dark' ? 'claro' : 'oscuro'}</span>
+            </button>
+            {allItems.map((item, index) => (
+              <button
+                key={`menu-item-${index}`}
+                onClick={item.onClick}
+                className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 active:bg-gray-300 dark:active:bg-gray-500 transition-colors"
+              >
+                {item.icon}
+                <span>{item.text}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </>

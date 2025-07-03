@@ -9,19 +9,19 @@ export async function POST(request: Request) {
             data.password,
             data.email,
         )
-        
-        const response = NextResponse.json({ 
+        const userCommonData = {
             userIsStudent: user.user_is_student,
-            userIsTeacher: user.user_is_teacher 
-        });
+            userIsTeacher: user.user_is_teacher,
+            userEmail: user.email,
+            userImage: user.image_path || '',
+            userName: user.username || '',
+        }
+        const response = NextResponse.json(userCommonData);
 
         const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
         const token = await new SignJWT({
             userId: user._id.toString(),
-            userIsStudent: user.user_is_student,
-            userIsTeacher: user.user_is_teacher,
-            userEmail: user.email,
-            userImage: user.data?.image_path || ''
+            ...userCommonData
         })
         .setProtectedHeader({ alg: 'HS256' })
         .setExpirationTime('7d')

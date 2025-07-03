@@ -11,14 +11,19 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormSchema, LoginFormValues } from '@/validations/login';
 import { Controller } from 'react-hook-form';
+import { useUser } from '@/providers/UserProvider';
 
 interface User {
   userIsStudent: boolean;
   userIsTeacher: boolean;
+  userEmail: string;
+  userImage: string;
+  userName: string;
 }
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useUser();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
@@ -40,6 +45,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const user = await FetchData("/api/login", data) as User;
+      setUser(user);
       SuccessMsj("Inicio de sesión exitoso");
       if (user.userIsStudent && user.userIsTeacher) {
         router.push("/");
