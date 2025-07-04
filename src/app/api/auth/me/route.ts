@@ -23,9 +23,11 @@ export async function GET(req: NextRequest) {
         }
     }, { status: 200 });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Error al obtener información del usuario';
+    console.error(message, error);
     return NextResponse.json({ 
       success: false,
-      error: 'Error al obtener información del usuario' 
+      error: message 
     }, { status: 500 });
   }
 }

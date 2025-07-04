@@ -17,7 +17,7 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const { user, setUser } = useUser(); // Agregado
+  const { setUser } = useUser(); // Agregado
 
   // Ocultar en rutas de login/register
   if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
