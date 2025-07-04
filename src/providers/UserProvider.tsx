@@ -12,52 +12,74 @@ interface User {
 
 type UserContextType = {
   user: User | null;
+  loading: boolean;
+  error: string | null;
   setUser: (user: User | null) => void;
   setUserImage: (image: string) => void;
+  refetchUser: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  loading: true,
+  error: null,
   setUser: () => {},
   setUserImage: () => {},
+  refetchUser: async () => {}
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const setUserImage = (image: string) => {
-    setUser(prevUser => {
-      if (!prevUser) return null;
-      return { ...prevUser, userImage: image };
-    });
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      const response = await FetchData<{ success: boolean, user: User }>(
+        '/api/auth/me',
+        {},
+        'GET'
+      );
+      if (response.success) {
+        setUser(response.user);
+        setError(null);
+      } else {
+        setError('Failed to load user data');
+        setUser(null);
+      }
+    } catch (err) {
+      setError('Failed to load user data');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const response = await FetchData<{ success: boolean, user: User }>(
-          '/api/auth/me', {}, 'GET');
-        if (response.success) {
-          setUser(response.user);
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
-      }
-    }
-    loadUser();
+    fetchUserData();
   }, []);
 
+  const setUserImage = (image: string) => {
+    if (user) {
+      setUser({ ...user, userImage: image });
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ user, setUser, setUserImage }}>
+    <UserContext.Provider 
+      value={{ 
+        user, 
+        loading, 
+        error, 
+        setUser, 
+        setUserImage,
+        refetchUser: fetchUserData 
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
 }
 
-export function useUser() {
-  const context = useContext(UserContext);
-  if (!context) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
-  return context;
-}
+export const useUser = () => useContext(UserContext);

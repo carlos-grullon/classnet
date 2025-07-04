@@ -1,10 +1,23 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
 import { FetchData } from '@/utils/Tools.tsx';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from '@/providers/ThemeProvider';
-import { useUser } from '@/providers/UserProvider'; // Agregado
+import { useUser } from '@/providers/UserProvider';
+
+const ThemeIcon = () => {
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return <div className="w-5 h-5" />;
+  }
+
+  return theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />;
+};
 
 type MenuItem = {
   icon: React.ReactNode;
@@ -17,7 +30,7 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const { setUser } = useUser(); // Agregado
+  const { setUser } = useUser();
 
   // Ocultar en rutas de login/register
   if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
@@ -27,7 +40,7 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const handleLogout = async () => {
     try {
       await FetchData('/api/logout', {}, 'POST');
-      setUser(null); // Limpiamos el contexto
+      setUser(null);
       router.push('/login');
       router.refresh();
     } catch (error) {
@@ -47,7 +60,6 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
 
   return (
     <>
-      {/* Botón del menú */}
       <button
         onClick={() => setIsOpen(true)}
         className="z-40 p-2 ml-3 md:ml-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -55,7 +67,6 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
         <FiMenu className="w-6 h-6" />
       </button>
 
-      {/* Menú lateral */}
       <div
         className={`fixed inset-0 z-50 transition-all duration-300 ease-in-out 
           ${isOpen ? 'visible bg-black/20' : 'invisible'}`}
@@ -66,7 +77,6 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
             ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Cabecera del menú */}
           <div className="flex justify-between items-center h-16 px-4 border-b">
             <h2 className="text-lg font-semibold">Menú</h2>
             <button
@@ -77,16 +87,16 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
             </button>
           </div>
 
-          {/* Contenido del menú */}
           <div className="p-4 space-y-4">
             <button
-              onClick={() => {
-                toggleTheme();
-              }}
+              onClick={toggleTheme}
               className="flex md:hidden items-center gap-3 w-full p-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 active:bg-gray-300 dark:active:bg-gray-500 transition-colors"
+              suppressHydrationWarning
             >
-              {theme === 'dark' ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-              <span>Modo {theme === 'dark' ? 'claro' : 'oscuro'}</span>
+              <ThemeIcon />
+              <span suppressHydrationWarning>
+                Modo {theme === 'dark' ? 'claro' : 'oscuro'}
+              </span>
             </button>
             {allItems.map((item, index) => (
               <button
