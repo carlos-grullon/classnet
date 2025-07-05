@@ -73,6 +73,7 @@ export function Navbar() {
             <div className="h-12 w-12 border border-blue-500 rounded-full overflow-hidden cursor-pointer">
               <div className="relative h-full w-full">
                 <Image
+                  sizes="(max-width: 768px) 48px, 48px"
                   src={user?.userImage || '/images/default-avatar.png'}
                   alt="Foto de perfil"
                   className="object-cover h-full w-full"

@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
             endTime: mongoTimeToTimeString12h(classItem.endTime),
             selectedDays: classItem.selectedDays.sort((a: string, b: string) => parseInt(a) - parseInt(b)),
             price: classItem.price,
-            currency: classItem.currency
+            currency: classItem.currency,
+            teacherName: classItem.teacherName,
+            durationWeeks: classItem.durationWeeks
         }));
 
 
