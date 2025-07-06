@@ -54,7 +54,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
     } catch (err) {
-      setError('Failed to load user data');
+      const message = err instanceof Error ? err.message : "Error al cargar los datos del usuario";
+      setError(message);
       setUser(null);
     } finally {
       setLoading(false);

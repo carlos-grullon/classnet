@@ -37,7 +37,7 @@ export default function StudentProfile() {
   const [editMode, setEditMode] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const { getCountryByCode } = useCountries();
-  const { user, setUserName, setUserNumber } = useUser();
+  const { setUserName, setUserNumber } = useUser();
 
   useEffect(() => {
     async function GetStudentData() {

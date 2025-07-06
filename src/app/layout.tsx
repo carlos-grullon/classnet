@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ClassNet",
-  description: "",
+  description: "Virtual classroom for students and teachers"
 };
 
 export default function RootLayout({
