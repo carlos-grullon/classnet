@@ -27,7 +27,7 @@ export interface ClassContent {
   teacher: {
     name: string;
     country: string;
-    whatsapp: string;
+    number: string;
     email: string;
     photo: string;
   };

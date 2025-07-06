@@ -6,7 +6,8 @@ import { ObjectId } from "mongodb";
 interface StudentUpdate {
     name: string,
     description: string,
-    country: string
+    country: string,
+    number: string
 }
 
 export async function GET(request: NextRequest) {
@@ -21,7 +22,8 @@ export async function GET(request: NextRequest) {
             name: student.username,
             image: student.image_path,
             description: student.description,
-            country: student.country
+            country: student.country,
+            number: student.number
         };
         return NextResponse.json(response);
     } catch (error) {
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const userId = await getUserId(request);
-        const { name, description, country }: StudentUpdate = await request.json();
+        const { name, description, country, number }: StudentUpdate = await request.json();
         
         const collection = await getCollection("users");
         
@@ -47,7 +49,8 @@ export async function PUT(request: NextRequest) {
                     username: name,
                     description: description,
                     country: country,
-                    updated_at: new Date()
+                    updated_at: new Date(),
+                    number: number
                 } 
             }
         );
@@ -59,7 +62,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ 
             success: true,
             message: 'Perfil actualizado correctamente',
-            updatedFields: { name, description, country }
+            updatedFields: { name, description, country, number }
         });
         
     } catch (error) {

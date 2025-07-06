@@ -56,7 +56,7 @@ export function CountrySelector({ value, onChange, className }: CountrySelectorP
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full p-2 border rounded-md bg-white dark:bg-gray-800"
+        className="flex items-center justify-between w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800"
       >
         {selectedCountry ? (
           <div className="flex items-center gap-2">

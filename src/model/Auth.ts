@@ -25,6 +25,7 @@ export async function Register(
             country: '',
             image_path: '',
             description: '',
+            number: '',
             data: user_type === 'P' ? {
                 subjects: [],
                 reviews: [],

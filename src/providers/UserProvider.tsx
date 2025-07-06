@@ -8,6 +8,7 @@ interface User {
   userEmail: string;
   userImage: string;
   userName: string;
+  userNumber: string;
 }
 
 type UserContextType = {
@@ -16,6 +17,8 @@ type UserContextType = {
   error: string | null;
   setUser: (user: User | null) => void;
   setUserImage: (image: string) => void;
+  setUserName: (name: string) => void;
+  setUserNumber: (number: string) => void;
   refetchUser: () => Promise<void>;
 };
 
@@ -25,6 +28,8 @@ const UserContext = createContext<UserContextType>({
   error: null,
   setUser: () => {},
   setUserImage: () => {},
+  setUserName: () => {},
+  setUserNumber: () => {},
   refetchUser: async () => {}
 });
 
@@ -66,6 +71,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setUserName = (name: string) => {
+    if (user) {
+      setUser({ ...user, userName: name });
+    }
+  };
+
+  const setUserNumber = (number: string) => {
+    if (user) {
+      setUser({ ...user, userNumber: number });
+    }
+  };
+
   return (
     <UserContext.Provider 
       value={{ 
@@ -74,6 +91,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         error, 
         setUser, 
         setUserImage,
+        setUserName,
+        setUserNumber,
         refetchUser: fetchUserData 
       }}
     >

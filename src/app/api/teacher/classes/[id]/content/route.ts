@@ -126,7 +126,7 @@ export async function GET(
     content.teacher = {
       name: teacher.username,
       country: teacher.country,
-      whatsapp: teacher.number,
+      number: teacher.number,
       email: teacher.email,
       photo: teacher.image_path
     };

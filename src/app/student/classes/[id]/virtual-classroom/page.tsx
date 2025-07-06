@@ -26,7 +26,7 @@ import { GradesView } from '@/components';
 interface TeacherInfo {
   name: string;
   country: string;
-  whatsapp: string;
+  number: string;
   email: string;
   photo: string;
 }
@@ -390,7 +390,7 @@ export default function VirtualClassroom() {
                           <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                             <FaWhatsapp className="text-green-500" /> WhatsApp - Número
                           </p>
-                          <p className="text-gray-700 dark:text-gray-300">{content.teacher.whatsapp}</p>
+                          <p className="text-gray-700 dark:text-gray-300">{content.teacher.number}</p>
                         </div>
                         <div className="col-span-7">
                           <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
