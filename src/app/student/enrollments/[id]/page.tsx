@@ -52,7 +52,7 @@ const bankDetails = [
   {
     id: "popular",
     name: "Banco Popular",
-    accountName: "ClassNet Educación",
+    accountName: "Carlos Miguel Grullon",
     accountNumber: "819479916",
     accountType: "Cuenta Corriente",
     logo_path: "/images/banco-popular-logo.png",
@@ -61,7 +61,7 @@ const bankDetails = [
   {
     id: "reservas",
     name: "BanReservas",
-    accountName: "ClassNet Educación",
+    accountName: "Carlos Miguel Grullon",
     accountNumber: "9608415786",
     accountType: "Cuenta Corriente",
     logo_path: "/images/banreservas-logo.png",
@@ -70,7 +70,7 @@ const bankDetails = [
   {
     id: "bhd",
     name: "Banco BHD León",
-    accountName: "ClassNet Educación",
+    accountName: "Ochayra Rodriguez Peña",
     accountNumber: "26371340015",
     accountType: "Cuenta de Ahorros",
     logo_path: "/images/bhd-logo.png",
