@@ -19,6 +19,7 @@ interface User {
   userEmail: string;
   userImage: string;
   userName: string;
+  userNumber: string;
 }
 
 export default function LoginPage() {
