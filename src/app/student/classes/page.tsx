@@ -16,6 +16,7 @@ export interface Class {
   selectedDays: string[];
   price?: number;
   currency?: string;
+  status?: string;
 }
 
 export default function MisClases() {
@@ -29,6 +30,7 @@ export default function MisClases() {
       try {
         const response = await FetchData<{ success: boolean, classes: Class[] }>('/api/student/classes', {}, 'GET');
         if (response.success && response.classes) {
+          console.log(response.classes);
           setClasses(response.classes);
         }
       } catch (err) {
@@ -97,14 +99,19 @@ export default function MisClases() {
                 </div>
 
                 <div className="flex justify-between mt-4">
-                  <Button
+                  {classItem.status === 'in_progress' ? (<Button
                     variant="primary"
                     onClick={() => router.push(`/student/classes/${classItem._id}/virtual-classroom`)}
                     className="flex items-center"
                   >
                     <FiBookOpen className="mr-2" />
                     Aula Virtual
-                  </Button>
+                  </Button>) : (
+                    <span className="text-orange-500 font-semibold flex items-center border border-orange-600 rounded-md p-2">
+                      <FiClock className="mr-2 text-3xl" />
+                      La clase aún no ha comenzado. ¡Pronto iniciaremos!
+                    </span>
+                  )}
                 </div>
               </div>
             </Card>

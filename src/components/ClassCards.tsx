@@ -86,28 +86,34 @@ export default function ClassCards() {
                     >
                       Detalles
                     </Button>
-                    <Button
+                    {classItem.status === 'in_progress' ? (<Button
+                      variant="primary"
                       onClick={() => router.push(`/student/classes/${classItem._id}/virtual-classroom`)}
-                      className="flex items-center md:text-base text-sm"
+                      className="flex items-center"
                     >
                       <FiBookOpen className="mr-2" />
                       Aula Virtual
-                    </Button>
+                    </Button>) : (
+                      <span className="text-orange-500 font-semibold flex items-center border border-orange-600 rounded-md p-2">
+                        <FiClock className="mr-2 text-3xl" />
+                        La clase aún no ha comenzado. ¡Pronto iniciaremos!
+                      </span>
+                    )}
                   </div>
                 </Card>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center text-center">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                  No tienes clases
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">
-                  Aún no te has inscrito a ninguna clase.
-                </p>
-                <Button onClick={() => router.push('/student/searchclasses')}>
-                  Buscar Clases
-                </Button>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                No tienes clases
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                Aún no te has inscrito a ninguna clase.
+              </p>
+              <Button onClick={() => router.push('/student/searchclasses')}>
+                Buscar Clases
+              </Button>
             </div>
           )}
         </div>
