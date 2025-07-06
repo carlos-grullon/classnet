@@ -43,7 +43,7 @@ export function InternationalPhoneInput({
         </div>
       )}
 
-      <div className={`relative ${isValid ? 'border-gray-300' : 'border-red-500'} dark:border-gray-600`}>
+      <div className={`relative ${isValid ? '' : 'border-red-500'}`}>
         <PhoneInput
           international
           defaultCountry={defaultCountry}
@@ -52,13 +52,8 @@ export function InternationalPhoneInput({
           disabled={disabled}
           className={
             `w-full p-2 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white dark:bg-gray-800 text-gray-900 dark:text-white
-            focus:outline-none focus:ring-2 focus:ring-blue-500/50
-            ${disabled ? 'cursor-not-allowed bg-gray-100 dark:bg-gray-700' : ''}`
+            ${disabled ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}`
           }
-          countrySelectProps={{
-            className: 'text-gray-900 dark:text-white bg-white dark:bg-gray-800',
-          }}
         />
       </div>
 

@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 :root {
   --foreground: #000000;
   --background: #f9f9f9;
@@ -14,4 +15,23 @@
 body {
   color: var(--foreground);
   background: var(--background);
+}
+
+.PhoneInputInput {
+  background-color: transparent !important;
+  outline: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.PhoneInput--focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+.PhoneInput--focus:is(.dark *) {
+  --tw-ring-color: rgb(96 165 250 / 0.5);
 }

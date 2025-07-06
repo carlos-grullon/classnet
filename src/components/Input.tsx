@@ -90,7 +90,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             ${error ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'}
             ${disabled ? 'bg-gray-100 dark:bg-gray-700' : 'bg-white dark:bg-gray-800'}
             text-gray-900 dark:text-white
-            ${isFocused ? 'ring-2 ring-blue-500 outline-none' : ''}
+            ${isFocused ? 'outline-none ring-2 dark:ring-blue-400/50' : ''}
             ${className}
           `}
           {...props}
