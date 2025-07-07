@@ -38,9 +38,9 @@ export interface ClassContent {
     startTime: string;
     endTime: string;
     price: number;
+    whatsappLink: string;
   };
   welcomeMessage: string;
-  whatsappLink: string;
   resources: SupportMaterial[];
   durationWeeks: number;
 }

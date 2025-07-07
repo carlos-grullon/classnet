@@ -72,6 +72,7 @@ export default function VirtualClassroom() {
   const [isEditingResources, setIsEditingResources] = useState(false);
   const [isEditingLinks, setIsEditingLinks] = useState(false);
   const { getCountryByCode } = useCountries();
+  const [whatsappLink, setWhatsappLink] = useState('');
 
   // Ref para el modal pequeñito
   const modalRef = useRef<HTMLDivElement>(null);
@@ -100,6 +101,8 @@ export default function VirtualClassroom() {
 
         if (data.success && data.content) {
           setContent(data.content);
+
+        setWhatsappLink(data.content.class.whatsappLink)
         } else {
           ErrorMsj('Error obteniendo datos del curso');
         }
@@ -194,7 +197,6 @@ export default function VirtualClassroom() {
     try {
       const response = await FetchData<{ success: boolean }>(`/api/teacher/classes/${classId}/content`, {
         welcomeMessage: content.welcomeMessage,
-        whatsappLink: content.whatsappLink,
         resources: content.resources
       }, 'PATCH');
       if (response.success) {
@@ -209,10 +211,20 @@ export default function VirtualClassroom() {
   };
 
   const handleSaveWhatsappLink = async () => {
-    const success = await handleSaveContent();
-    if (success) {
-      setIsEditingWhatsapp(false);
-      SuccessMsj('Whatsapp link guardado');
+    try {
+      const response = await FetchData<{ success: boolean }>("/api/classes", {
+        action: 'updateWhatsappLink',
+        classId: classId,
+        whatsappLink: whatsappLink
+      }, 'PATCH');
+      if (response.success) {
+        setIsEditingWhatsapp(false);
+        SuccessMsj('Whatsapp link guardado');
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error guardando whatsapp link';
+      ErrorMsj(message);
+      console.error(error);
     }
   };
 
@@ -466,18 +478,15 @@ export default function VirtualClassroom() {
                           {isEditingWhatsapp ? (
                             <div className="flex items-center gap-2 w-full">
                               <Input
-                                value={content.whatsappLink}
-                                onChange={(e) => setContent({
-                                  ...content,
-                                  whatsappLink: e.target.value
-                                })}
+                                value={whatsappLink}
+                                 onChange={(e) => setWhatsappLink(e.target.value)}
                                 placeholder="WhatsApp group link"
                                 className="flex-1"
                               />
                             </div>
                           ) : (
                             <p className="text-gray-700 dark:text-gray-300 break-all whitespace-normal overflow-hidden">
-                              {content.whatsappLink || 'Aún no se ha agregado un Link'}
+                              {whatsappLink || 'Aún no se ha agregado un Link'}
                             </p>
                           )}
                         </div>

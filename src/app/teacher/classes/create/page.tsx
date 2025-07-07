@@ -22,7 +22,8 @@ export default function TeacherClasses() {
       maxStudents: 30,
       currency: 'DOP',
       description: '',
-      durationWeeks: 16
+      durationWeeks: 16,
+      whatsappLink: ''
     }
   });
 
@@ -227,6 +228,24 @@ export default function TeacherClasses() {
                       error={errors.maxStudents?.message}
                       className="w-full"
                       value={field.value}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className="md:col-span-12">
+                <Controller
+                  name="whatsappLink"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="whatsappLink"
+                      type="url"
+                      label="Enlace al grupo de WhatsApp"
+                      placeholder="https://chat.whatsapp.com/..."
+                      error={errors.whatsappLink?.message}
+                      className="w-full"
                     />
                   )}
                 />

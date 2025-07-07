@@ -7,6 +7,8 @@ import { FiBookOpen, FiClock, FiCalendar, FiCheckCircle, FiDollarSign } from 're
 import { useRouter } from 'next/navigation';
 import { getDayName, getLevelName } from '@/utils/GeneralTools.ts';
 import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
+import { FaWhatsapp } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function ClassCards() {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -100,6 +102,21 @@ export default function ClassCards() {
                       </span>
                     )}
                   </div>
+                  {classItem.status !== 'in_progress' && (
+                    <div className="mt-2">
+                        <p className=" text-green-600 dark:text-green-400 flex items-center gap-2">
+                          <FaWhatsapp className="text-xl" /> Link del grupo de whatsapp
+                        </p>
+                        <Link
+                          href={classItem.whatsappLink || ''}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:underline break-all whitespace-normal"
+                        >
+                          {classItem.whatsappLink || ''}
+                        </Link>
+                      </div>
+                    )}
                 </Card>
               ))}
             </div>

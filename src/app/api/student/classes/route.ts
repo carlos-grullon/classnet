@@ -35,7 +35,8 @@ export async function GET(request: NextRequest) {
             currency: classItem.currency,
             teacherName: classItem.teacherName,
             durationWeeks: classItem.durationWeeks,
-            status: classItem.status
+            status: classItem.status,
+            whatsappLink: classItem.whatsappLink
         }));
 
 

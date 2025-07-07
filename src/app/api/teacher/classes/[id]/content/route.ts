@@ -19,7 +19,6 @@ export async function PATCH(
       {
         $set: {
           welcomeMessage: classContent.welcomeMessage,
-          whatsappLink: classContent.whatsappLink,
           resources: classContent.resources,
           updatedAt: new Date()
         }
@@ -137,6 +136,7 @@ export async function GET(
       startTime: mongoTimeToTimeString12h(classData.startTime),
       endTime: mongoTimeToTimeString12h(classData.endTime),
       price: classData.price,
+      whatsappLink: classData.whatsappLink,
     };
 
     const response = NextResponse.json({

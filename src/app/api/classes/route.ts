@@ -113,6 +113,7 @@ export async function POST(request: NextRequest) {
             durationWeeks: classData.durationWeeks,
             price: classData.price,
             level: classData.level,
+            whatsappLink: classData.whatsappLink,
             status: 'ready_to_start',
             created_at: new Date(),
             updated_at: new Date(),
@@ -139,6 +140,36 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Error al procesar la solicitud';
         console.error('Error al crear la clase:', error);
+        return NextResponse.json(
+            { error: message },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(request: NextRequest) {
+    try {
+        const data = await request.json();
+        const classId = data.classId;
+        if (data.action === 'updateWhatsappLink') {
+            const classCollection = await getCollection("classes");
+            const updatedClass = await classCollection.updateOne(
+                { _id: new ObjectId(classId) },
+                { $set: { whatsappLink: data.whatsappLink } }
+            );
+            if (updatedClass.modifiedCount === 0) {
+                return NextResponse.json(
+                    { success: false, error: 'No se encontraron documentos para actualizar' },
+                    { status: 404 }
+                );
+            }
+        }
+        return NextResponse.json({
+            success: true
+        });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al procesar la solicitud';
+        console.error('Error al actualizar la clase:', error);
         return NextResponse.json(
             { error: message },
             { status: 500 }

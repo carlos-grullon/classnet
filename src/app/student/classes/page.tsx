@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button } from '@/components';
 import { FiClock, FiBookOpen, FiInfo, FiCalendar, FiDollarSign } from 'react-icons/fi';
+import { FaWhatsapp } from 'react-icons/fa';
 import { FetchData, ErrorMsj, getDayName, getLevelName } from '@/utils/Tools.tsx';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // Interfaces para tipar los datos
 export interface Class {
@@ -17,6 +19,7 @@ export interface Class {
   price?: number;
   currency?: string;
   status?: string;
+  whatsappLink?: string;
 }
 
 export default function MisClases() {
@@ -98,7 +101,7 @@ export default function MisClases() {
                   <span>{classItem.price} {classItem.currency}</span>
                 </div>
 
-                <div className="flex justify-between mt-4">
+                <div className="flex flex-col justify-between mt-4">
                   {classItem.status === 'in_progress' ? (<Button
                     variant="primary"
                     onClick={() => router.push(`/student/classes/${classItem._id}/virtual-classroom`)}
@@ -107,10 +110,25 @@ export default function MisClases() {
                     <FiBookOpen className="mr-2" />
                     Aula Virtual
                   </Button>) : (
-                    <span className="text-orange-500 font-semibold flex items-center border border-orange-600 rounded-md p-2">
-                      <FiClock className="mr-2 text-3xl" />
-                      La clase aún no ha comenzado. ¡Pronto iniciaremos!
-                    </span>
+                    <>
+                      <div className="text-orange-500 font-semibold flex items-center border border-orange-600 rounded-md p-2">
+                        <FiClock className="mr-2 text-3xl" />
+                        La clase aún no ha comenzado. ¡Pronto iniciaremos!
+                      </div>
+                      <div className="mt-2">
+                        <p className=" text-green-600 dark:text-green-400 flex items-center gap-2">
+                          <FaWhatsapp className="text-xl" /> Link del grupo de whatsapp
+                        </p>
+                        <Link
+                          href={classItem.whatsappLink || ''}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:underline break-all whitespace-normal"
+                        >
+                          {classItem.whatsappLink || ''}
+                        </Link>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

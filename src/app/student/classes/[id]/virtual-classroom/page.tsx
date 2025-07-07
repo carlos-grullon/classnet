@@ -38,6 +38,7 @@ interface ClassInfo {
   startTime: string;
   endTime: string;
   price: number;
+  whatsappLink: string;
 }
 
 export interface ClassContentResponse {
@@ -46,7 +47,6 @@ export interface ClassContentResponse {
   teacher: TeacherInfo;
   class: ClassInfo;
   welcomeMessage?: string;
-  whatsappLink?: string;
   resources?: SupportMaterial[];
   durationWeeks: number;
 }
@@ -103,6 +103,7 @@ export default function VirtualClassroom() {
     }
   });
   const [linkUrl, setLinkUrl] = useState('');
+  const [whatsappLink, setWhatsappLink] = useState('');
 
   const getTimeRemainingMessage = (dueDate: string | Date, submission?: { submittedAt?: string | Date | null, isGraded?: boolean, grade?: number | null }) => {
     const now = new Date();
@@ -179,11 +180,11 @@ export default function VirtualClassroom() {
               teacher: data.content.teacher,
               class: data.content.class,
               welcomeMessage: data.content.welcomeMessage || '',
-              whatsappLink: data.content.whatsappLink || '',
               resources: data.content.resources || [],
               durationWeeks: data.content.durationWeeks
             }
           );
+          setWhatsappLink(data.content.class.whatsappLink);
         } else {
           ErrorMsj('Contenido no encontrado');
         }
@@ -446,14 +447,14 @@ export default function VirtualClassroom() {
                           <p className=" text-gray-500 dark:text-gray-400 flex items-center gap-2">
                             <FaWhatsapp className="text-green-500 text-xl" /> Link del grupo de whatsapp
                           </p>
-                          {content.whatsappLink ? (
+                          {whatsappLink ? (
                             <Link
-                              href={content.whatsappLink}
+                              href={whatsappLink}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 dark:text-blue-400 hover:underline break-all whitespace-normal"
                             >
-                              {content.whatsappLink}
+                              {whatsappLink}
                             </Link>
                           ) : (
                             <span className="text-gray-700 dark:text-gray-300">Aún no se ha agregado un Link</span>

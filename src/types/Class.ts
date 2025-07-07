@@ -42,7 +42,8 @@ export const ClassFormSchema = z.object({
   maxStudents: z.coerce.number().min(1, "Mínimo 1 estudiante").max(150, "Máximo 150 estudiantes"),
   currency: z.string().default('DOP'),
   description: z.string().optional(),
-  durationWeeks: z.number().min(1, "Mínimo 1 semana").max(24, "Máximo 24 semanas").default(12)
+  durationWeeks: z.number().min(1, "Mínimo 1 semana").max(24, "Máximo 24 semanas").default(12),
+  whatsappLink: z.string().min(1, 'Se requiere enlace de WhatsApp')
 });
 
 // Definición explícita del tipo para React Hook Form
@@ -57,4 +58,5 @@ export interface ClassFormValues {
   currency?: string;
   description?: string;
   durationWeeks?: number;
+  whatsappLink: string;
 }

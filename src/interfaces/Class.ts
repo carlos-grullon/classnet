@@ -13,6 +13,7 @@ interface BaseClass {
   durationWeeks: number;
   startDate: Date | string;
   currency: string;
+  whatsappLink: string;
 }
 
 export interface Class extends BaseClass {
