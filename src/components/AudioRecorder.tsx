@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { FiMic, FiPlay, FiPause, FiUpload, FiRefreshCw, FiCheck } from 'react-icons/fi';
 import { ErrorMsj } from '@/utils/Tools.tsx';
+import * as lamejs from 'lamejs';
 
 interface AudioRecorderProps {
   onRecordingComplete?: (audioUrl: string) => void;
@@ -335,15 +336,44 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
     setTime(0);
   };
 
+  const convertToMP3 = async (blob: Blob): Promise<Blob> => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      
+      // Usar valores por defecto compatibles con voz
+      const channels = 1; // Mono para optimizar tamaño
+      const sampleRate = 44100; // Frecuencia estándar
+      const bitrate = 64; // 64kbps
+      
+      const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, bitrate);
+      
+      const samples = new Int16Array(audioBuffer.length * channels);
+      for (let i = 0; i < audioBuffer.length; i++) {
+        samples[i] = audioBuffer.getChannelData(0)[i] * 32767; // Canal 0 (mono)
+      }
+      
+      const mp3Data = mp3encoder.encodeBuffer(samples);
+      mp3encoder.flush();
+      
+      return new Blob([mp3Data], { type: 'audio/mpeg' });
+    } catch (error) {
+      console.error('Error converting to MP3:', error);
+      throw error;
+    }
+  };
+
   const sendAudio = async () => {
     if (!audioBlob) return;
     
     try {
       setIsUploading(true);
+      const mp3Blob = await convertToMP3(audioBlob);
       const formData = new FormData();
       // Asegurarse de que el tipo de archivo sea compatible con iOS
-      const audioFile = new File([audioBlob], 'audio-recording.wav', {
-        type: 'audio/wav'
+      const audioFile = new File([mp3Blob], 'audio-recording.mp3', {
+        type: 'audio/mpeg'
       });
       formData.append('file', audioFile);
       formData.append('path', path);
