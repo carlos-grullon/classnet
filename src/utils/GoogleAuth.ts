@@ -6,9 +6,7 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID!;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET!;
 
 // Asegúrate de que esta URL coincida exactamente con la configurada en Google Cloud Console
-const REDIRECT_URI = process.env.NODE_ENV === 'production'
-  ? 'https://classnet.org/api/auth/google/callback'
-  : 'http://localhost:3000/api/auth/google/callback';
+const REDIRECT_URI = process.env.NEXT_PUBLIC_APP_URL + '/api/auth/google/callback';
 
 // URL para la autorización de Google
 export const getGoogleAuthURL = () => {
