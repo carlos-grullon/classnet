@@ -152,7 +152,7 @@ export default function StudentProfile() {
             )}
             <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
-            <div className='grid md:grid-cols-2 gap-4 '>
+            <div className='grid md:grid-cols-2 gap-4'>
               <div>
                 {/* Sección de foto de perfil */}
                 <div className="space-y-2 flex flex-col items-center rounded-lg">

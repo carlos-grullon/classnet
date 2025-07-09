@@ -3,10 +3,12 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
-import { FiEdit, FiSave, FiUser, FiX } from 'react-icons/fi';
+import { FiEdit, FiSave, FiUser, FiX, FiAlignLeft, FiMapPin, FiPhone } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
 import { useCountries } from '@/providers';
+import { InternationalPhoneInput } from '@/components/PhoneInput';
+import type { CountryCode, E164Number } from 'libphonenumber-js';
 
 // Lazy load CountrySelector
 const CountrySelector = lazy(() => import('@/components').then(mod => ({ default: mod.CountrySelector })));
@@ -17,17 +19,19 @@ export interface TeacherProfileProps {
   description: string;
   subjects: Array<{ _id: string; name: string }>;
   country: string;
+  number: string;
 }
 
 export default function TeacherProfile() {
-  
+
   const [initialData, setInitialData] = useState<TeacherProfileProps | null>(null);
   const [formData, setFormData] = useState<TeacherProfileProps>({
     name: '',
     image: '',
     description: '',
     subjects: [],
-    country: ''
+    country: '',
+    number: ''
   });
   const [editMode, setEditMode] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -44,7 +48,8 @@ export default function TeacherProfile() {
           image: data.image,
           description: data.description,
           subjects: data.subjects || [],
-          country: data.country || ''
+          country: data.country || '',
+          number: data.number || ''
         });
       } catch (error) {
         console.error(error);
@@ -61,7 +66,8 @@ export default function TeacherProfile() {
         image: initialData.image,
         description: initialData.description,
         subjects: initialData.subjects || [],
-        country: initialData.country || ''
+        country: initialData.country || '',
+        number: initialData.number || ''
       });
     }
     setEditMode(false);
@@ -70,11 +76,12 @@ export default function TeacherProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const data = await FetchData<{success: boolean, message: string}>('/api/teacher/profile', {
+      const data = await FetchData<{ success: boolean, message: string }>('/api/teacher/profile', {
         name: formData.name,
         description: formData.description,
         subjects: formData.subjects,
-        country: formData.country
+        country: formData.country,
+        number: formData.number
       }, 'PUT');
 
       if (data.success) {
@@ -83,7 +90,8 @@ export default function TeacherProfile() {
           image: formData.image,
           description: formData.description,
           subjects: formData.subjects,
-          country: formData.country
+          country: formData.country,
+          number: formData.number
         };
 
         setInitialData(updatedData);
@@ -113,25 +121,27 @@ export default function TeacherProfile() {
     });
   };
 
-  return (
-    <div className="grid md:grid-cols-3">
-      <div></div>
-      <div className="min-h-screen flex pt-3 ">
-        <Card title="Perfil del Profesor" icon={<FiUser className="text-blue-500" />} className="max-w-2xl w-full h-fit">
-          {!editMode && (
-            <div className="flex gap-2 mb-4">
-              <Button
-                type="button"
-                onClick={() => setEditMode(true)}
-                icon={<FiEdit />}
-              >
-                Editar
-              </Button>
-            </div>
-          )}
+  const handleUploadSuccess = async (url: string) => {
+    try {
+      const updatedData = {
+        ...formData,
+        image: url
+      };
+      setInitialData(updatedData);
+      setFormData(updatedData);
+      setEditMode(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar el perfil';
+      ErrorMsj(message);
+    }
+  };
 
+  return (
+    <div className="flex items-center justify-center space-y-3">
+      <div className="mt-3 max-w-4xl w-full">
+        <Card title="Perfil del Profesor" fullWidth icon={<FiUser className="text-blue-500" />} className="h-fit">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {editMode && (
+            {editMode ? (
               <div className="flex gap-2 mb-4">
                 <Button
                   type="submit"
@@ -148,133 +158,196 @@ export default function TeacherProfile() {
                   Cancelar
                 </Button>
               </div>
+            ) : (
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setEditMode(true);
+                  }}
+                  icon={<FiEdit />}
+                >
+                  Editar
+                </Button>
+              </div>
             )}
 
-            {/* Sección de foto de perfil */}
-            <div className="space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Foto de perfil
-              </label>
-              <ProfilePictureUploader
-                currentImageUrl={formData.image}
-                onUploadSuccess={(url) => {
-                  setFormData(prev => ({...prev, image: url}));
-                  SuccessMsj('Foto de perfil actualizada correctamente');
-                }}
-                editMode={editMode}
-                onImageClick={() => formData.image && setIsImageModalOpen(true)}
-              />
-              {isImageModalOpen && (
-                <ImageModal
-                  imageUrl={formData.image}
-                  onClose={() => setIsImageModalOpen(false)}
-                  altText="Foto de perfil"
-                />
-              )}
-            </div>
+            {/* barra divisora */}
+            <div className="border-t border-gray-200 dark:border-gray-700 my-4"></div>
 
-            {/* Nombre */}
-            <div className="space-y-2">
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                label="Nombre"
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Tu nombre completo"
-                disabled={!editMode}
-              />
-            </div>
-
-            {/* Descripción */}
-            <Textarea
-              id="description"
-              name="description"
-              label="Descripción Breve"
-              placeholder="Escribe una breve descripción de ti"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-              rows={4}
-              disabled={!editMode}
-            />
-
-            {/* País */}
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                País
-              </label>
-              {editMode ? (
-                <Suspense fallback={<div className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800">Loading country selector...</div>}>
-                  <CountrySelector
-                    value={formData.country || ''}
-                    onChange={(countryCode: string) => setFormData({...formData, country: countryCode})}
-                    className="w-full"
+            <div className='grid md:grid-cols-2 gap-4 '>
+              <div>
+                {/* Sección de foto de perfil */}
+                <div className="space-y-2 flex flex-col items-center rounded-lg">
+                  <label className="block text-sm font-medium">
+                    Foto de perfil
+                  </label>
+                  <ProfilePictureUploader
+                    currentImageUrl={formData.image}
+                    onUploadSuccess={handleUploadSuccess}
+                    editMode={editMode}
+                    onImageClick={() => setIsImageModalOpen(true)}
+                    className="h-40 w-40"
                   />
-                </Suspense>
-              ) : (
-                <div className="p-2 border rounded-md bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10 cursor-not-allowed">
-                  {formData.country ? (
-                    <>
-                      <span className="text-lg">
-                        {getCountryByCode(formData.country)?.flag}
-                      </span>
-                      <span>{getCountryByCode(formData.country)?.name.common}</span>
-                    </>
-                  ) : (
-                    <span className="text-gray-400">No especificado</span>
+                  {isImageModalOpen && (
+                    <ImageModal
+                      imageUrl={formData.image}
+                      onClose={() => setIsImageModalOpen(false)}
+                      altText="Foto de perfil"
+                    />
                   )}
                 </div>
-              )}
-            </div>
+                {/* Descripción Grande */}
+                <div className='hidden md:block'>
+                  <div className="flex items-center gap-1 mb-1 mt-3">
+                    <FiAlignLeft className="text-blue-500" />
+                    <label className="block text-sm font-medium">
+                      Descripción Breve
+                    </label>
+                  </div>
 
-            {/* Materias */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Materias
-                </label>
-                {editMode && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSubjectSearchOpen(true)}
-                  >
-                    <span className="flex items-center">
-                      <FaPlus className="mr-1" /> Agregar
-                    </span>
-                  </Button>
-                )}
+                  <Textarea
+                    id="description"
+                    placeholder="Escribe una breve descripción de ti"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                    disabled={!editMode}
+                  />
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {formData.subjects.length === 0 ? (
-                  <span className="text-sm text-gray-500">No hay materias asignadas</span>
+
+              <div>
+                {/* Nombre Grande */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1">
+                    <FiUser className="text-blue-500" />
+                    <label className="block text-sm font-medium">
+                      Nombre
+                    </label>
+                  </div>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Tu nombre completo"
+                    disabled={!editMode}
+                  />
+                </div>
+                {/* Descripción Pequeña */}
+                <div className='md:hidden'>
+                  <div className="flex items-center gap-1 mb-1 mt-3">
+                    <FiAlignLeft className="text-blue-500" />
+                    <label className="block text-sm font-medium">
+                      Descripción Breve
+                    </label>
+                  </div>
+
+                  <Textarea
+                    id="description"
+                    placeholder="Escribe una breve descripción de ti"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                    disabled={!editMode}
+                  />
+                </div>
+
+                {/* País */}
+                <div className="flex items-center gap-1 mb-1.5 mt-3">
+                  <FiMapPin className="text-blue-500" />
+                  <label className="block text-sm font-medium">
+                    País
+                  </label>
+                </div>
+                {editMode ? (
+                  <Suspense fallback={<div className="w-full p-2 border rounded-md bg-gray-50 dark:bg-gray-800">Loading country selector...</div>}>
+                    <CountrySelector
+                      value={formData.country || ''}
+                      onChange={(countryCode: string) => setFormData({ ...formData, country: countryCode })}
+                      className="w-full"
+                    />
+                  </Suspense>
                 ) : (
-                  formData.subjects.map((subject, index) => (
-                    <span 
-                      key={index}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                      title={subject.name}
-                    >
-                      {subject.name}
-                      {editMode && (
-                        <button 
-                          onClick={() => removeSubject(index)}
-                          className="ml-1 text-blue-500 hover:text-blue-700"
-                        >
-                          <FiX size={14} />
-                        </button>
-                      )}
-                    </span>
-                  ))
+                  <div className="p-2 border rounded-md border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 flex items-center gap-2 min-h-10 cursor-not-allowed">
+                    {formData.country ? (
+                      <>
+                        <span className="text-lg">
+                          {getCountryByCode(formData.country)?.flag}
+                        </span>
+                        <span>{getCountryByCode(formData.country)?.name.common}</span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">No especificado</span>
+                    )}
+                  </div>
                 )}
+                {/* Numero */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-1 mb-1.5 mt-3">
+                    <FiPhone className="text-blue-500" />
+                    <label className="block text-sm font-medium">
+                      Número
+                    </label>
+                  </div>
+                  <InternationalPhoneInput
+                    value={formData.number as E164Number | undefined}
+                    onChange={(number) => setFormData({ ...formData, number: number?.toString() || '' })}
+                    disabled={!editMode}
+                    defaultCountry={formData.country as CountryCode || 'DO'}
+                  />
+                </div>
+                {/* Materias */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Materias
+                    </label>
+                    {editMode && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSubjectSearchOpen(true)}
+                      >
+                        <span className="flex items-center">
+                          <FaPlus className="mr-1" /> Agregar
+                        </span>
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.subjects.length === 0 ? (
+                      <span className="text-sm text-gray-500">No hay materias asignadas</span>
+                    ) : (
+                      formData.subjects.map((subject, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                          title={subject.name}
+                        >
+                          {subject.name}
+                          {editMode && (
+                            <button
+                              onClick={() => removeSubject(index)}
+                              className="ml-1 text-blue-500 hover:text-blue-700"
+                            >
+                              <FiX size={14} />
+                            </button>
+                          )}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </form>
         </Card>
       </div>
-      <div></div>
-      <SubjectSearch 
+      <SubjectSearch
         isOpen={isSubjectSearchOpen}
         onClose={() => setIsSubjectSearchOpen(false)}
         onSelect={handleSubjectSelect}

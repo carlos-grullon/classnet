@@ -15,6 +15,7 @@ interface TeacherProfileResponse {
     description: string;
     subjects: string[];
     country: string;
+    number: string;
     classes?: {
         _id: ObjectId;
         startTime: string;
@@ -38,7 +39,8 @@ export async function GET(request: NextRequest) {
             image: teacher.image_path,
             description: teacher.description,
             subjects: teacher.data.subjects,
-            country: teacher.country
+            country: teacher.country,
+            number: teacher.number
         };
         const { searchParams } = new URL(request.url);
         const needClasses = searchParams.get('needClasses') === 'true';
@@ -78,7 +80,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
     try {
         const userId = await getUserId(request);
-        const { name, description, subjects, country }: { name: string; description: string; subjects: SubjectRef[]; country: string } = await request.json();
+        const { name, description, subjects, country, number }: { name: string; description: string; subjects: SubjectRef[]; country: string; number: string } = await request.json();
 
         const collection = await getCollection("users");
 
@@ -92,6 +94,7 @@ export async function PUT(request: NextRequest) {
                         subjects: subjects
                     },
                     country: country,
+                    number: number,
                     updated_at: new Date()
                 }
             }
@@ -104,7 +107,7 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'Perfil actualizado correctamente',
-            updatedFields: { name, description, subjects, country }
+            updatedFields: { name, description, subjects, country, number }
         });
 
     } catch (error) {
