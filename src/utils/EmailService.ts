@@ -102,7 +102,7 @@ function createEmailTemplate(bodyContent: string): string {
           <p>© ${new Date().getFullYear()} ClassNet. Todos los derechos reservados.</p>
           <p style="margin-top: 10px;">
             <strong>¿Necesitas ayuda?</strong><br>
-            Correo: <a href="mailto:classnet.dom@gmail.com" style="color: #3b82f6; text-decoration: none;">classnet.dom@gmail.com</a><br>
+            Correo: <a href="mailto:infoclassnet.org@gmail.com" style="color: #3b82f6; text-decoration: none;">infoclassnet.org@gmail.com</a><br>
             WhatsApp: <a href="https://wa.me/18298647008" style="color: #3b82f6; text-decoration: none;">829-864-7008</a>
           </p>
         </div>

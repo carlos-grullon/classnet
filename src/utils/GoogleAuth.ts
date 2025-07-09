@@ -37,7 +37,6 @@ export const getGoogleTokens = async (code: string) => {
     redirect_uri: REDIRECT_URI,
     grant_type: 'authorization_code',
   };
-
   try {
     const res = await fetch(url, {
       method: 'POST',
