@@ -3,7 +3,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { Card, Input, Textarea, Button } from '@/components';
 import { ProfilePictureUploader, ImageModal } from '@/components';
-import { FiEdit, FiSave, FiUser, FiX, FiAlignLeft, FiMapPin, FiPhone } from 'react-icons/fi';
+import { FiEdit, FiSave, FiUser, FiX, FiAlignLeft, FiMapPin, FiPhone, FiBook } from 'react-icons/fi';
 import { SubjectSearch } from '@/components';
 import { FaPlus } from 'react-icons/fa';
 import { useCountries } from '@/providers';
@@ -303,9 +303,12 @@ export default function TeacherProfile() {
                 {/* Materias */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Materias
-                    </label>
+                    <div className="flex items-center gap-1">
+                      <FiBook className="text-blue-500" />
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Materias
+                      </label>
+                    </div>
                     {editMode && (
                       <Button
                         variant="ghost"

@@ -1,29 +1,31 @@
 "use client";
-
-import { FileUploader, AudioRecorder, Modal } from "@/components";
-import { useState } from "react";
+import AnnouncementsSection from '../../components/AnnouncementsSection';
+import UpcomingTasks from '../../components/UpcomingTasks';
+import { useUser } from '@/providers/UserProvider';
+import { Card } from '@/components';
+import { TeacherClassCards } from '@/components/TeacherClassCards';
 
 export default function TeacherDashboard() {
-    const [showAudioModal, setShowAudioModal] = useState(false);
-    
+    const { user, loading } = useUser();
     return (
-        <div className="min-h-screen p-4 space-y-4">
-            <FileUploader />
-            
-            <button 
-                onClick={() => setShowAudioModal(true)}
-                className="bg-blue-500 text-white px-4 py-2 rounded"
-            >
-                Grabar Audio
-            </button>
-            
-            <Modal 
-                isOpen={showAudioModal} 
-                onClose={() => setShowAudioModal(false)}
-                title="Grabador de Audio"
-            >
-                <AudioRecorder />
-            </Modal>
+        <div className="min-h-screen p-4">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Columna principal */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card fullWidth size='sm'>
+                        <div className="font-bold text-center text-4xl bg-gradient-to-r from-blue-500 to-purple-600 text-transparent bg-clip-text rounded-lg animate-gradient bg-[length:200%_200%]">
+                            {loading ? 'Cargando...' : `Hola ${user?.userName?.split(' ')[0] || 'Profesor'}!`}
+                        </div>
+                    </Card>
+                    <TeacherClassCards compact={true} />
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-6">
+                    <AnnouncementsSection />
+                    <UpcomingTasks />
+                </div>
+            </div>
         </div>
     );
 }

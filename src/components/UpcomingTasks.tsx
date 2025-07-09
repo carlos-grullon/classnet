@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FetchData } from '@/utils/Tools.tsx';
+import { Card } from '@/components';
 
 type Task = {
   id: string;
@@ -45,7 +46,7 @@ export default function UpcomingTasks() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <Card>
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Próximas Tareas</h2>
       
       {loading ? (
@@ -79,6 +80,6 @@ export default function UpcomingTasks() {
       ) : (
         <p className="text-gray-600 dark:text-gray-300">No hay tareas próximas</p>
       )}
-    </div>
+    </Card>
   );
 }

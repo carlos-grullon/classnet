@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FetchData } from '@/utils/Tools.tsx';
+import { Card } from '@/components';
 
 type Announcement = {
   id: string;
@@ -33,7 +34,7 @@ export default function AnnouncementsSection() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <Card>
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Anuncios Recientes</h2>
       
       {loading ? (
@@ -57,6 +58,6 @@ export default function AnnouncementsSection() {
       ) : (
         <p className="text-gray-600 dark:text-gray-300">No hay anuncios recientes</p>
       )}
-    </div>
+    </Card>
   );
 }
