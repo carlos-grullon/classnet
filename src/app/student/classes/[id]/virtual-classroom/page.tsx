@@ -299,6 +299,7 @@ export default function VirtualClassroom() {
         {(activeId, setActiveId) => (
           <>
             <div className="grid grid-cols-4 gap-0 border border-gray-500 dark:border-gray-200 mb-4 w-full bg-white dark:bg-gray-800/50 rounded-t-lg">
+
               <Tab
                 id="presentation"
                 activeId={activeId}
@@ -307,6 +308,7 @@ export default function VirtualClassroom() {
               >
                 Presentación
               </Tab>
+
               <Tab
                 id="week"
                 activeId={activeId}
@@ -336,6 +338,7 @@ export default function VirtualClassroom() {
                   </div>
                 </div>
               </Tab>
+
               <Tab
                 id="resources"
                 activeId={activeId}
@@ -344,6 +347,7 @@ export default function VirtualClassroom() {
               >
                 Recursos
               </Tab>
+
               <Tab
                 id="grades"
                 activeId={activeId}
@@ -353,6 +357,7 @@ export default function VirtualClassroom() {
                 <span className='md:hidden'>Califs.</span>
                 <span className='hidden md:block'>Calificaciones</span>
               </Tab>
+              
             </div>
 
             <TabContent id="presentation" activeId={activeId} className="mt-4">
@@ -928,6 +933,7 @@ export default function VirtualClassroom() {
           </>
         )}
       </Tabs>
+
       <ConfirmationModal
         isOpen={showConfirmation}
         onClose={() => setShowConfirmation(false)}

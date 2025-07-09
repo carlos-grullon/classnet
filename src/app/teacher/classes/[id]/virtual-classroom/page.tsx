@@ -98,11 +98,9 @@ export default function VirtualClassroom() {
       try {
         setIsLoading(true);
         const data = await FetchData<{ success: boolean, content: ClassContent }>(`/api/teacher/classes/${classId}/content?userType=teacher`, {}, 'GET');
-
         if (data.success && data.content) {
           setContent(data.content);
-
-        setWhatsappLink(data.content.class.whatsappLink)
+          setWhatsappLink(data.content.class.whatsappLink)
         } else {
           ErrorMsj('Error obteniendo datos del curso');
         }
@@ -292,80 +290,84 @@ export default function VirtualClassroom() {
   };
 
   return (
-    <div className="p-4 mx-7">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Aula Virtual</h1>
+    <div className="md:p-4 md:mx-7 p-1">
+      <div className="flex flex-col md:flex-row justify-center md:justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-center md:text-left">Aula Virtual</h1>
       </div>
 
       <Tabs defaultActiveId="presentation">
         {(activeId, setActiveId) => (
           <>
-            <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+            <div className="grid grid-cols-4 md:grid-cols-5 gap-0 border border-gray-500 dark:border-gray-200 mb-4 w-full bg-white dark:bg-gray-800/50 rounded-t-lg">
+
               <Tab
                 id="presentation"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Presentación
               </Tab>
+
               <Tab
-                id="week"
-                activeId={activeId}
-                setActiveId={setActiveId}
-                className={`px-4 py-2 font-medium text-sm focus:outline-none ${activeId === 'week' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300'}`}
-              >
-                <div className="relative flex items-center">
-                  <span
-                    className="mr-7 cursor-pointer"
-                    onClick={() => setActiveId('week')}
-                  >
-                    Semana {selectedWeek}
-                  </span>
-                  <Select
-                    value={selectedWeek.toString()}
-                    onChange={handleWeekChange}
-                    className="w-5 opacity-0 absolute right-0"
-                  >
-                    {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
-                      <SelectItem key={week} value={week.toString()}>
-                        Semana {week}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  <div className="pointer-events-none absolute right-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
+                 id="week"
+                 activeId={activeId}
+                 setActiveId={setActiveId}
+                 className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
+               >
+                 <div className="relative flex justify-center items-center">
+                   <span className="truncate mr-5">
+                     <span className='md:hidden'>Sem {selectedWeek}</span>
+                     <span className='hidden md:block'>Semana {selectedWeek}</span>
+                   </span>
+                   <Select
+                     value={selectedWeek.toString()}
+                     onChange={handleWeekChange}
+                     className="w-4 opacity-0 absolute right-0"
+                   >
+                     {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
+                       <SelectItem key={week} value={week.toString()}>
+                         Semana {week}
+                       </SelectItem>
+                     ))}
+                   </Select>
+                   <div className="pointer-events-none absolute right-0">
+                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                     </svg>
+                   </div>
+                 </div>
               </Tab>
+
               <Tab
                 id="students"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Estudiantes
               </Tab>
+
               <Tab
                 id="resources"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Recursos
               </Tab>
+
               <Tab
                 id="grade"
                 activeId={activeId}
                 setActiveId={setActiveId}
-                className="px-4 py-2 font-medium text-sm focus:outline-none"
+                className="px-2 py-2 border-r border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
               >
                 Calificación
               </Tab>
-            </div>
 
+            </div>
+            
             <TabContent id="presentation" activeId={activeId} className="mt-4">
               <div className="grid md:grid-cols-12 gap-6">
 
@@ -479,7 +481,7 @@ export default function VirtualClassroom() {
                             <div className="flex items-center gap-2 w-full">
                               <Input
                                 value={whatsappLink}
-                                 onChange={(e) => setWhatsappLink(e.target.value)}
+                                onChange={(e) => setWhatsappLink(e.target.value)}
                                 placeholder="WhatsApp group link"
                                 className="flex-1"
                               />
