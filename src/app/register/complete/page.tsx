@@ -8,6 +8,7 @@ import { FiUserPlus, FiMail, FiUser } from 'react-icons/fi';
 import { FetchData } from '@/utils/Tools.tsx';
 import Image from 'next/image';
 import { ThemeToggle } from '@/components';
+import { useUser } from '@/providers/UserProvider';
 
 export default function CompleteRegistrationPage() {
   return (
@@ -28,6 +29,7 @@ function CompleteRegistrationContent() {
   const [userType, setUserType] = useState<'E' | 'P' | ''>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { setUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +51,14 @@ function CompleteRegistrationContent() {
       });
       
       if (result.success) {
+        setUser({
+          userIsStudent: userType === 'E',
+          userIsTeacher: userType === 'P',
+          userEmail: email,
+          userImage: picture,
+          userName: name,
+          userNumber: ''
+        });
         router.push('/');
       } else {
         setError(result.message || 'Error al completar el registro');

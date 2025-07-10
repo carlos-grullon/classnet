@@ -78,7 +78,7 @@ export function Navbar() {
                   alt="Foto de perfil"
                   className="object-cover h-full w-full"
                   fill={true}
-                  onClick={() => router.push('/student/profile')}
+                  onClick={() => isTeacherRoute ? router.push('/teacher/profile') : router.push('/student/profile')}
                 />
               </div>
             </div>

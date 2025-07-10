@@ -86,7 +86,15 @@ export async function POST(request: NextRequest) {
     const token = await createUserSession(user);
     
     // Crear respuesta y establecer cookie
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.json({ 
+      success: true,
+      user: {
+        email: user.email,
+        username: user.username,
+        user_type: user.user_is_teacher ? 'P' : 'E',
+        image_path: user.image_path
+      }
+    });
     
     response.cookies.set({
       name: 'AuthToken',
