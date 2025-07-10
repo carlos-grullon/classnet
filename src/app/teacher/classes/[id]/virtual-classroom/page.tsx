@@ -18,6 +18,7 @@ import { formatInputDateToLong } from '@/utils/GeneralTools';
 import { SupportMaterial, WeekContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { useParams } from 'next/navigation';
+import { FaUserGraduate, FaUsers } from 'react-icons/fa';
 
 export default function VirtualClassroom() {
   const params = useParams();
@@ -708,8 +709,17 @@ export default function VirtualClassroom() {
             </TabContent>
 
             <TabContent id="students" activeId={activeId} className="mt-4">
-              <div className="p-4 border rounded-lg">
-                <h2 className="text-xl font-semibold mb-2">Estudiantes inscritos</h2>
+              <div className="flex flex-col items-center justify-center p-6 gap-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div className="bg-blue-100 dark:bg-blue-900 p-5 rounded-full relative">
+                  <FaUserGraduate className="text-blue-600 dark:text-blue-300 text-4xl" />
+                  <div className="absolute -top-2 -right-2 bg-green-400 text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                    <FaUsers className="text-green-800 text-xs" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300">Students enrolled</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                  This page is still in development.
+                </p>
               </div>
             </TabContent>
 
