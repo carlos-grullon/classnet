@@ -7,7 +7,8 @@
     "build": "npx tsx src/utils/Schema.ts && next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-db": "npx tsx src/utils/Schema.ts"
+    "setup-db": "npx tsx src/utils/Schema.ts",
+    "seed-db": "npx tsx src/utils/seedDatabase.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.830.0",
