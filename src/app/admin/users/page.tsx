@@ -13,7 +13,7 @@ export default function Users() {
       </div>
       <h1 className="text-3xl text-gray-600 dark:text-gray-400 font-bold text-center">User Management</h1>
       <p className="text-lg text-gray-500 text-center max-w-md">
-        User management panel in development. We're building powerful tools for user administration.
+        User management panel in development. We&apos;re building powerful tools for user administration.
       </p>
     </div>
   );
