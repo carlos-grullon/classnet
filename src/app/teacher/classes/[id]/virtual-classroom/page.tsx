@@ -1027,6 +1027,7 @@ export default function VirtualClassroom() {
               handleSaveWeekContent(updatedContent);
               setMaterialData({ link: '', title: '', file: null });
               setMaterialType(null);
+              setIsAddMaterialModalOpen(false);
             }
           }}>
             Subir

@@ -97,7 +97,6 @@ export async function POST(
     await classContentCollection.insertOne({
       classId: new ObjectId(classId),
       welcomeMessage: '',
-      whatsappLink: '',
       resources: [],
       createdAt: new Date()
     });
