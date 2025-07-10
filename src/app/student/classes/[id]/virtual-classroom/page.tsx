@@ -509,10 +509,10 @@ export default function VirtualClassroom() {
                                   <Link
                                     href={weekContent.meetingLink}
                                     target="_blank"
-                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline max-w-full"
                                   >
                                     <FiExternalLink />
-                                    <span className="truncate max-w-[180px] md:max-w-none">{weekContent.meetingLink}</span>
+                                    <span className="truncate w-[180px] md:w-[220px] block">{weekContent.meetingLink}</span>
                                   </Link>
                                 </div>
                               ) : (
@@ -529,10 +529,10 @@ export default function VirtualClassroom() {
                                   <Link
                                     href={weekContent.recordingLink}
                                     target="_blank"
-                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline"
+                                    className="flex justify-center items-center gap-2 text-blue-500 hover:underline max-w-full"
                                   >
                                     <FiExternalLink />
-                                    <span className="truncate max-w-[180px] md:max-w-none">{weekContent.recordingLink}</span>
+                                    <span className="truncate w-[180px] md:w-[220px] block">{weekContent.recordingLink}</span>
                                   </Link>
                                 </div>
                               ) : (
