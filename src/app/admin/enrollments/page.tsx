@@ -300,7 +300,7 @@ export default function AdminEnrollments() {
             <p className="text-gray-500 dark:text-gray-400">Cargando inscripciones...</p>
           </div>
         ) : enrollments.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid md:grid-cols-3 gap-4">
             {/* Lista de inscripciones */}
             {enrollments.map((enrollment) => (
               <Card key={enrollment.id} className="p-4">

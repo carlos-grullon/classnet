@@ -33,7 +33,6 @@ export function Navbar() {
   ] : isAdminRoute ? [
     { name: 'Dashboard', path: '/admin' },
     { name: 'Usuarios', path: '/admin/users' },
-    { name: 'Clases', path: '/admin/classes' },
     { name: 'Inscripciones', path: '/admin/enrollments' },
     { name: 'Pagos Mensuales', path: '/admin/monthly-payments' }
   ] : [];
