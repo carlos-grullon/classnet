@@ -7,13 +7,6 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     const { email, username, user_type, image_path } = data;
 
-    if (email !== 'carlos0012010vegano@gmail.com' && user_type === 'P') {
-      return NextResponse.json(
-        { success: false, message: 'No se pueden ingresar como profesores todavía' },
-        { status: 401 }
-      );
-    }
-
     if (!email || !username || !user_type) {
       return NextResponse.json(
         { success: false, message: 'Datos incompletos' },
