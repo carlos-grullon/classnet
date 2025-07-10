@@ -1,5 +1,3 @@
-import { getCollection } from './MongoDB';
-
 /**
  * Seeds initial data into collections if they are empty.
  * Safe to run multiple times (idempotent).
