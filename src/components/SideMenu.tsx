@@ -52,7 +52,7 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const resetDemo = async () => {
     setIsResetLoading(true);
     try {
-      const response: { success: boolean, error?: string, message?: string } = await FetchData("/api/seed-db", {}, "POST");
+      const response: { success: boolean, error?: string, message?: string } = await FetchData("/api/reset-demo", {}, "POST");
       if (response.success) {
         SuccessMsj(response.message || "Demo reseteada");
         window.location.reload();

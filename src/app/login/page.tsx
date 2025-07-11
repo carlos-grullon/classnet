@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, ThemeToggle, Input, Button } from "@/components";
 import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormSchema, LoginFormValues } from '@/validations/login';
 import { Controller } from 'react-hook-form';
 import { useUser } from '@/providers/UserProvider';
-import { resetDemoIfNeeded } from '@/utils/resetDemo';
 
 interface User {
   userIsStudent: boolean;
@@ -27,8 +26,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useUser();
 
-  resetDemoIfNeeded();
-
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
@@ -36,6 +33,26 @@ export default function LoginPage() {
       password: ''
     }
   });
+
+  useEffect(() => {
+    // Reset demo si es necesario, una vez al día
+    async function resetDemoIfNeeded() {
+      try {
+       const response = await FetchData<{ success: boolean, message: string, error?: string, resetDone: boolean }>("/api/reset-demo", {}, "GET");
+       if (response.success) {
+         if (response.resetDone) {
+           SuccessMsj(response.message);
+         }
+       } else {
+         ErrorMsj(response.error || "Error al resetear la demo");
+       }
+      } catch (error) {
+        console.error(error);
+        ErrorMsj("Error al resetear la demo");
+      }
+    }
+    resetDemoIfNeeded();
+  }, []);
 
   const {
     handleSubmit,
