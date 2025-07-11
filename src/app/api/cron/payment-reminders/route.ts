@@ -5,6 +5,7 @@ import { addDays, isBefore, isAfter, differenceInDays } from 'date-fns';
 import { sendPaymentReminderEmail, sendPaymentOverdueEmail } from '@/utils/EmailService';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { Payment, Enrollment } from '@/interfaces/Enrollment'
+import { getLevelName } from '@/utils/GeneralTools.ts';
 
 // Clave secreta para proteger el endpoint de cron
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -53,7 +54,7 @@ export async function GET(req: NextRequest) {
           student.email,
           student.username || 'Estudiante',
           classData.subjectName,
-          classData.level,
+          getLevelName(classData.level),
           {
             dueDate: formatDateLong(nextPaymentDate),
             amount: enrollment.priceAtEnrollment || classData.price,
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
           student.email,
           student.username || 'Estudiante',
           classData.subjectName,
-          classData.level,
+          getLevelName(classData.level),
           {
             dueDate: formatDateLong(nextPaymentDate),
             amount: enrollment.priceAtEnrollment || classData.price,
@@ -86,8 +87,7 @@ export async function GET(req: NextRequest) {
         // Verificar si ya se ha marcado como vencido para no enviar múltiples correos
         const isAlreadyMarkedOverdue = enrollment.paymentsMade?.some(
           (payment: Payment) => payment.status === 'overdue' && 
-          payment.date && 
-          isBefore(new Date(payment.date), now) && 
+          payment.date && isBefore(new Date(payment.date), now) && 
           differenceInDays(now, new Date(payment.date)) < 7
         );
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
             student.email,
             student.username || 'Estudiante',
             classData.subjectName,
-            classData.level,
+            getLevelName(classData.level),
             {
               dueDate: formatDateLong(nextPaymentDate),
               amount: enrollment.priceAtEnrollment || classData.price,
@@ -124,8 +124,8 @@ export async function GET(req: NextRequest) {
         }
       }
       
-      // 4. Suspender al estudiante si han pasado más de 10 días desde la fecha de vencimiento
-      else if (isAfter(now, addDays(nextPaymentDate, 10))) {
+      // 4. Suspender al estudiante si han pasado más de 20 días desde la fecha de vencimiento
+      else if (isAfter(now, addDays(nextPaymentDate, 20))) {
         // Solo suspender si no está ya suspendido
         if (enrollment.status !== 'suspended_due_to_non_payment') {
           await enrollmentsCollection.updateOne(

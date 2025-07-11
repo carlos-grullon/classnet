@@ -33,7 +33,7 @@ export async function deleteS3Object(url: string) {
 export async function uploadToS3(file: File, prefix: string): Promise<string> {
   try {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${prefix}/${uuidv4()}.${fileExt}`;
+    const fileName = `test/${prefix}/${uuidv4()}.${fileExt}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
     await s3.send(new PutObjectCommand({

@@ -1,3 +1,6 @@
+import 'dotenv/config';
+import { getCollection } from "@/utils/MongoDB";
+import * as dataSeed from "../lib/dataSeed";
 /**
  * Seeds initial data into collections if they are empty.
  * Safe to run multiple times (idempotent).
@@ -6,16 +9,23 @@ export async function seedDatabase(): Promise<void> {
   try {
     console.log('Starting database seeding...');
 
-    // Example for subjects collection
-    // const subjectsCollection = await getCollection('subjects');
-    // const subjectCount = await subjectsCollection.countDocuments();
-    
-    // if (subjectCount === 0) {
-    //   console.log('Seeding subjects collection...');
-    // }
+    const collections = [
+      { name: 'class_contents', data: dataSeed.class_contents },
+      { name: 'classes', data: dataSeed.classes },
+      { name: 'enrollments', data: dataSeed.enrollments },
+      { name: 'users', data: dataSeed.users },
+      { name: 'weeks', data: dataSeed.weeks },
+      { name: 'submitted_assignments', data: dataSeed.submittedAssignments }
+    ];
 
-    // Add similar logic for other collections (countries, etc.)
-    
+    for (const { name, data } of collections) {
+      const collection = await getCollection(name);
+      console.log(`Seeding ${name} collection...`);
+      await collection.deleteMany({});
+      const result = await collection.insertMany(data);
+      console.log(`Inserted ${result.insertedCount} documents into ${name}`);
+    }
+
     console.log('Database seeding completed successfully');
   } catch (error) {
     console.error('Database seeding failed:', error);
