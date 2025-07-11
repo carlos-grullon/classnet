@@ -63,7 +63,7 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
       return;
     }
 
-    // Validar tamaño (5MB máximo)
+    // Validar tamaño (25MB máximo)
     const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
       setError('El archivo es demasiado grande (máximo 25MB)');
@@ -245,7 +245,7 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
               Arrastra y suelta archivos aquí o haz clic para seleccionar
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Formatos soportados: JPEG, JPG, PNG, GIF, PDF, Word (DOC, DOCX) (máx. 5MB)
+              Formatos soportados: JPEG, JPG, PNG, GIF, PDF, Word (DOC, DOCX) (máx. 25MB)
             </p>
           </div>
         ) : (
