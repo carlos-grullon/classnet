@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { seedDatabase } from '@/utils/seedDatabase';
-import { getCollection } from "@/utils/MongoDB";
+import { seedDatabase } from '@/utils/seedDatabase.ts';
+import { getCollection } from "@/utils/MongoDB.ts";
 import { ObjectId } from "mongodb";
 
 interface MetaDocument {
@@ -33,7 +33,7 @@ export async function GET() {
             );
             resetDone = true;
         }
-        return NextResponse.json({ success: true, message: "Demo reset done", resetDone }, { status: 200 });
+        return NextResponse.json({ success: true, message: "Daily Demo reset done", resetDone }, { status: 200 });
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Error al resetear la demo';
         console.error(message, error);
@@ -53,7 +53,7 @@ export async function POST() {
             { $set: { date: today } },
             { upsert: true }
         );
-        return NextResponse.json({ success: true, message: "Demo reset done" }, { status: 200 });
+        return NextResponse.json({ success: true, message: "Demo reset done", resetDone: true }, { status: 200 });
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Error al resetear la demo';
         console.error(message, error);

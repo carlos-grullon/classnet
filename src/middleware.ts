@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
     '/api/auth/google',
     '/api/auth/google/callback',
     '/api/auth/google/register',
+    '/api/reset-demo',
     '/_next',
     '/favicon.ico',
     '/images',

@@ -15,7 +15,7 @@ export async function seedDatabase(): Promise<void> {
       { name: 'enrollments', data: dataSeed.enrollments },
       { name: 'users', data: dataSeed.users },
       { name: 'weeks', data: dataSeed.weeks },
-      { name: 'submitted_assignments', data: dataSeed.submittedAssignments }
+      { name: 'submittedAssignments', data: dataSeed.submittedAssignments }
     ];
 
     for (const { name, data } of collections) {

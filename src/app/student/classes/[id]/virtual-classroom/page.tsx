@@ -215,6 +215,23 @@ export default function VirtualClassroom() {
             if (!response.studentAssignment.message) {
               setIsEditingMessage(true);
             }
+          } else {
+            setStudentAssignment({
+              fileUrl: null,
+              fileName: null,
+              audioUrl: null,
+              message: '',
+              fileSubmission: {
+                submittedAt: null,
+                isGraded: false,
+                grade: null
+              },
+              audioSubmission: {
+                submittedAt: null,
+                isGraded: false,
+                grade: null
+              }
+            });
           }
         }
       } catch (error) {
