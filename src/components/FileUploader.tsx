@@ -64,9 +64,9 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
     }
 
     // Validar tamaño (5MB máximo)
-    const maxSize = 5 * 1024 * 1024;
+    const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
-      setError('El archivo es demasiado grande (máximo 5MB)');
+      setError('El archivo es demasiado grande (máximo 25MB)');
       ErrorMsj('Archivo demasiado grande');
       return;
     }
@@ -84,35 +84,107 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (!file) { // 'file' es el File object que viene de tu input
+      setError('Por favor, selecciona un archivo primero.');
+      return;
+    }
     
     try {
       setIsLoading(true);
       setError('');
       
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('path', path); // Enviamos la ruta al endpoint
-      
-      const response = await fetch('/api/upload-files', {
+      // PASO 1: Solicitar la URL pre-firmada a tu API Route
+      // Tu API Route '/api/upload-files' ahora espera un JSON con el nombre, tipo y path.
+      const getUrlResponse = await fetch('/api/upload-files', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json', // ¡Importante! Ahora envías JSON
+        },
+        body: JSON.stringify({ 
+          fileName: file.name,   // El nombre original del archivo
+          fileType: file.type,   // El tipo MIME del archivo
+          path: path             // La carpeta de destino en S3
+        }),
       });
+  
+      if (!getUrlResponse.ok) {
+        const errorData = await getUrlResponse.json();
+        throw new Error(`Error al obtener URL pre-firmada: ${errorData.error || getUrlResponse.statusText}`);
+      }
+  
+      // Desestructuramos la respuesta para obtener la URL pre-firmada y la URL pública final de S3
+      const { presignedUrl, s3ObjectUrl } = await getUrlResponse.json();
       
-      if (!response.ok) throw new Error('Upload failed');
-      
-      const result = await response.json();
+      // PASO 2: Subir el archivo directamente a S3 usando la URL pre-firmada
+      // Aquí el 'file' (el objeto File completo) se envía directamente a S3.
+      const uploadToS3Response = await fetch(presignedUrl, {
+        method: 'PUT', // Para subidas directas de objetos individuales, siempre es PUT
+        headers: {
+          'Content-Type': file.type, // Asegúrate que el Content-Type coincida con el generado en la URL
+          // Si al generar la URL pre-firmada en S3Service.ts usaste ACL: 'public-read',
+          // a veces es necesario incluir también el header 'x-amz-acl': 'public-read' aquí.
+          // Prueba sin él primero, y si hay problemas, descoméntalo:
+          // 'x-amz-acl': 'public-read',
+        },
+        body: file, // ¡Aquí es donde envías el archivo (File object) directamente a S3!
+      });
+  
+      if (!uploadToS3Response.ok) {
+        // Los errores de S3 directo suelen venir en texto/XML, no JSON
+        const errorText = await uploadToS3Response.text();
+        throw new Error(`Fallo al subir el archivo a S3: ${uploadToS3Response.status} - ${errorText}`);
+      }
+      const result = {
+        url: s3ObjectUrl, // Usamos la URL pública de S3
+        fileName: file.name
+      }
+      // PASO 3: Manejar el éxito
+      // Ahora 's3ObjectUrl' es la URL pública del archivo en S3
       onUploadSuccess?.({
         url: result.url,
-        fileName: file.name
+        fileName: result.fileName
       });
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload error');
+      setError(err instanceof Error ? err.message : 'Error desconocido al subir');
+      console.error('Upload error:', err);
     } finally {
       setIsLoading(false);
     }
   };
+
+
+
+  // const handleUpload = async () => {
+  //   if (!file) return;
+    
+  //   try {
+  //     setIsLoading(true);
+  //     setError('');
+      
+  //     const formData = new FormData();
+  //     formData.append('file', file);
+  //     formData.append('path', path); // Enviamos la ruta al endpoint
+      
+  //     const response = await fetch('/api/upload-files', {
+  //       method: 'POST',
+  //       body: formData
+  //     });
+      
+  //     if (!response.ok) throw new Error('Upload failed');
+      
+  //     const result = await response.json();
+  //     onUploadSuccess?.({
+  //       url: result.url,
+  //       fileName: file.name
+  //     });
+      
+  //   } catch (err) {
+  //     setError(err instanceof Error ? err.message : 'Upload error');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const removeFile = () => {
     setFile(null);
