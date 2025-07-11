@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { FiMenu, FiX, FiSun, FiMoon, FiLogOut } from 'react-icons/fi';
-import { FetchData } from '@/utils/Tools.tsx';
+import { FiMenu, FiX, FiSun, FiMoon, FiLogOut, FiRefreshCcw } from 'react-icons/fi';
+import { FetchData, SuccessMsj, ErrorMsj } from '@/utils/Tools.tsx';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useUser } from '@/providers/UserProvider';
@@ -31,6 +31,7 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const { setUser } = useUser();
+  const [isResetLoading, setIsResetLoading] = useState(false);
 
   // Ocultar en rutas de login/register
   if (pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
@@ -48,11 +49,33 @@ export function SideMenu({ items = [] }: { items?: MenuItem[] }) {
     }
   };
 
+  const resetDemo = async () => {
+    setIsResetLoading(true);
+    try {
+      const response: { success: boolean, error?: string, message?: string } = await FetchData("/api/seed-db", {}, "POST");
+      if (response.success) {
+        SuccessMsj(response.message || "Demo reseteada");
+        window.location.reload();
+      } else {
+        ErrorMsj(response.error || "Error al resetear la demo");
+      }
+    } catch (error) {
+      ErrorMsj(error instanceof Error ? error.message : "Error al resetear la demo");
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
   const defaultItems: MenuItem[] = [
     {
       icon: <FiLogOut className="w-5 h-5" />,
       text: 'Cerrar sesión',
       onClick: handleLogout
+    },
+    {
+      icon: <FiRefreshCcw className="w-5 h-5" />,
+      text: isResetLoading ? 'Reseting...' : 'Reset Demo',
+      onClick: resetDemo,
     }
   ];
 

@@ -12,6 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormSchema, LoginFormValues } from '@/validations/login';
 import { Controller } from 'react-hook-form';
 import { useUser } from '@/providers/UserProvider';
+import { resetDemoIfNeeded } from '@/utils/resetDemo';
 
 interface User {
   userIsStudent: boolean;
@@ -25,6 +26,8 @@ interface User {
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useUser();
+
+  resetDemoIfNeeded();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginFormSchema),
