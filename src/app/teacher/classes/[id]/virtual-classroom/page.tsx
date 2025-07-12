@@ -19,6 +19,7 @@ import { SupportMaterial, WeekContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { useParams } from 'next/navigation';
 import { FaUserGraduate, FaUsers } from 'react-icons/fa';
+import Image from 'next/image';
 
 export default function VirtualClassroom() {
   const params = useParams();
@@ -311,33 +312,33 @@ export default function VirtualClassroom() {
               </Tab>
 
               <Tab
-                 id="week"
-                 activeId={activeId}
-                 setActiveId={setActiveId}
-                 className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
-               >
-                 <div className="relative flex justify-center items-center">
-                   <span className="truncate mr-5">
-                     <span className='md:hidden'>Sem {selectedWeek}</span>
-                     <span className='hidden md:block'>Semana {selectedWeek}</span>
-                   </span>
-                   <Select
-                     value={selectedWeek.toString()}
-                     onChange={handleWeekChange}
-                     className="w-4 opacity-0 absolute right-0"
-                   >
-                     {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
-                       <SelectItem key={week} value={week.toString()}>
-                         Semana {week}
-                       </SelectItem>
-                     ))}
-                   </Select>
-                   <div className="pointer-events-none absolute right-0">
-                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                     </svg>
-                   </div>
-                 </div>
+                id="week"
+                activeId={activeId}
+                setActiveId={setActiveId}
+                className="px-2 py-2 border-r border-b border-gray-500 dark:border-gray-200 text-xs sm:text-sm font-medium text-center truncate focus:outline-none"
+              >
+                <div className="relative flex justify-center items-center">
+                  <span className="truncate mr-5">
+                    <span className='md:hidden'>Sem {selectedWeek}</span>
+                    <span className='hidden md:block'>Semana {selectedWeek}</span>
+                  </span>
+                  <Select
+                    value={selectedWeek.toString()}
+                    onChange={handleWeekChange}
+                    className="w-4 opacity-0 absolute right-0"
+                  >
+                    {Array.from({ length: content.durationWeeks }, (_, i) => i + 1).map(week => (
+                      <SelectItem key={week} value={week.toString()}>
+                        Semana {week}
+                      </SelectItem>
+                    ))}
+                  </Select>
+                  <div className="pointer-events-none absolute right-0">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </Tab>
 
               <Tab
@@ -368,7 +369,7 @@ export default function VirtualClassroom() {
               </Tab>
 
             </div>
-            
+
             <TabContent id="presentation" activeId={activeId} className="mt-4">
               <div className="grid md:grid-cols-12 gap-6">
 
@@ -380,10 +381,12 @@ export default function VirtualClassroom() {
 
                   <div className="flex flex-col sm:flex-row gap-6">
                     <div className="flex-shrink-0">
-                      <img
-                        src={content.teacher.photo}
+                      <Image
+                        src={content.teacher.photo || '/images/default-avatar.png'}
                         alt={content.teacher.name}
-                        className="w-32 h-32 rounded-full object-cover border-2 border-blue-100 dark:border-blue-900"
+                        width={128} // Equivalente a w-32 (32 * 4 = 128)
+                        height={128} // Equivalente a h-32
+                        className="rounded-full object-cover border-2 border-blue-100 dark:border-blue-900"
                       />
                     </div>
 
