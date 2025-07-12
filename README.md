@@ -12,7 +12,7 @@
 ClassNet solves the challenge of scattered online educational management by offering a modern, unified platform that connects students and teachers. It allows for intuitive and centralized virtual classroom administration, improving the remote learning experience.
 
 ## 🚀 Demonstration
-![ClassNet Gif In Action](https://classnetbucket.s3.us-east-2.amazonaws.com/project_meta_data/Grabaciondepantalla2025-07-12alas2.36.06a.m.-ezgif.com-video-to-gif-converter.mov)
+![ClassNet Gif In Action](https://classnetbucket.s3.us-east-2.amazonaws.com/project_meta_data/Grabacio%CC%81n+de+pantalla+2025-07-12+a+la(s)+2.36.06+a.+m..mov.gif)
 
 ## Features
 
