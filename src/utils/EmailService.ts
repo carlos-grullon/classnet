@@ -183,6 +183,7 @@ export async function sendEnrollmentConfirmationEmail(
     schedule?: string;
     startDate?: string;
     price?: number;
+    whatsappLink?: string;
   } = {}
 ) {
   const subject = '¡Inscripción Confirmada! - ClassNet';
@@ -203,6 +204,23 @@ export async function sendEnrollmentConfirmationEmail(
         </ul>
       </div>
       
+      ${classDetails.whatsappLink ? `
+      <div style="margin: 25px 0; padding: 15px; background-color: #f0fff4; border-left: 4px solid #48bb78; border-radius: 4px;">
+        <h3 style="color: #2f855a; margin-top: 0;">¡Únete al grupo de WhatsApp de la clase!</h3>
+        <p>Únete al grupo de WhatsApp haciendo clic en el siguiente enlace:</p>
+        <p style="margin: 15px 0;">
+          <a href="${classDetails.whatsappLink}" 
+             style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            Unirme al grupo de WhatsApp
+          </a>
+        </p>
+        <p style="font-size: 12px; color: #718096; margin: 5px 0 0;">
+          Si el botón no funciona, copia y pega este enlace en tu navegador: <br>
+          <span style="word-break: break-all;">${classDetails.whatsappLink}</span>
+        </p>
+      </div>
+      ` : ''}
+
       <p>Gracias por confiar en ClassNet para tu educación.</p>
       
       <p>Saludos,<br>El equipo de ClassNet</p>

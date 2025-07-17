@@ -145,7 +145,8 @@ async function sendConfirmationEmailToStudent(student: User, classData: ClassDat
         teacherName: classData.teacherName || '{ nombre del profesor }',
         schedule: `${getDayName(classData.selectedDays || [])} ${mongoTimeToTimeString12h(classData.startTime)} - ${mongoTimeToTimeString12h(classData.endTime)}`,
         startDate: classData.startDate ? formatDateLong(new Date(classData.startDate)) : undefined,
-        price: classData.price
+        price: classData.price,
+        whatsappLink: classData.whatsappLink || undefined
       }
     );
     console.log(`Correo de confirmación enviado a ${student.email}`);
