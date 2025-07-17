@@ -48,12 +48,10 @@ export default function LoginPage() {
       const user = await FetchData("/api/login", data) as User;
       setUser(user);
       SuccessMsj("Inicio de sesión exitoso");
-      if (user.userIsStudent && user.userIsTeacher) {
-        router.push("/");
+      if (user.userIsTeacher) {
+        router.push("/teacher");
       } else if (user.userIsStudent) {
         router.push("/student");
-      } else if (user.userIsTeacher) {
-        router.push("/teacher");
       }
     } catch (error) {
       console.error(error);

@@ -59,7 +59,7 @@ function CompleteRegistrationContent() {
           userName: name,
           userNumber: ''
         });
-        router.push('/');
+        router.push(userType === 'P' ? '/teacher' : '/student');
       } else {
         setError(result.message || 'Error al completar el registro');
       }

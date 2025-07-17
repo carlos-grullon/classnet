@@ -4,6 +4,8 @@ import { jwtVerify } from "jose";
 export async function middleware(request: NextRequest) {
   // Lista de rutas públicas que no requieren autenticación
   const publicPaths = [
+    '/',
+    '/faq',
     '/login',
     '/register',
     '/register/complete',
@@ -26,8 +28,24 @@ export async function middleware(request: NextRequest) {
   if (publicPaths.some(path => pathname.startsWith(path))) {
     if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
       if (token) {
-        return NextResponse.redirect(new URL('/', request.url));
+        try {
+          const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
+          const { payload } = await jwtVerify(token, secret);
+          
+          // Redirigir a la ruta correspondiente según el rol
+          if (payload.userIsTeacher) {
+            return NextResponse.redirect(new URL('/teacher', request.url));
+          }else if (payload.userIsStudent) {
+            return NextResponse.redirect(new URL('/student', request.url));
+          }
+          // Si no es ni estudiante ni profesor, redirigir a inicio
+          return NextResponse.redirect(new URL('/', request.url));
+        } catch (error) {
+          // Si hay un error al verificar el token, redirigir a login
+          return NextResponse.redirect(new URL('/login', request.url));
+        }
       }
+      return NextResponse.next();
     }
     return NextResponse.next();
   }
