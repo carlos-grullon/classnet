@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
           // Si no es ni estudiante ni profesor, redirigir a inicio
           return NextResponse.redirect(new URL('/', request.url));
         } catch (error) {
+          console.error('Error al verificar el token:', error);
           // Si hay un error al verificar el token, redirigir a login
           return NextResponse.redirect(new URL('/login', request.url));
         }
