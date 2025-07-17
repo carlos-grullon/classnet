@@ -49,10 +49,10 @@ export async function POST(
     }
 
     // Validar tamaño (máximo 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 4.5 * 1024 * 1024; // 4.5MB
     if (paymentProof.size > maxSize) {
       return NextResponse.json({ 
-        error: 'El archivo es demasiado grande. El tamaño máximo es 5MB' 
+        error: 'El archivo es demasiado grande. El tamaño máximo es 4.5MB' 
       }, { status: 400 });
     }
     

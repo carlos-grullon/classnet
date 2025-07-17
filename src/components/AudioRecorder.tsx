@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { toast } from 'react-toastify';
 import { FiMic, FiPlay, FiPause, FiUpload, FiRefreshCw, FiCheck } from 'react-icons/fi';
 import { ErrorMsj } from '@/utils/Tools.tsx';
 import * as lamejs from 'lamejs';
@@ -366,37 +365,101 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const sendAudio = async () => {
     if (!audioBlob) return;
-    
     try {
       setIsUploading(true);
       const mp3Blob = await convertToMP3(audioBlob);
-      const formData = new FormData();
-      // Asegurarse de que el tipo de archivo sea compatible con iOS
+      
+      // Crear el objeto File. Es importante que tenga un nombre y un tipo MIME correctos.
       const audioFile = new File([mp3Blob], 'audio-recording.mp3', {
         type: 'audio/mpeg'
       });
-      formData.append('file', audioFile);
-      formData.append('path', path);
-      
-      const response = await fetch('/api/upload-files', {
+  
+      // PASO 2: Solicitar la URL pre-firmada a tu API Route
+      // Tu API Route '/api/upload-files' ahora espera un JSON con el nombre, tipo y path.
+      const getUrlResponse = await fetch('/api/upload-files', {
         method: 'POST',
-        body: formData
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+        body: JSON.stringify({
+          fileName: audioFile.name,
+          fileType: audioFile.type, 
+          path: path
+        }),
       });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (onRecordingComplete) onRecordingComplete(data.url);
-      } else {
-        throw new Error(data.error || 'Error al subir el audio');
+  
+      if (!getUrlResponse.ok) {
+        const errorData = await getUrlResponse.json();
+        throw new Error(`Error al obtener URL pre-firmada: ${errorData.error || getUrlResponse.statusText}`);
       }
+  
+      // Desestructuramos la respuesta para obtener la URL pre-firmada y la URL final de S3
+      const { presignedUrl, s3ObjectUrl } = await getUrlResponse.json();
+  
+      // PASO 3: Subir el archivo directamente a S3 usando la URL pre-firmada
+      // Aquí el 'audioFile' (el Blob MP3) se envía directamente a S3.
+      const uploadToS3Response = await fetch(presignedUrl, {
+        method: 'PUT', // Para subidas directas de objetos individuales, siempre es PUT
+        headers: {
+          'Content-Type': audioFile.type, // Asegúrate que el Content-Type coincida con el generado en la URL
+          // Si al generar la URL pre-firmada en S3Service.ts usaste ACL: 'public-read',
+          // a veces es necesario incluir también el header 'x-amz-acl': 'public-read' aquí.
+          // Prueba sin él primero, y si hay problemas, descoméntalo:
+          // 'x-amz-acl': 'public-read', 
+        },
+        body: audioFile, // ¡Aquí es donde envías el Blob de audio directamente a S3!
+      });
+  
+      if (!uploadToS3Response.ok) {
+        // Los errores de S3 directo suelen venir en texto/XML, no JSON
+        const errorText = await uploadToS3Response.text(); 
+        throw new Error(`Fallo al subir el audio a S3: ${uploadToS3Response.status} - ${errorText}`);
+      }
+  
+      // PASO 4: Manejar el éxito
+      // Ahora 's3ObjectUrl' es la URL pública del audio en S3
+      if (onRecordingComplete) onRecordingComplete(s3ObjectUrl);
     } catch (error: unknown) {
-      toast.error('Error al subir el audio: ' + (error as Error).message);
+      // Manejo de errores
       console.error('Upload error:', error);
     } finally {
       setIsUploading(false);
     }
   };
+
+  // const sendAudio = async () => {
+  //   if (!audioBlob) return;
+    
+  //   try {
+  //     setIsUploading(true);
+  //     const mp3Blob = await convertToMP3(audioBlob);
+  //     const formData = new FormData();
+  //     // Asegurarse de que el tipo de archivo sea compatible con iOS
+  //     const audioFile = new File([mp3Blob], 'audio-recording.mp3', {
+  //       type: 'audio/mpeg'
+  //     });
+  //     formData.append('file', audioFile);
+  //     formData.append('path', path);
+      
+  //     const response = await fetch('/api/upload-files', {
+  //       method: 'POST',
+  //       body: formData
+  //     });
+      
+  //     const data = await response.json();
+      
+  //     if (response.ok) {
+  //       if (onRecordingComplete) onRecordingComplete(data.url);
+  //     } else {
+  //       throw new Error(data.error || 'Error al subir el audio');
+  //     }
+  //   } catch (error: unknown) {
+  //     toast.error('Error al subir el audio: ' + (error as Error).message);
+  //     console.error('Upload error:', error);
+  //   } finally {
+  //     setIsUploading(false);
+  //   }
+  // };
 
   return (
     <div className="relative">
