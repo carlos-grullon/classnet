@@ -41,7 +41,10 @@ export async function GET(request: NextRequest) {
     // Crear token JWT para la sesión
     const token = await createUserSession(user);
     
-    const redirectUrl = '/';
+    let redirectUrl = '/student';
+    if (user.user_is_teacher) {
+      redirectUrl = '/teacher';
+    }
     
     // Crear una respuesta con redirección y establecer la cookie httpOnly
     const response = NextResponse.redirect(new URL(redirectUrl, request.url));
