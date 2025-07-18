@@ -556,7 +556,7 @@ export default function ClassnetLanding() {
               </motion.a>
 
               <motion.a
-                href="mailto:infoclassnet.org@gmail.com"
+                href={"mailto:" + process.env.FROM_EMAIL}
                 className="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-full transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

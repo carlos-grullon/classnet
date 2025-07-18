@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     try {
         const data = await request.json();
         const validatedData = RegisterSchema.parse(data);
-            
         await Register(
             validatedData.username,
             validatedData.password,

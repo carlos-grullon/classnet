@@ -102,7 +102,7 @@ function createEmailTemplate(bodyContent: string): string {
           <p>© ${new Date().getFullYear()} ClassNet. Todos los derechos reservados.</p>
           <p style="margin-top: 10px;">
             <strong>¿Necesitas ayuda?</strong><br>
-            Correo: <a href="mailto:infoclassnet.org@gmail.com" style="color: #3b82f6; text-decoration: none;">infoclassnet.org@gmail.com</a><br>
+            Correo: <a href="mailto:${process.env.NEXT_PUBLIC_EMAIL_SUPPORT}" style="color: #3b82f6; text-decoration: none;">${process.env.NEXT_PUBLIC_EMAIL_SUPPORT}</a><br>
             WhatsApp: <a href="https://wa.me/18298647008" style="color: #3b82f6; text-decoration: none;">829-864-7008</a>
           </p>
         </div>
@@ -463,4 +463,17 @@ export async function sendPaymentConfirmationEmail(
   `;
 
   return await sendEmail(studentEmail, subject, htmlContent);
+}
+
+export async function sendVerificationEmail(email: string, token: string) {
+  const subject = 'Verificación de correo electrónico - ClassNet';
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #38a169;">Verificación de correo electrónico</h2>
+      <p>Hola,</p>
+      <p>Para verificar tu correo electrónico, haz clic en el siguiente enlace:</p>
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}">Verificar correo electrónico</a></p>
+    </div>
+  `;
+  return await sendEmail(email, subject, htmlContent);
 }

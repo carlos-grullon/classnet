@@ -34,7 +34,7 @@ export default function RegisterForm() {
     setIsLoading(true);
     try {
       await FetchData('/api/register', data);
-      router.push('/login');
+      router.push(`/check-email?email=${encodeURIComponent(data.email)}`);
       SuccessMsj('Registro exitoso');
     } catch (error) {
       const err = error as Error;
