@@ -54,8 +54,8 @@ export default function LoginPage() {
         router.push("/student");
       }
     } catch (error) {
-      console.error(error);
-      ErrorMsj("Credenciales incorrectas");
+      const errorMessage = error instanceof Error ? error.message : "Error al iniciar sesión";
+      ErrorMsj(errorMessage);
     } finally {
       setIsLoading(false);
     }

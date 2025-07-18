@@ -1,5 +1,7 @@
 import { getCollection } from "../utils/MongoDB";
 import { HashPassword, ComparePassword } from "../utils/Tools.ts";
+import crypto from 'crypto';
+import { sendVerificationEmail } from "@/utils/EmailService.ts";
 
 export async function Register(
     username: string,
@@ -10,10 +12,12 @@ export async function Register(
     if (email !== 'carlos0012010vegano@gmail.com' && user_type === 'P') {
         throw new Error('No se pueden ingresar como profesores todavía');
     }
-    
+
+    const token = crypto.randomBytes(32).toString('hex');
+
     const usersCollection = await getCollection('users');
     const user = await usersCollection.findOne({ email });
-    
+
     if (!user) {
         await usersCollection.insertOne({
             username,
@@ -31,9 +35,14 @@ export async function Register(
                 reviews: [],
                 rating: 0,
             } : {},
+            is_verified: false,
+            verification_token: token,
+            verification_expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hora
+            email_sent_at: new Date(),
             created_at: new Date(),
             updated_at: new Date()
         });
+        await sendVerificationEmail(email, token);
     } else {
         if (user.user_is_student && user_type === 'P') {
             await usersCollection.updateOne({
@@ -67,6 +76,10 @@ export async function Login(password: string, email: string) {
     const isPasswordValid = await ComparePassword(password, user.password);
     if (!isPasswordValid) {
         throw new Error('Contraseña incorrecta')
+    }
+
+    if (!user.is_verified) {
+        throw new Error('Cuenta no verificada, verifica tu correo electrónico')
     }
 
     return user;

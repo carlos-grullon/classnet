@@ -116,7 +116,7 @@ const FAQCategories = [
     items: [
       {
         question: "¿Cómo puedo contactar a soporte técnico?",
-        answer: "Puedes contactarnos a través de nuestro número 829-864-7008 o correo electrónico infoclassnet.org@google.com. Estamos disponibles de lunes a viernes."
+        answer: "Puedes contactarnos a través de nuestro número 829-864-7008 o correo electrónico " + process.env.NEXT_PUBLIC_EMAIL_SUPPORT + ". Estamos disponibles de lunes a viernes."
       },
       {
         question: "¿Tienen grupos de WhatsApp para estudiantes?",
