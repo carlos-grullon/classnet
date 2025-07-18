@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FetchData, ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx";
 import { Card } from "@/components/Card";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/Badge";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FiCheckCircle, FiAlertCircle, FiMail } from "react-icons/fi";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -87,5 +87,13 @@ export default function VerifyEmailPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-8">Cargando...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 } 

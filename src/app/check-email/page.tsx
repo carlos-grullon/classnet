@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ErrorMsj, FetchData, SuccessMsj } from "@/utils/Tools.tsx";
 import { Card } from "@/components/Card";
@@ -17,7 +17,7 @@ function maskEmail(email: string) {
   return `${maskedUser}@${maskedDom}.${domTld}`;
 }
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const params = useSearchParams();
   const email = params.get("email") || "";
   const [status, setStatus] = useState<"idle"|"sending"|"sent"|"error">("idle");
@@ -92,9 +92,17 @@ export default function CheckEmailPage() {
           ¿Correo equivocado? <a href="/register" className="text-blue-600 underline">Volver al registro</a>
         </div>
         <div className="mt-4 text-xs text-gray-400 text-center">
-          ¿Tienes problemas? <a href={"mailto:" + process.env.NEXT_PUBLIC_EMAIL_SUPPORT} className="text-blue-500 underline">Contáctanos</a> y te ayudaremos.
+          ¿Tienes problemas? <a href="mailto:classnet.info@gmail.com" className="text-blue-500 underline">Contáctanos</a> y te ayudaremos.
         </div>
       </Card>
     </div>
+  );
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-8">Cargando...</div>}>
+      <CheckEmailContent />
+    </Suspense>
   );
 }
