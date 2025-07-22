@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react"
 import { Button, ThemeToggle, Modal, Card } from "@/components"
-import { ErrorMsj, SuccessMsj } from "@/utils/Tools.tsx"
+import { ErrorMsj } from "@/utils/Tools.tsx"
 import { FiBookOpen, FiStar, FiCheckCircle, FiArrowLeft } from "react-icons/fi"
 
 export interface Question {
