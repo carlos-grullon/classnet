@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { FiClock, FiUsers, FiGlobe, FiMessageCircle, FiCheckCircle } from "react-icons/fi"
+import { FiClock, FiUsers, FiGlobe, FiMessageCircle, FiCheckCircle, FiBook, FiCalendar } from "react-icons/fi"
 import { FiVideo, FiMail, FiHelpCircle, FiMenu, FiX, FiPlay } from "react-icons/fi"
 import { Button, Card } from "@/components"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
@@ -127,22 +128,26 @@ export default function ClassnetLanding() {
   const levels = [
     {
       title: "Nivel Básico",
-      description: "Inglés desde 0, Ideal para principiantes o quienes quieran reforzar las bases.",
-      schedule: "Horarios Flexibles",
+      description: "Empieza desde cero. Aprende a presentarte, hablar del día a día y construir tus primeras frases con seguridad.",
       color: "from-purple-500 to-purple-600",
     },
     {
       title: "Nivel Intermedio",
-      description: "Perfecto para quienes ya tienen nociones y buscan mayor confianza.",
-      schedule: "Horarios Flexibles",
+      description: "Mejora tu vocabulario, domina los tiempos verbales y comienza a hablar con más fluidez y seguridad.",
       color: "from-orange-500 to-orange-600",
     },
     {
       title: "Nivel Avanzado",
-      description: "Ideal si quieres mejorar tu fluidez y practicar gramáticas avanzadas",
-      schedule: "Horarios Flexibles",
+      description: "Habla con naturalidad, comprende conversaciones reales y domina estructuras complejas del inglés.",
       color: "from-green-500 to-green-600",
     },
+  ]
+
+  const features = [
+    { icon: <FiBook />, description: "2 Clases por semana" },
+    { icon: <FiVideo />, description: "Clases en vivo + tareas guiadas" },
+    { icon: <FiClock />, description: "Duracion por clase de 4 meses" },
+    { icon: <FiCalendar />, description: "Horarios Flexibles" },
   ]
 
   return (
@@ -406,7 +411,7 @@ export default function ClassnetLanding() {
             variants={fadeInUp}
           >
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Encuentra el <span className="text-orange-500">Nivel Perfecto</span> Para Ti
+              Elige Tu Nivel y Empieza a Aprender  <span className="text-orange-500">Hoy</span>
             </h2>
             <p className="text-lg md:text-xl text-gray-600">
               Ofrecemos clases diseñadas para cada etapa de tu aprendizaje. Empieza desde cero o perfecciona lo que ya
@@ -428,10 +433,6 @@ export default function ClassnetLanding() {
 
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">{level.title}</h3>
                   <p className="text-gray-600 mb-6">{level.description}</p>
-                  <div className="flex items-center text-gray-700 mb-6">
-                    <FiClock className="w-5 h-5 mr-2 text-purple-600" />
-                    <span className="font-medium">{level.schedule}</span>
-                  </div>
                   {/* <Button
                       variant="outline"
                       className="w-full border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white bg-transparent"
@@ -442,6 +443,143 @@ export default function ClassnetLanding() {
               </motion.div>
             ))}
           </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="my-12"
+          >
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 max-w-4xl mx-auto">
+              <div className="flex flex-col md:flex-row items-center text-center md:text-left">
+                <div className="bg-blue-100 p-3 rounded-full mb-4 md:mb-0 md:mr-6">
+                  <FiHelpCircle className="w-8 h-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                    ¿No sabes tu nivel de inglés?
+                  </h3>
+                  <p className="text-gray-600">
+                    Haz nuestro test rápido y descubre por dónde empezar.{" "}
+                    <Link 
+                      href="/test-level" 
+                      className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors"
+                    >
+                      Haz el test de nivel
+                    </Link>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          {/* Sección de Características Comunes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="mt-8 text-center max-w-4xl mx-auto"
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-8">
+              Todos los niveles incluyen:
+            </h3>
+            <div className="grid md:grid-cols-4 gap-6">
+              {features.map((feature, index) => (
+                <div key={index} className="flex flex-col items-center p-6 border border-black/30 bg-white shadow-md rounded-lg hover:shadow-xl transition-shadow">
+                  <span className="text-2xl mb-3 text-purple-600">{feature.icon}</span>
+                  <p className="text-gray-700 font-medium">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Contenedor para las nuevas secciones */}
+          <div className="container mx-auto px-4 mt-12">
+            {/* Sección ¿Listo para Empezar? */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="w-full"
+            >
+              <div className="rounded-xl p-6 md:p-8 text-left shadow-lg border border-gray-100 max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold mb-8 text-center text-gray-800">
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                    ¿Listo para Empezar?
+                  </span>
+                  <span className="block text-lg font-medium text-gray-600 mt-2">
+                    Inscríbete en 4 Pasos Sencillos
+                  </span>
+                </h2>
+
+                <ol className="grid md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      title: "Regístrate o Inicia Sesión",
+                      description: "Dirígete a ",
+                      link: "https://www.classnet.org/login",
+                      linkText: "Iniciar Sesión",
+                      afterLink: " y accede rápidamente con tu cuenta de Google."
+                    },
+                    {
+                      title: "Encuentra Tu Clase Ideal",
+                      description: "Explora nuestro catálogo y verifica el horario que mejor se adapte a ti."
+                    },
+                    {
+                      title: "Inscríbete y Obtén los Datos Bancarios",
+                      description: "Una vez en la página de la clase, haz clic en \"Inscribirme\" para ver las opciones de pago."
+                    },
+                    {
+                      title: "Completa tu Inscripción",
+                      description: "Realiza el depósito, sube el comprobante en la plataforma y ¡listo! Nos encargaremos de confirmar tu inscripción."
+                    }
+                  ].map((step, index) => (
+                    <li
+                      key={index}
+                      className="p-5 rounded-xl transition-all bg-blue-50 h-full"
+                    >
+                      <div className="flex items-start">
+                        <span className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold text-lg mr-4">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h3 className="font-semibold text-lg text-gray-800">
+                            {step.title}
+                          </h3>
+                          <p className="mt-1 text-gray-600">
+                            {step.description}
+                            {step.link && (
+                              <a
+                                href={step.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600hover:underline font-medium"
+                              >
+                                {step.linkText}
+                              </a>
+                            )}
+                            {step.afterLink}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+
+                <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <p className="text-center text-blue-700">
+                    ¿Necesitas ayuda? Contáctanos en{' '}
+                    <a href="mailto:classnet.info@gmail.com" className="font-semibold hover:underline">
+                      classnet.info@gmail.com
+                    </a>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -556,7 +694,7 @@ export default function ClassnetLanding() {
               </motion.a>
 
               <motion.a
-                href={"mailto:" + process.env.FROM_EMAIL}
+                href={"mailto:classnet.info@gmail.com"}
                 className="flex items-center justify-center space-x-2 bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-full transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
