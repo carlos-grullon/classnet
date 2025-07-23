@@ -46,7 +46,7 @@ export async function PATCH(
     const { status, notes } = body;
     
     // Validar estado
-    const validStatuses = ['pending_payment', 'proof_submitted', 'enrolled', 'proof_rejected', 'cancelled'];
+    const validStatuses = ['pending_payment', 'proof_submitted', 'enrolled', 'proof_rejected', 'cancelled', 'trial'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
     }

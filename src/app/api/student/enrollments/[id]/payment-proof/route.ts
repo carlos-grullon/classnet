@@ -62,7 +62,7 @@ export async function POST(
     // Lógica diferente según el tipo de pago
     if (paymentType === 'enrollment') {
       // Verificar que la inscripción esté en estado pendiente de pago o con comprobante enviado
-      if (enrollment.status !== 'pending_payment' && enrollment.status !== 'proof_submitted' && enrollment.status !== 'proof_rejected') {
+      if (enrollment.status !== 'pending_payment' && enrollment.status !== 'proof_submitted' && enrollment.status !== 'proof_rejected' && enrollment.status !== 'trial' && enrollment.status !== 'trial_proof_submitted' && enrollment.status !== 'trial_proof_rejected') {
         return NextResponse.json({ 
           error: 'La inscripción no está en un estado válido para enviar comprobante',
           status: enrollment.status
@@ -70,7 +70,7 @@ export async function POST(
       }
       
       // Si ya existe un comprobante anterior, intentar eliminarlo
-      if ((enrollment.status === 'proof_submitted' || enrollment.status === 'proof_rejected') && enrollment.paymentProof) {
+      if ((enrollment.status === 'proof_submitted' || enrollment.status === 'proof_rejected' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') && enrollment.paymentProof) {
         await deleteS3Object(enrollment.paymentProof);
       }
 
@@ -81,7 +81,7 @@ export async function POST(
           $set: { 
             paymentProof: fileUrl,
             paymentNotes: notes,
-            status: 'proof_submitted',
+            status: (enrollment.status === 'trial' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') ? 'trial_proof_submitted' : 'proof_submitted',
             paymentSubmittedAt: new Date(),
             updatedAt: new Date() 
           } 
@@ -94,7 +94,7 @@ export async function POST(
         fileUrl: fileUrl,
         enrollment: {
           id: enrollment._id,
-          status: 'proof_submitted',
+          status: (enrollment.status === 'trial' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') ? 'trial_proof_submitted' : 'proof_submitted',
           updatedAt: new Date()
         }
       });

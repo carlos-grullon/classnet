@@ -25,9 +25,15 @@ export async function GET(req: NextRequest) {
     const status = url.searchParams.get('status') || '';
     
     // Construir filtro
-    const filter: { status?: string } = {};
+    const filter: { status?: string | { $in: string[] } } = {};
     if (status) {
-      filter.status = status;
+      if (status === 'proof_submitted') {
+        filter.status = { $in: ['proof_submitted', 'trial_proof_submitted'] };
+      } else if (status === 'proof_rejected') {
+        filter.status = { $in: ['proof_rejected', 'trial_proof_rejected'] };
+      } else {
+        filter.status = status;
+      }
     }
     
     // Obtener colecciones

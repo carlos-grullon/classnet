@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch, Modal } from '@/components'
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { FiFilter, FiCalendar, FiCheckCircle, FiDollarSign, FiClock, FiAlertTriangle } from 'react-icons/fi';
+import { FiFilter, FiCalendar, FiCheckCircle, FiDollarSign, FiClock } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { SearchClassSchema, SearchClassValues } from '@/validations/classSearch';

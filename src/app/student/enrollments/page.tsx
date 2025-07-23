@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 // Interfaz para las inscripciones
 interface Enrollment {
   _id: string;
-  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial';
+  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -69,6 +69,10 @@ export default function StudentEnrollments() {
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
       case 'trial':
         return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      case 'trial_proof_submitted':
+        return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'trial_proof_rejected':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       default:
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
     }
@@ -89,6 +93,10 @@ export default function StudentEnrollments() {
         return <FiXCircle className="mr-2" />;
       case 'trial':
         return <FiCheckCircle className="mr-2" />;
+      case 'trial_proof_submitted':
+        return <FiUpload className="mr-2" />;
+      case 'trial_proof_rejected':
+        return <FiAlertTriangle className="mr-2" />;
       default:
         return <FiClock className="mr-2" />;
     }
@@ -109,6 +117,10 @@ export default function StudentEnrollments() {
         return 'Cancelada';
       case 'trial':
         return 'Prueba Gratuita';
+      case 'trial_proof_submitted':
+        return 'Prueba Gratuita - Comprobante Enviado';
+      case 'trial_proof_rejected':
+        return 'Prueba Gratuita - Comprobante Rechazado';
       default:
         return 'Desconocido';
     }
@@ -140,7 +152,7 @@ export default function StudentEnrollments() {
                       {enrollment.class.subjectName} - {getLevelName(enrollment.class.level)}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Profesor/a: <p className='font-bold'>{enrollment.class.teacherName}</p>
+                      Profesor/a: <span className='font-bold block'>{enrollment.class.teacherName}</span>
                     </p>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(enrollment.status)}`}>
                       {getStatusIcon(enrollment.status)}
@@ -163,7 +175,7 @@ export default function StudentEnrollments() {
                           {formatDate(new Date(enrollment.createdAt), false)}
                         </p>
                       </div>
-                      {(enrollment.status === 'pending_payment' || enrollment.status === 'trial') && enrollment.expiresAt && (
+                      {(enrollment.status === 'pending_payment' || enrollment.status === 'trial' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') && enrollment.expiresAt && (
                         <div className={`text-sm ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
                           <p>
                             {isExpired(enrollment)
