@@ -163,7 +163,12 @@ export default function AdminEnrollments() {
 
   const handleUpdateStatus = async () => {
     if (!detailModal.enrollment) return;
-
+    if (updateForm.status === 'proof_rejected' || updateForm.status === 'trial_proof_rejected') {
+      if (updateForm.notes === '') {
+        ErrorMsj('Por favor, añade notas o motivo de rechazo');
+        return;
+      }
+    }
     setIsUpdating(true);
     try {
       const response = await FetchData<EnrollmentStatusResponse>(`/api/admin/enrollments/${detailModal.enrollment.id}/status`, {
