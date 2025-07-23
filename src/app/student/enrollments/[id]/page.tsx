@@ -12,7 +12,7 @@ import { useCallback } from 'react';
 // Interfaz para la inscripción
 interface Enrollment {
   id: string;
-  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled';
+  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial';
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -126,11 +126,13 @@ export default function EnrollmentDetails() {
       case 'proof_submitted':
         return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
       case 'enrolled':
-        return 'text-green-500 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       case 'proof_rejected':
         return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'cancelled':
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
+      case 'trial':
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       default:
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
     }
@@ -149,6 +151,8 @@ export default function EnrollmentDetails() {
         return <FiAlertTriangle className="mr-2" />;
       case 'cancelled':
         return <FiXCircle className="mr-2" />;
+      case 'trial':
+        return <FiCheckCircle className="mr-2" />;
       default:
         return <FiClock className="mr-2" />;
     }
@@ -167,6 +171,8 @@ export default function EnrollmentDetails() {
         return 'Comprobante Rechazado';
       case 'cancelled':
         return 'Cancelada';
+      case 'trial':
+        return 'Prueba Gratuita';
       default:
         return 'Desconocido';
     }
@@ -238,25 +244,29 @@ export default function EnrollmentDetails() {
                 {getStatusText(enrollment.status)}
               </div>
 
-
-
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Fecha de inscripción:
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(new Date(enrollment.createdAt))}
-                </p>
+              <div className="space-y-2 text-center font-semibold">
+                <div className='text-sm text-blue-600 dark:text-blue-400'>
+                  <p>
+                    Fecha de inscripción:
+                  </p>
+                  <p>
+                    {formatDate(new Date(enrollment.createdAt), false)}
+                  </p>
+                </div>
+                {(enrollment.status === 'pending_payment' || enrollment.status === 'trial') && enrollment.expiresAt && (
+                  <div className={`text-sm ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                    <p>
+                      {isExpired(enrollment)
+                        ? 'Plazo de pago expirado'
+                        : "Expira:"}
+                    </p>
+                    <p>
+                      {formatDate(new Date(enrollment.expiresAt), false)}
+                    </p>
+                  </div>
+                )}
               </div>
-              {enrollment.status === 'pending_payment' && enrollment.expiresAt && (
-                <p className={`text-sm mt-1 ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                  {isExpired(enrollment)
-                    ? 'Plazo de pago expirado'
-                    : `Expira: ${formatDate(new Date(enrollment.expiresAt))}`}
-                </p>
-              )}
             </div>
-
 
             {enrollment.status === 'proof_rejected' && enrollment.notes && (
               <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -369,14 +379,14 @@ export default function EnrollmentDetails() {
           {/* Sección de pagos mensuales (para inscripciones activas o con pagos pendientes) */}
           {['enrolled', 'proof_submitted', 'proof_rejected'].includes(enrollment.status) && (
             <div className="md:col-span-6">
-              <MonthlyPaymentSection 
-                enrollmentId={enrollmentId} 
+              <MonthlyPaymentSection
+                enrollmentId={enrollmentId}
                 onOpenPaymentModal={(paymentId) => {
                   // Abrir el modal de pago para pagos mensuales
                   setCurrentPaymentType('monthly');
                   setCurrentPaymentId(paymentId); // Guardar el ID del pago si existe
                   setIsPaymentModalOpen(true);
-                }} 
+                }}
               />
             </div>
           )}

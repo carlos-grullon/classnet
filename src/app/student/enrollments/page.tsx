@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 // Interfaz para las inscripciones
 interface Enrollment {
   _id: string;
-  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled';
+  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial';
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -41,7 +41,7 @@ export default function StudentEnrollments() {
   const fetchEnrollments = async () => {
     setIsLoading(true);
     try {
-      const response = await FetchData<{success: boolean, enrollments: Enrollment[]}>('/api/student/enrollments', {}, 'GET');
+      const response = await FetchData<{ success: boolean, enrollments: Enrollment[] }>('/api/student/enrollments', {}, 'GET');
       if (response.success) {
         setEnrollments(response.enrollments);
       }
@@ -62,11 +62,13 @@ export default function StudentEnrollments() {
       case 'proof_submitted':
         return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
       case 'enrolled':
-        return 'text-green-500 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       case 'proof_rejected':
         return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'cancelled':
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
+      case 'trial':
+        return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       default:
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
     }
@@ -85,6 +87,8 @@ export default function StudentEnrollments() {
         return <FiAlertTriangle className="mr-2" />;
       case 'cancelled':
         return <FiXCircle className="mr-2" />;
+      case 'trial':
+        return <FiCheckCircle className="mr-2" />;
       default:
         return <FiClock className="mr-2" />;
     }
@@ -103,6 +107,8 @@ export default function StudentEnrollments() {
         return 'Comprobante Rechazado';
       case 'cancelled':
         return 'Cancelada';
+      case 'trial':
+        return 'Prueba Gratuita';
       default:
         return 'Desconocido';
     }
@@ -125,40 +131,52 @@ export default function StudentEnrollments() {
             <p className="text-gray-500 dark:text-gray-400">Cargando inscripciones...</p>
           </div>
         ) : enrollments.length > 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-6 text-center md:text-left">
             {enrollments.map((enrollment) => (
               <Card key={enrollment._id} className="p-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="space-y-2">
-                    <h3 className="font-medium text-lg dark:text-white">
+                    <h3 className="font-medium text-lg">
                       {enrollment.class.subjectName} - {getLevelName(enrollment.class.level)}
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Profesor/a: <span className='font-bold'>{enrollment.class.teacherName}</span>
+                      Profesor/a: <p className='font-bold'>{enrollment.class.teacherName}</p>
                     </p>
                     <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(enrollment.status)}`}>
                       {getStatusIcon(enrollment.status)}
                       {getStatusText(enrollment.status)}
                     </div>
-                    {enrollment.status === 'pending_payment' && enrollment.expiresAt && (
-                      <p className={`text-sm ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
-                        {isExpired(enrollment) 
-                          ? 'Plazo de pago expirado' 
-                          : `Expira: ${formatDate(new Date(enrollment.expiresAt))}`}
-                      </p>
-                    )}
                     {enrollment.status === 'proof_rejected' && enrollment.notes && (
                       <p className="text-sm text-red-500">
                         Motivo: {enrollment.notes}
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col gap-2">
-                    <p className="text-gray-600 dark:text-gray-300 text-right">
-                      Precio: <span className='font-bold'>${enrollment.paymentAmount}</span>
-                    </p>
-                    <Button 
+                    <div className="space-y-2 text-center font-semibold">
+                      <div className='text-sm text-blue-600 dark:text-blue-400'>
+                        <p>
+                          Fecha de inscripción:
+                        </p>
+                        <p>
+                          {formatDate(new Date(enrollment.createdAt), false)}
+                        </p>
+                      </div>
+                      {(enrollment.status === 'pending_payment' || enrollment.status === 'trial') && enrollment.expiresAt && (
+                        <div className={`text-sm ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
+                          <p>
+                            {isExpired(enrollment)
+                              ? 'Plazo de pago expirado'
+                              : "Expira:"}
+                          </p>
+                          <p>
+                            {formatDate(new Date(enrollment.expiresAt), false)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    <Button
                       size="sm"
                       onClick={() => router.push(`/student/enrollments/${enrollment._id}`)}
                     >
@@ -184,6 +202,6 @@ export default function StudentEnrollments() {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

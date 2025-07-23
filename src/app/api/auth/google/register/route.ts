@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     }
 
     const usersCollection = await getCollection('users');
-    
+
     // Verificar si el usuario ya existe
     let user = await usersCollection.findOne({ email });
-    
+
     if (user) {
       // Si el usuario ya existe pero está intentando agregar un nuevo rol
       if (user_type === 'E' && !user.user_is_student) {
@@ -39,15 +39,15 @@ export async function POST(request: NextRequest) {
           { $set: { user_is_teacher: true } }
         );
       }
-      
+
       // Actualizar información del usuario si viene de Google
       await usersCollection.updateOne(
         { email },
-        { 
-          $set: { 
+        {
+          $set: {
             image_path: image_path || user.image_path,
             updated_at: new Date()
-          } 
+          }
         }
       );
     } else {
@@ -68,25 +68,26 @@ export async function POST(request: NextRequest) {
         } : {},
         created_at: new Date(),
         updated_at: new Date(),
+        has_used_trial: false,
         auth_provider: 'google'
       });
     }
-    
+
     // Obtener el usuario actualizado
     user = await usersCollection.findOne({ email });
-    
+
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'Error al crear el usuario' },
         { status: 500 }
       );
     }
-    
+
     // Crear token JWT para la sesión
     const token = await createUserSession(user);
-    
+
     // Crear respuesta y establecer cookie
-    const response = NextResponse.json({ 
+    const response = NextResponse.json({
       success: true,
       user: {
         email: user.email,
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
         image_path: user.image_path
       }
     });
-    
+
     response.cookies.set({
       name: 'AuthToken',
       value: token,
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24 * 7 // 7 días
     });
-    
+
     return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';

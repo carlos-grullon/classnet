@@ -11,6 +11,7 @@ import { ClassDatabase } from "@/interfaces/Class";
 
 export async function GET(request: NextRequest) {
     try {
+        const userId = await getUserId(request);
         const searchParams = request.nextUrl.searchParams;
         
         const rawData = {
@@ -72,9 +73,15 @@ export async function GET(request: NextRequest) {
                 subjectName: classItem.subjectName || 'Materia no disponible'
             };
         }));
+
+        // Verificar si el usuario tiene un periodo de prueba activo
+        const userCollection = await getCollection("users");
+        const user = await userCollection.findOne({ _id: new ObjectId(userId) });
+        const userHasTrial = !user?.has_used_trial;
         
         return NextResponse.json({ 
             classes: formattedClasses,
+            userHasTrial,
             total,
             page,
             totalPages

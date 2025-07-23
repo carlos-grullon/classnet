@@ -3,7 +3,8 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { Button } from './Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiAlertTriangle } from 'react-icons/fi';
+import { FiX } from 'react-icons/fi';
+import { FaExclamationCircle } from 'react-icons/fa';
 
 type ConfirmationModalProps = {
   isOpen: boolean;
@@ -80,7 +81,7 @@ export function ConfirmationModal({
           >
             <div className="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-center gap-2">
-                <FiAlertTriangle className="text-yellow-500" size={24} />
+                <FaExclamationCircle className="text-yellow-500" size={24} />
                 <h3 className="text-xl font-medium text-center">{title}</h3>
               </div>
               <button

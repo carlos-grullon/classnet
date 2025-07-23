@@ -65,6 +65,10 @@ export async function POST(req: NextRequest) {
     };
     
     const result = await enrollmentsCollection.insertOne(newEnrollment);
+
+    // Actualizar el usuario porque ya no necesita la prueba gratuita
+    const userCollection = await getCollection('users');
+    await userCollection.updateOne({ _id: new ObjectId(studentId) }, { $set: { has_used_trial: true } });
     
     return NextResponse.json({
       success: true,
