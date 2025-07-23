@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { getUserId } from "@/utils/Tools.ts";
 import { ObjectId } from 'mongodb';
-import { User } from '@/interfaces/User';
-import { ClassDatabase } from '@/interfaces/Class';
-import { sendEnrollmentConfirmationEmail, sendPaymentRejectionEmail } from '@/utils/EmailService';
-import { addMonths } from 'date-fns';
-import { v4 as uuidv4 } from 'uuid';
-import { Enrollment } from '@/interfaces/Enrollment';
 
 // POST /api/student/trial - Crear una nueva inscripción (prueba)
 export async function POST(req: NextRequest) {
@@ -55,10 +49,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'El número máximo de estudiantes para esta clase ha sido alcanzado' }, { status: 409 });
     }
 
-    // Calcular fecha de expiración (7 dias)
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    expiresAt.setHours(23, 59, 59, 999);
+    // Verificar si la clase ya empezó para poner la expiracion despues de 7 días
+    let expiresAt = null;
+    if (classData.status === 'in_progress') {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      expiresAt.setHours(23, 59, 59, 999);
+    }
 
     // Obtener datos del estudiante para el correo
     // const usersCollection = await getCollection('users');

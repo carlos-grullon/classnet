@@ -265,7 +265,7 @@ export default function EnrollmentDetails() {
                     {formatDate(new Date(enrollment.createdAt), false)}
                   </p>
                 </div>
-                {(enrollment.status === 'pending_payment' || enrollment.status === 'trial' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') && enrollment.expiresAt && (
+                {(enrollment.status === 'pending_payment' || enrollment.status === 'trial' || enrollment.status === 'trial_proof_submitted' || enrollment.status === 'trial_proof_rejected') && (
                   <div className={`text-sm ${isExpired(enrollment) ? 'text-red-500' : 'text-yellow-600 dark:text-yellow-400'}`}>
                     <p>
                       {isExpired(enrollment)
@@ -273,7 +273,7 @@ export default function EnrollmentDetails() {
                         : "Expira:"}
                     </p>
                     <p>
-                      {formatDate(new Date(enrollment.expiresAt), false)}
+                      {enrollment.expiresAt ? formatDate(new Date(enrollment.expiresAt), false) : '7 días despues de empezar la clase'}
                     </p>
                   </div>
                 )}
