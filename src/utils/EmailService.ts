@@ -102,7 +102,7 @@ function createEmailTemplate(bodyContent: string): string {
           <p>© ${new Date().getFullYear()} ClassNet. Todos los derechos reservados.</p>
           <p style="margin-top: 10px;">
             <strong>¿Necesitas ayuda?</strong><br>
-            Correo: <a href="mailto:${process.env.NEXT_PUBLIC_EMAIL_SUPPORT}" style="color: #3b82f6; text-decoration: none;">${process.env.NEXT_PUBLIC_EMAIL_SUPPORT}</a><br>
+            Correo: <a href="mailto:${process.env.FROM_EMAIL}" style="color: #3b82f6; text-decoration: none;">${process.env.FROM_EMAIL}</a><br>
             WhatsApp: <a href="https://wa.me/18298647008" style="color: #3b82f6; text-decoration: none;">829-864-7008</a>
           </p>
         </div>
@@ -463,6 +463,112 @@ export async function sendPaymentConfirmationEmail(
   `;
 
   return await sendEmail(studentEmail, subject, htmlContent);
+}
+
+/**
+ * Envía un correo de notificación cuando el período de prueba ha expirado
+ * @param studentEmail Email del estudiante
+ * @param studentName Nombre del estudiante
+ * @param className Nombre de la clase
+ * @param classLevel Nivel de la clase
+ * @param expiryDate Fecha de expiración de la prueba
+ */
+export async function sendTrialExpiredEmail(
+  studentEmail: string,
+  studentName: string,
+  className: string,
+  classLevel: string,
+  expiryDate: Date
+) {
+  const formattedDate = expiryDate.toLocaleDateString('es-ES', { 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #4a5568;">¡Período de Prueba Finalizado!</h2>
+      <p>Hola <strong>${studentName}</strong>,</p>
+      <p>Tu período de prueba para la clase <strong>${className} (${getLevel(classLevel)})</strong> ha finalizado.</p>
+      
+      <div style="background-color: #f7fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="color: #4a5568; margin-top: 0;">Detalles de la clase:</h3>
+        <ul style="padding-left: 20px;">
+          <li><strong>Clase:</strong> ${className}</li>
+          <li><strong>Nivel:</strong> ${getLevel(classLevel)}</li>
+          <li><strong>Fecha de finalización:</strong> ${formattedDate}</li>
+        </ul>
+      </div>
+      
+      <p>Para continuar disfrutando de la clase, te recomendamos realizar el pago correspondiente lo antes posible.</p>
+      <p>Si ya realizaste el pago, por favor ignora este mensaje.</p>
+    </div>
+  `;
+
+  return sendEmail(
+    studentEmail,
+    'Tu período de prueba ha finalizado',
+    htmlContent
+  );
+}
+
+/**
+ * Envía un correo de notificación cuando el período de prueba está por expirar
+ * @param studentEmail Email del estudiante
+ * @param studentName Nombre del estudiante
+ * @param className Nombre de la clase
+ * @param classLevel Nivel de la clase
+ * @param expiryDate Fecha de expiración de la prueba
+ * @param daysLeft Días restantes para que expire la prueba
+ */
+export async function sendTrialExpiryNotificationEmail(
+  studentEmail: string,
+  studentName: string,
+  className: string,
+  classLevel: string,
+  expiryDate: Date,
+  daysLeft: number
+) {
+  const formattedDate = expiryDate.toLocaleDateString('es-ES', { 
+    weekday: 'long',
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #4a5568;">¡Tu período de prueba está por finalizar!</h2>
+      <p>Hola <strong>${studentName}</strong>,</p>
+      <p>Te recordamos que tu período de prueba para la clase <strong>${className} (${getLevel(classLevel)})</strong> finaliza en <strong>${daysLeft} día${daysLeft > 1 ? 's' : ''}</strong>.</p>
+      
+      <div style="background-color: #f7fafc; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3 style="color: #4a5568; margin-top: 0;">Detalles de la clase:</h3>
+        <ul style="padding-left: 20px;">
+          <li><strong>Clase:</strong> ${className}</li>
+          <li><strong>Nivel:</strong> ${getLevel(classLevel)}</li>
+          <li><strong>Fecha de finalización:</strong> ${formattedDate}</li>
+        </ul>
+      </div>
+      
+      <p>Para continuar disfrutando de la clase después de esta fecha, te recomendamos realizar el pago correspondiente.</p>
+      <p>¡No pierdas tu acceso a la plataforma de aprendizaje!</p>
+      
+      <div style="margin-top: 20px; padding: 15px; background-color: #ebf8ff; border-radius: 5px; border-left: 4px solid #4299e1;">
+        <p style="margin: 0; color: #2c5282;">
+          <strong>¿Necesitas ayuda con tu pago?</strong><br>
+          Contáctanos en <a href="mailto:${process.env.FROM_EMAIL}" style="color: #2b6cb0; text-decoration: none;">${process.env.FROM_EMAIL}</a> o por WhatsApp al <a href="https://wa.me/18298647008" style="color: #2b6cb0; text-decoration: none;">829-864-7008</a>
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail(
+    studentEmail,
+    `Tu período de prueba finaliza en ${daysLeft} día${daysLeft > 1 ? 's' : ''}`,
+    htmlContent
+  );
 }
 
 export async function sendVerificationEmail(email: string, token: string) {
