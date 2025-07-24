@@ -21,7 +21,6 @@ interface Enrollment {
   status: string;
   expiresAt?: Date;
   notificationSent?: boolean;
-  [key: string]: any;
 }
 
 // GET /api/cron/daily-tasks - Process daily tasks including trial expirations
