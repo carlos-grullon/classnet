@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
-import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch, Modal } from '@/components';
+import { InputReadOnly, Select, Card, Button, CurrencyInput, DaysCheckboxGroup, SubjectSearch, TeacherSearch, Modal } from '@/components'
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { FiFilter, FiCalendar, FiCheckCircle, FiDollarSign, FiClock } from 'react-icons/fi';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,6 +24,7 @@ interface SearchClassResult {
 
 export interface SearchClassesResponse {
   classes: SearchClassResult[];
+  userHasTrial: boolean;
   total: number;
   page: number;
   totalPages: number;
@@ -47,10 +49,18 @@ export default function StudentClasses() {
     total: 0,
     totalPages: 0
   });
+  const [trialModal, setTrialModal] = useState<{
+    isOpen: boolean;
+    classItem: SearchClassResult | null;
+  }>({
+    isOpen: false,
+    classItem: null,
+  });
   const [classes, setClasses] = useState<SearchClassResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [enrollmentLoading, setEnrollmentLoading] = useState(false);
-  
+  const [userHasTrial, setUserHasTrial] = useState(false);
+
   // Estado para el modal de confirmación de inscripción
   const [enrollmentModal, setEnrollmentModal] = useState({
     isOpen: false,
@@ -90,6 +100,7 @@ export default function StudentClasses() {
       params.append('page', String(page));
       const response = await FetchData<SearchClassesResponse>(`/api/classes?${params}`, {}, 'GET');
       setClasses(response.classes);
+      setUserHasTrial(response.userHasTrial);
       setPagination({
         page: response.page,
         total: response.total,
@@ -106,7 +117,7 @@ export default function StudentClasses() {
 
   const onSubmit = (data: SearchClassValues) => {
     fetchClasses(data, 0); // Siempre empieza en página 0 al hacer submit
-    setPagination(prev => ({...prev, page: 0})); // Resetear estado de paginación
+    setPagination(prev => ({ ...prev, page: 0 })); // Resetear estado de paginación
   };
 
   const handleReset = () => {
@@ -120,7 +131,7 @@ export default function StudentClasses() {
     setSelectedSubjectName(subject.name);
     setSubjectModalOpen(false);
   };
-  
+
   // Manejador para abrir el modal de confirmación de inscripción
   const handleEnrollmentClick = (classItem: SearchClassResult) => {
     setEnrollmentModal({
@@ -128,17 +139,47 @@ export default function StudentClasses() {
       classItem
     });
   };
-  
+
+  // Manejador para abrir el modal de confirmación de inscripción
+  const handleTrialClick = (classItem: SearchClassResult) => {
+    setTrialModal({
+      isOpen: true,
+      classItem
+    });
+  };
+
+  const handleConfirmTrial = async () => {
+    if (!trialModal.classItem) return;
+    try {
+      const response = await FetchData<ClassSearchPostResponse>('/api/student/trial', {
+        classId: trialModal.classItem._id
+      }, 'POST');
+
+      if (response.success) {
+        SuccessMsj('¡Clase de prueba agendada con éxito!');
+        setTrialModal({ isOpen: false, classItem: null });
+        router.push(`/student/enrollments/${response.enrollmentId}`);
+      } else {
+        ErrorMsj(response.error || 'Error al agendar la clase de prueba');
+      }
+    } catch (error) {
+      console.error('Error scheduling trial:', error);
+      ErrorMsj('Error al conectar con el servidor');
+    } finally {
+      setTrialModal({ isOpen: false, classItem: null });
+    }
+  };
+
   // Manejador para confirmar la inscripción
   const handleConfirmEnrollment = async () => {
     if (!enrollmentModal.classItem) return;
-    
+
     setEnrollmentLoading(true);
     try {
       const response = await FetchData<ClassSearchPostResponse>('/api/student/enrollments', {
         classId: enrollmentModal.classItem._id
       }, 'POST');
-      
+
       if (response.success) {
         SuccessMsj('Inscripción iniciada correctamente');
         setEnrollmentModal({ isOpen: false, classItem: null });
@@ -319,7 +360,7 @@ export default function StudentClasses() {
                 </Button>
               </div>
             )}
-            {classes.length > 0  ? (
+            {classes.length > 0 ? (
               <div className="mt-8 space-y-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {pagination.total} clases encontradas
@@ -344,14 +385,25 @@ export default function StudentClasses() {
                         <p className="text-gray-600 dark:text-gray-300">
                           Precio: <span className='font-bold'>${classItem.price}</span>
                         </p>
-                        <div className="pt-2">
-                          <Button 
-                            size="sm" 
+                        <div className="pt-2 flex justify-between">
+                          <Button
+                            size="sm"
                             onClick={() => handleEnrollmentClick(classItem)}
                             isLoading={enrollmentLoading && enrollmentModal.classItem?._id === classItem._id}
                           >
                             Inscribirse
                           </Button>
+                          {userHasTrial && (
+                            <Button
+                              size="sm"
+                              variant='success'
+                              className='ml-2'
+                              onClick={() => handleTrialClick(classItem)}
+                              isLoading={enrollmentLoading && enrollmentModal.classItem?._id === classItem._id}
+                            >
+                              Iniciar prueba gratuita
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </Card>
@@ -388,7 +440,7 @@ export default function StudentClasses() {
         onClose={() => setSubjectModalOpen(false)}
         onSelect={handleSubjectSelect}
       />
-      
+
       {/* Modal de confirmación de inscripción */}
       <Modal
         isOpen={enrollmentModal.isOpen}
@@ -422,13 +474,13 @@ export default function StudentClasses() {
                 </p>
               </div>
             </div>
-            
+
             <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-lg border border-yellow-100 dark:border-yellow-800">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 Al confirmar, se creará una inscripción pendiente de pago. Tendrás 48 horas para realizar el pago y subir el comprobante.
               </p>
             </div>
-            
+
             <div className="flex justify-end gap-3 pt-2">
               <Button
                 variant="outline"
@@ -446,6 +498,65 @@ export default function StudentClasses() {
           </div>
         )}
       </Modal>
+      <ConfirmationModal
+        isOpen={trialModal.isOpen}
+        onClose={() => setTrialModal({ isOpen: false, classItem: null })}
+        onConfirm={handleConfirmTrial}
+        title="Confirmar clase de prueba"
+        message={
+          trialModal.classItem && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-5 rounded-xl border-2 border-green-200 dark:border-green-800/50 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-black dark:text-green-200 text-base flex items-center gap-2 text-center justify-center">
+                      <FiCheckCircle className="text-green-500" />
+                      Prueba Gratuita de 7 Días
+                    </h4>
+                    <ul className="text-sm space-y-1.5 list-disc list-inside">
+                      <li>Acceso completo a la clase en vivo durante 7 días</li>
+                      <li>Experiencia real con clases dinámicas y tareas semanales</li>
+                      <li>Acompañamiento personalizado de tu profesor</li>
+                      <li>Sin compromiso de permanencia</li>
+                    </ul>
+                    <p className="text-sm text-black/90 dark:text-white/90 mt-2 font-medium">
+                      Al finalizar, podrás inscribirte fácilmente si deseas continuar.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <h3 className="font-semibold text-lg mb-2">{trialModal.classItem.subjectName}</h3>
+                <div className="space-y-2 text-sm">
+                  <p className="flex items-center gap-2">
+                    <FiCheckCircle className="text-blue-500" />
+                    <span className="font-medium">Nivel:</span> {getLevelName(trialModal.classItem.level)}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiCheckCircle className="text-blue-500" />
+                    <span className="font-medium">Profesor:</span> {trialModal.classItem.teacherName}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiCheckCircle className="text-blue-500" />
+                    <span className="font-medium">Días:</span> {getDayName(trialModal.classItem.selectedDays!)}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiClock className="text-blue-500" />
+                    <span className="font-medium">Horario:</span> {trialModal.classItem.startTime} - {trialModal.classItem.endTime}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiDollarSign className="text-blue-500" />
+                    <span className="font-medium">Precio:</span> ${trialModal.classItem.price}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        confirmColor="primary"
+      />
     </div>
   );
 }

@@ -44,51 +44,67 @@ export async function POST(
     );
     const enrollmentsCollection = await getCollection('enrollments');
 
-    // Actualizar todas las inscripciones de estudiantes con estado 'enrolled'
+    // Preparar la fecha de vencimiento dentro de 7 días para los trial
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setHours(23, 59, 59, 999);
+
+    // Actualizar todas las inscripciones de estudiantes con estado 'enrolled' y 'trial'
     const enrollments = await enrollmentsCollection.find({
       class_id: new ObjectId(classId),
-      status: 'enrolled'
+      status: { $in: ['enrolled', 'trial'] }
     }).toArray();
 
     // Procesar cada inscripción para establecer fechas de facturación
     for (const enrollment of enrollments) {
-      const nextPaymentDueDate = addMonths(startDate, 1); // Próximo pago en 1 mes
-
-      await enrollmentsCollection.updateOne(
-        { _id: enrollment._id },
-        {
-          $set: {
-            billingStartDate: startDate,
-            nextPaymentDueDate: nextPaymentDueDate,
-            priceAtEnrollment: enrollment.paymentAmount || classData.price,
-            // Añadir el primer pago al historial (el de inscripción)
-            paymentsMade: [{
-              _id: uuidv4(),
-              amount: enrollment.paymentAmount || classData.price,
-              date: enrollment.updatedAt || new Date(),
-              status: 'paid',
-              notes: 'Pago inicial de inscripción',
-              paymentDueDate: startDate
-            }]
-          }
-        }
-      );
-      const usersCollection = await getCollection('users');
-
-      // Obtener datos del estudiante para enviar notificación
-      const student = await usersCollection.findOne({ _id: enrollment.student_id });
-      if (student) {
-        // Enviar notificación por correo al estudiante
-        await sendClassStartNotification(
-          student.email,
-          student.username,
-          classData.subjectName,
-          classData.level,
+      if (enrollment.status === 'trial') {
+        await enrollmentsCollection.updateOne(
+          { _id: enrollment._id },
           {
-            startDate: formatDateLong(startDate),
-            nextPaymentDate: formatDateLong(nextPaymentDueDate)
+            $set: {
+              expiresAt: expiresAt
+            }
           }
         );
+      } else {
+        const nextPaymentDueDate = addMonths(startDate, 1); // Próximo pago en 1 mes
+
+        await enrollmentsCollection.updateOne(
+          { _id: enrollment._id },
+          {
+            $set: {
+              billingStartDate: startDate,
+              nextPaymentDueDate: nextPaymentDueDate,
+              priceAtEnrollment: enrollment.paymentAmount || classData.price,
+              // Añadir el primer pago al historial (el de inscripción)
+              paymentsMade: [{
+                _id: uuidv4(),
+                amount: enrollment.paymentAmount || classData.price,
+                date: enrollment.updatedAt || new Date(),
+                status: 'paid',
+                notes: 'Pago inicial de inscripción',
+                paymentDueDate: startDate
+              }]
+            }
+          }
+        );
+        const usersCollection = await getCollection('users');
+
+        // Obtener datos del estudiante para enviar notificación
+        const student = await usersCollection.findOne({ _id: enrollment.student_id });
+        if (student) {
+          // Enviar notificación por correo al estudiante
+          await sendClassStartNotification(
+            student.email,
+            student.username,
+            classData.subjectName,
+            classData.level,
+            {
+              startDate: formatDateLong(startDate),
+              nextPaymentDate: formatDateLong(nextPaymentDueDate)
+            }
+          );
+        }
       }
     }
 

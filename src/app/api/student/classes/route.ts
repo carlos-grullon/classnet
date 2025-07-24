@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
         const enrollments = await enrollmentsCollection.find({
             student_id: new ObjectId(userId),
-            status: 'enrolled'
+            status: { $in: ['enrolled', 'trial', 'trial_proof_submitted', 'trial_proof_rejected'] }
         }).toArray();
 
         const classIds = enrollments.map(enrollment => enrollment.class_id);

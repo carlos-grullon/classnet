@@ -39,6 +39,7 @@ export async function Register(
             verification_token: token,
             verification_expires: new Date(Date.now() + 1000 * 60 * 60), // 1 hora
             email_sent_at: new Date(),
+            has_used_trial: false,
             created_at: new Date(),
             updated_at: new Date()
         });

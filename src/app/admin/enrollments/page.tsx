@@ -73,7 +73,7 @@ interface EnrollmentStatusResponse {
   message: string;
   enrollment: {
     id: string;
-    status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled';
+    status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
     updatedAt: string;
     notes?: string;
   };
@@ -84,7 +84,7 @@ interface EnrollmentStatusResponse {
 export default function AdminEnrollments() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('proof_submitted');
   const [pagination, setPagination] = useState({
     page: 1, // Comenzar desde la página 1, no 0
     limit: 10,
@@ -112,12 +112,13 @@ export default function AdminEnrollments() {
 
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const fetchEnrollments = useCallback(async () => {
+  const fetchEnrollments = useCallback(async (status?: string) => {
     setIsLoading(true);
     try {
       let url = `/api/admin/enrollments?page=${pagination.page}&limit=${pagination.limit}`;
-      if (statusFilter) {
-        url += `&status=${statusFilter}`;
+      const filter = status !== undefined ? status : statusFilter;
+      if (filter) {
+        url += `&status=${filter}`;
       }
       const response = await FetchData<EnrollmentResponse>(url, {}, 'GET');
       if (response.success) {
@@ -128,20 +129,19 @@ export default function AdminEnrollments() {
           totalPages: response.pagination.totalPages
         }));
       } else {
-        ErrorMsj('Error al cargar las inscripciones');
+        ErrorMsj(response.error || 'Error al cargar las inscripciones');
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Error desconocido';
       ErrorMsj(message);
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [pagination.page, pagination.limit, statusFilter]);
 
   useEffect(() => {
     fetchEnrollments();
-  }, [pagination.page, pagination.limit, statusFilter]);
+  }, [pagination.page, pagination.limit]);
 
   const handleViewDetails = (enrollment: Enrollment) => {
     setDetailModal({
@@ -163,7 +163,12 @@ export default function AdminEnrollments() {
 
   const handleUpdateStatus = async () => {
     if (!detailModal.enrollment) return;
-
+    if (updateForm.status === 'proof_rejected' || updateForm.status === 'trial_proof_rejected') {
+      if (updateForm.notes === '') {
+        ErrorMsj('Por favor, añade notas o motivo de rechazo');
+        return;
+      }
+    }
     setIsUpdating(true);
     try {
       const response = await FetchData<EnrollmentStatusResponse>(`/api/admin/enrollments/${detailModal.enrollment.id}/status`, {
@@ -177,7 +182,7 @@ export default function AdminEnrollments() {
           isOpen: false,
           enrollment: null
         });
-        fetchEnrollments(); // Recargar datos
+        fetchEnrollments(statusFilter); // Recargar datos
       } else {
         ErrorMsj(response.error || 'Error al actualizar el estado');
       }
@@ -189,6 +194,12 @@ export default function AdminEnrollments() {
     }
   };
 
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value;
+    setStatusFilter(newStatus);
+    fetchEnrollments(newStatus);
+  };
+
   // Función para obtener el color según el estado
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -196,6 +207,12 @@ export default function AdminEnrollments() {
         return 'text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
       case 'proof_submitted':
         return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'trial':
+        return 'text-green-500 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+      case 'trial_proof_submitted':
+        return 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+      case 'trial_proof_rejected':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'enrolled':
         return 'text-green-500 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       case 'proof_rejected':
@@ -220,6 +237,12 @@ export default function AdminEnrollments() {
         return <FiAlertTriangle className="mr-2" />;
       case 'cancelled':
         return <FiXCircle className="mr-2" />;
+      case 'trial':
+        return <FiClock className="mr-2" />;
+      case 'trial_proof_submitted':
+        return <FiUpload className="mr-2" />;
+      case 'trial_proof_rejected':
+        return <FiAlertTriangle className="mr-2" />;
       default:
         return <FiClock className="mr-2" />;
     }
@@ -238,6 +261,12 @@ export default function AdminEnrollments() {
         return 'Comprobante Rechazado';
       case 'cancelled':
         return 'Cancelada';
+      case 'trial':
+        return 'Período de Prueba';
+      case 'trial_proof_submitted':
+        return 'Comprobante Enviado';
+      case 'trial_proof_rejected':
+        return 'Comprobante Rechazado';
       default:
         return 'Desconocido';
     }
@@ -249,7 +278,7 @@ export default function AdminEnrollments() {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestión de Inscripciones</h1>
           <Button
-            onClick={fetchEnrollments}
+            onClick={() => fetchEnrollments(statusFilter)}
             disabled={isLoading}
             className="flex items-center gap-2"
           >
@@ -270,7 +299,7 @@ export default function AdminEnrollments() {
                 </label>
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onChange={(e) => handleStatusChange(e)}
                   className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
                 >
                   <option value="">Todos los estados</option>
@@ -279,11 +308,12 @@ export default function AdminEnrollments() {
                   <option value="enrolled">Inscrito</option>
                   <option value="proof_rejected">Comprobante Rechazado</option>
                   <option value="cancelled">Cancelada</option>
+                  <option value="trial">Período de Prueba</option>
                 </select>
               </div>
               <div className="flex-none self-end">
                 <Button
-                  onClick={() => fetchEnrollments()}
+                  onClick={() => fetchEnrollments(statusFilter)}
                   icon={<FiSearch />}
                   variant="outline"
                 >

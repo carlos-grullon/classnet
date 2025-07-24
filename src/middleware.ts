@@ -4,7 +4,6 @@ import { jwtVerify } from "jose";
 export async function middleware(request: NextRequest) {
   // Lista de rutas públicas que no requieren autenticación
   const publicPaths = [
-    '/',
     '/faq',
     '/login',
     '/register',
@@ -28,6 +27,10 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const token = request.cookies.get('AuthToken')?.value;
+
+  if (pathname === '/') {
+    return NextResponse.next();
+  }
   
   // Permitir acceso a rutas públicas sin restricciones
   if (publicPaths.some(path => pathname.startsWith(path))) {
@@ -43,8 +46,6 @@ export async function middleware(request: NextRequest) {
           }else if (payload.userIsStudent) {
             return NextResponse.redirect(new URL('/student', request.url));
           }
-          // Si no es ni estudiante ni profesor, redirigir a inicio
-          return NextResponse.redirect(new URL('/', request.url));
         } catch (error) {
           console.error('Error al verificar el token:', error);
           // Si hay un error al verificar el token, redirigir a login

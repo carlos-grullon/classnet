@@ -45,11 +45,16 @@ export async function PATCH(
     const body = await req.json();
     const { status, notes } = body;
     
-    // Validar estado
-    const validStatuses = ['pending_payment', 'proof_submitted', 'enrolled', 'proof_rejected', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
+    if (status === 'proof_rejected' || status === 'trial_proof_rejected') {
+      if (notes === '') {
+        return NextResponse.json({ error: 'Por favor, añade notas o motivo de rechazo' }, { status: 400 });
+      }
     }
+    // Validar estado
+    // const validStatuses = ['pending_payment', 'proof_submitted', 'enrolled', 'proof_rejected', 'cancelled', 'trial'];
+    // if (!validStatuses.includes(status)) {
+    //   return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
+    // }
 
     // Obtener datos del estudiante para el correo
     const usersCollection = await getCollection('users');
@@ -66,14 +71,26 @@ export async function PATCH(
     }
     
     // Si se está rechazando el comprobante
-    if (status === 'proof_rejected' && enrollment.status === 'proof_submitted') {
+    if (status === 'proof_rejected' && (enrollment.status === 'proof_submitted' || enrollment.status === 'trial_proof_submitted')) {
       // Enviar correo de rechazo de comprobante
       await sendRejectionEmailToStudent(student!, classData!, notes);
     }
     
+    // Determinar el estado final
+    let finalStatus = status;
+    const trialStatuses = ['trial', 'trial_proof_submitted', 'trial_proof_rejected'];
+    
+    if (trialStatuses.includes(enrollment.status)) {
+      if (status === 'proof_rejected') {
+        finalStatus = 'trial_proof_rejected';
+      } else if (status === 'proof_submitted') {
+        finalStatus = 'trial_proof_submitted';
+      }
+    }
+
     // Preparar datos de actualización
     const updateData: Enrollment = { 
-      status, 
+      status: finalStatus, 
       updatedAt: new Date()
     };
     
