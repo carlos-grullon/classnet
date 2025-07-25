@@ -1,6 +1,6 @@
 import 'dotenv/config'; // Carga variables de entorno desde .env
-import { getCollection } from './MongoDB'; // Asegúrate de que esta función maneje la conexión correctamente
-import { subjects, countries } from '../lib/data'; // Datos iniciales
+import { getCollection } from './MongoDB';
+import { subjects, countries } from '../lib/data';
 
 /**
  * Creates necessary indexes and inserts initial data if collections are empty.
@@ -9,7 +9,7 @@ import { subjects, countries } from '../lib/data'; // Datos iniciales
 export async function createIndexesAndSeedData(): Promise<void> {
   try {
     console.log('Iniciando configuración de índices y datos iniciales en las colecciones...');
-
+    
     // #region Users Collection
     console.log('Configurando índices para la colección users...');
     const usersCollection = await getCollection('users');
@@ -89,6 +89,30 @@ export async function createIndexesAndSeedData(): Promise<void> {
     } else {
       console.log('Colección countries ya contiene datos, saltando inserción inicial.');
     }
+    // #endregion
+
+    // #region Notifications Collection
+    console.log('Configurando colección notifications...');
+    const notificationsCollection = await getCollection('notifications');
+
+    // Create indexes for notifications. They are idempotent.
+    await notificationsCollection.createIndex({ userId: 1, createdAt: -1 }, { unique: false });
+    await notificationsCollection.createIndex({
+      userId: 1,
+      "read.status": 1,
+      createdAt: -1
+    }, { unique: false });
+
+    // TTL index for automatic cleanup (90 days)
+    await notificationsCollection.createIndex(
+      { createdAt: 1 },
+      { 
+        name: 'idx_ttl',
+        expireAfterSeconds: 7776000 // 90 days in seconds
+      }
+    );
+    console.log('Índices de notifications creados/asegurados.');
+
     // #endregion
 
     console.log('Configuración de base de datos (índices y datos iniciales) completada correctamente.');

@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.830.0",
     "@aws-sdk/s3-request-presigner": "^3.844.0",
+    "@headlessui/react": "^2.2.6",
     "@hookform/resolvers": "^5.0.1",
     "@types/formidable": "^3.4.5",
     "@types/html-to-text": "^9.0.4",

@@ -86,6 +86,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/student') || 
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
+      pathname.startsWith('/notifications') ||
       pathname.endsWith('.css') ||
       pathname.endsWith('.js') ||
       pathname.endsWith('.png') ||
@@ -100,6 +101,7 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/teacher') || 
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
+      pathname.startsWith('/notifications') ||
       pathname.endsWith('.css') ||
       pathname.endsWith('.js') ||
       pathname.endsWith('.png') ||
