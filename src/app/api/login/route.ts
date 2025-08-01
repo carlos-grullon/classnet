@@ -10,7 +10,6 @@ export async function POST(request: Request) {
             data.email,
         )
         const userCommonData = {
-            userId: user._id.toString(),
             userIsStudent: user.user_is_student,
             userIsTeacher: user.user_is_teacher,
             userEmail: user.email,

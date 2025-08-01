@@ -10,15 +10,6 @@ import Image from 'next/image';
 import { ThemeToggle } from '@/components';
 import { useUser } from '@/providers/UserProvider';
 
-interface User {
-  userId: string;
-  userIsStudent: boolean;
-  userIsTeacher: boolean;
-  userEmail: string;
-  userImage: string;
-  userName: string;
-  userNumber: string;
-}
 export default function CompleteRegistrationPage() {
   return (
     <Suspense fallback={<div>Cargando...</div>}>
@@ -52,7 +43,7 @@ function CompleteRegistrationContent() {
     setError('');
     
     try {
-      const result = await FetchData<{success: boolean, message: string, user: User}>('/api/auth/google/register', {
+      const result = await FetchData<{success: boolean, message: string}>('/api/auth/google/register', {
         email,
         username: name,
         user_type: userType,
@@ -61,7 +52,6 @@ function CompleteRegistrationContent() {
       
       if (result.success) {
         setUser({
-          userId: result.user.userId,
           userIsStudent: userType === 'E',
           userIsTeacher: userType === 'P',
           userEmail: email,

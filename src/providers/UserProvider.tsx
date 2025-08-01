@@ -3,7 +3,6 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import { FetchData } from '@/utils/Tools.tsx';
 
 interface User {
-  userId: string;
   userIsStudent: boolean;
   userIsTeacher: boolean;
   userEmail: string;

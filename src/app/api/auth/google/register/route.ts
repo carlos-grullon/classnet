@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({
       success: true,
       user: {
-        userId: user._id.toString(),
         email: user.email,
         username: user.username,
         user_type: user.user_is_teacher ? 'P' : 'E',
