@@ -7,7 +7,6 @@ import { MarkAsReadDto } from '@/types/notification';
 
 // POST /api/notifications - Create a new notification
 export async function POST(request: NextRequest) {
-
     try {
         // Verificar que el cuerpo de la solicitud existe
         const requestBody = await request.text();
@@ -62,6 +61,22 @@ export async function POST(request: NextRequest) {
         };
 
         const result = await notificationCollection.insertOne(newNotification);
+
+        fetch('https://web-production-e802b.up.railway.app/emit', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-key': process.env.SOCKET_KEY || ''
+            },
+            body: JSON.stringify({
+              userId: data.userId,
+              eventType: 'new-notification',
+              payload: {
+                _id: result.insertedId,
+                ...newNotification
+              }
+            })
+          });
 
         return NextResponse.json(
             {

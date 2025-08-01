@@ -13,7 +13,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useUser();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const isTeacherRoute = pathname?.startsWith('/teacher');
   const isStudentRoute = pathname?.startsWith('/student');
@@ -80,9 +80,7 @@ export function Navbar() {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="hidden md:block">
-                <NotificationBell />
-              </div>
+              <NotificationBell />
               <SideMenu />
             </div>
           </div>
