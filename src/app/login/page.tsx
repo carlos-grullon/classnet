@@ -14,6 +14,7 @@ import { Controller } from 'react-hook-form';
 import { useUser } from '@/providers/UserProvider';
 
 interface User {
+  userId: string;
   userIsStudent: boolean;
   userIsTeacher: boolean;
   userEmail: string;
