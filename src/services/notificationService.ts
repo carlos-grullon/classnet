@@ -3,7 +3,7 @@ import { NotificationType } from '@/types/notification';
 const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || '';
 
 interface NotificationPayload {
-  userId: string;
+  userId: string[];
   title: string;
   message: string;
   link?: string;

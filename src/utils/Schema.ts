@@ -108,7 +108,7 @@ export async function createIndexesAndSeedData(): Promise<void> {
       { createdAt: 1 },
       { 
         name: 'idx_ttl',
-        expireAfterSeconds: 7776000 // 90 days in seconds
+        expireAfterSeconds: 5184000 // 60 days in seconds
       }
     );
     console.log('Índices de notifications creados/asegurados.');

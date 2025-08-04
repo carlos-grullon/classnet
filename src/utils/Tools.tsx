@@ -119,3 +119,11 @@ export const getFileIcon = (fileName?: string) => {
       return <FiFile className="mr-2 text-3xl" />;
   }
 };
+
+export const getToken = async () => {
+  const token = await FetchData<{token:string}>('/api/get-token', {}, 'GET')
+  if (!token) {
+    throw new Error('No se encontró el token');
+  }
+  return token.token;
+};

@@ -20,7 +20,7 @@ export interface Notification {
 }
 
 export interface CreateNotificationDto {
-  userId: string;
+  userId: string[];
   title: string;
   message: string;
   type?: NotificationType;

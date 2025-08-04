@@ -10,6 +10,7 @@ import { getUserNotifications, markNotificationsAsRead, updateLastNotificationVi
 import { Notification } from '@/types/notification';
 import Link from 'next/link';
 import { io } from 'socket.io-client';
+import { getToken } from '@/utils/Tools.tsx';
 
 
 export function NotificationBell() {
@@ -18,7 +19,6 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[] | null>(null);
   const [newNotificationsCount, setNewNotificationsCount] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [pageSize, setPageSize] = useState(10);
   const [isConnected, setIsConnected] = useState(false);
   const [showNewNotification, setShowNewNotification] = useState(false);
   const notificationSound = useRef<HTMLAudioElement | null>(null);
@@ -27,6 +27,7 @@ export function NotificationBell() {
   const socketRef = useRef<any>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+  const pageSize = 10;
 
   const fetchNotifications = async (isLoadMore = false) => {
     try {
@@ -99,7 +100,7 @@ export function NotificationBell() {
 
   // Inicializar el sonido de notificación
   useEffect(() => {
-    notificationSound.current = new Audio('sounds/new-notification.mp3');
+    notificationSound.current = new Audio('/sounds/new-notification.mp3');
 
     // Precargar el sonido con manejo de errores
     try {
@@ -123,8 +124,9 @@ export function NotificationBell() {
     const MAX_RECONNECT_ATTEMPTS = 3;
     const RECONNECT_INTERVAL = 10000; // 10 segundos
 
-    const connectWebSocket = () => {
+    const connectWebSocket = async () => {
       try {
+        const token = await getToken();
         console.log('Intentando conectar al WebSocket...');
 
         // Limpiamos cualquier conexión existente
@@ -139,8 +141,7 @@ export function NotificationBell() {
         socketRef.current = io(SOCKET_URL, {
           reconnection: false, // Deshabilitamos la reconexión automática para manejarla nosotros
           query: {
-            userId: '6879d2ece3b14292b11bccae',
-            socketKey: 'a2fb783c495856d646ee43dbced773aedc6054d4234e0d34c8351b6504b0e7dc'
+            token
           }
         });
 

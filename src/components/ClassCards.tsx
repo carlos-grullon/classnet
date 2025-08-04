@@ -9,7 +9,6 @@ import { getDayName, getLevelName } from '@/utils/GeneralTools.ts';
 import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import { FaWhatsapp } from 'react-icons/fa';
 import Link from 'next/link';
-import { sendNotification } from '@/services/notificationService';
 
 export default function ClassCards() {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -26,17 +25,6 @@ export default function ClassCards() {
       classItem
     });
   };
-
-  const handlebuscarclases = () => {
-    sendNotification({
-              userId: '6879d2ece3b14292b11bccae',
-              title: 'FUERZA con la notificacion',
-              message: 'Si buenas tardes equipo, los amé',
-              type: 'info',
-              link: '',
-              metadata: {}
-            })
-  }
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -140,7 +128,7 @@ export default function ClassCards() {
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Aún no te has inscrito a ninguna clase.
               </p>
-              <Button onClick={() => handlebuscarclases()}>
+              <Button onClick={() => router.push('/student/classes')}>
                 Buscar Clases
               </Button>
             </div>
