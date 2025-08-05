@@ -1,7 +1,5 @@
 import { NotificationType } from '@/types/notification';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || '';
-
 interface NotificationPayload {
   userId: string[];
   title: string;
@@ -27,7 +25,7 @@ export async function sendNotification(notification: NotificationPayload): Promi
       ...(notification.metadata && { metadata: notification.metadata })
     };
     
-    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+    const response = await fetch('/api/notifications', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,7 +65,7 @@ export async function sendNotification(notification: NotificationPayload): Promi
 export async function updateLastNotificationView(): Promise<boolean> {
   try {
     // Usamos el endpoint existente con un parámetro markAsViewed
-    const response = await fetch(`${API_BASE_URL}/api/notifications?markAsViewed=true&limit=1`, {
+    const response = await fetch('/api/notifications?markAsViewed=true&limit=1', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json'
@@ -101,7 +99,7 @@ export async function markNotificationsAsRead(
   notificationIds: string[]
 ): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+    const response = await fetch('/api/notifications', {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -177,7 +175,7 @@ export async function getUserNotifications(
       skip: skip.toString()
     });
 
-    const response = await fetch(`${API_BASE_URL}/api/notifications?${params}`, {
+    const response = await fetch(`/api/notifications?${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
