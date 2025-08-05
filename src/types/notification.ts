@@ -54,4 +54,5 @@ export interface PaginatedNotifications {
   total: number;
   hasMore: boolean;
   unreadCount: number;
+  newCount: number;
 }

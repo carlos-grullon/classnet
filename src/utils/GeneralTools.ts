@@ -67,8 +67,8 @@ export function mongoTimeToTimeString12h(date: Date): string {
 }
 
 /**
- * Convierte una fecha en formato yyyy-mm-dd a dd/mes(texto)/yyyy
- * @param dateString Fecha en formato yyyy-mm-dd (ej. "2025-06-19")
+ * Convierte una fecha en formato yyyy-mm-dd o Date a dd/mes(texto)/yyyy
+ * @param dateString Fecha en formato yyyy-mm-dd (ej. "2025-06-19") o Date (ej. new Date())
  * @returns String en formato "dd/Mes/yyyy" (ej. "19/Junio/2025")
  */
 export function formatInputDateToLong(dateString: string | Date): string {

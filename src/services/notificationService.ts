@@ -1,4 +1,4 @@
-import { NotificationType } from '@/types/notification';
+import { PaginatedNotifications, NotificationType } from '@/types/notification';
 
 interface NotificationPayload {
   userId: string[];
@@ -16,6 +16,7 @@ interface NotificationPayload {
  */
 export async function sendNotification(notification: NotificationPayload): Promise<boolean> {
   try {
+    const app_url = process.env.NEXT_PUBLIC_APP_URL
     const payload = {
       userId: notification.userId,
       title: notification.title,
@@ -25,11 +26,10 @@ export async function sendNotification(notification: NotificationPayload): Promi
       ...(notification.metadata && { metadata: notification.metadata })
     };
     
-    const response = await fetch('/api/notifications', {
+    const response = await fetch(`${app_url}/api/notifications`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     });
@@ -135,19 +135,6 @@ export interface GetNotificationsOptions {
   includeCounts?: boolean;
   limit?: number;
   skip?: number;
-}
-
-/**
- * Paginated notifications response
- */
-import { Notification } from '@/types/notification';
-
-export interface PaginatedNotifications {
-  data: Notification[];
-  total: number; // Total de notificaciones que coinciden con los filtros
-  hasMore: boolean;
-  unreadCount: number; // Total de no leídas
-  newCount: number; // Nuevas desde la última vista
 }
 
 /**

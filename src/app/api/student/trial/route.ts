@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { getUserId } from "@/utils/Tools.ts";
 import { ObjectId } from 'mongodb';
+import { sendNotification } from '@/services/notificationService'
+import { getLevelName, formatInputDateToLong } from '@/utils/GeneralTools.ts';
+
 
 // POST /api/student/trial - Crear una nueva inscripción (prueba)
 export async function POST(req: NextRequest) {
@@ -78,6 +81,16 @@ export async function POST(req: NextRequest) {
     const userCollection = await getCollection('users');
     await userCollection.updateOne({ _id: new ObjectId(studentId) }, { $set: { has_used_trial: true } });
     const result = await enrollmentsCollection.insertOne(newEnrollment);
+
+    // Enviar notificación al estudiante
+    const levelName = getLevelName(classData.level);
+    await sendNotification({
+      userId: [studentId],
+      title: 'Inscripción a clase de prueba',
+      message: `Has sido inscrito a la clase de ${classData.subjectName} ${levelName}, tu período de prueba termina ${expiresAt ? 'el ' + formatInputDateToLong(expiresAt) : '7 días después que empiece la clase'}`,
+      link: `/student/enrollments/${result.insertedId}`,
+      type: 'info'
+    });
 
     return NextResponse.json({
       success: true,
