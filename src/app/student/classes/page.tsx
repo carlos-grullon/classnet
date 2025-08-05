@@ -33,7 +33,6 @@ export default function MisClases() {
       try {
         const response = await FetchData<{ success: boolean, classes: Class[] }>('/api/student/classes', {}, 'GET');
         if (response.success && response.classes) {
-          console.log(response.classes);
           setClasses(response.classes);
         }
       } catch (err) {

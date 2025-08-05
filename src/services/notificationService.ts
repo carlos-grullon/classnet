@@ -26,8 +26,6 @@ export async function sendNotification(notification: NotificationPayload): Promi
       ...(notification.type && { type: notification.type }),
       ...(notification.metadata && { metadata: notification.metadata })
     };
-
-    console.log('Enviando notificación:', payload);
     
     const response = await fetch(`${API_BASE_URL}/api/notifications`, {
       method: 'POST',
@@ -44,6 +42,7 @@ export async function sendNotification(notification: NotificationPayload): Promi
         errorData = await response.json();
       } catch (e) {
         errorData = { message: await response.text() };
+        console.error('Error al enviar notificación:', e);
       }
       console.error('Error sending notification:', {
         status: response.status,
@@ -176,8 +175,10 @@ export interface GetNotificationsOptions {
 /**
  * Paginated notifications response
  */
+import { Notification } from '@/types/notification';
+
 export interface PaginatedNotifications {
-  data: any[];
+  data: Notification[];
   total: number; // Total de notificaciones que coinciden con los filtros
   hasMore: boolean;
   unreadCount: number; // Total de no leídas

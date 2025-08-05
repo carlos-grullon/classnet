@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Datos recibidos:', data);
-
     // Validación básica
     if (data.userId.length === 0 || !data.title || !data.message) {
       return NextResponse.json(
@@ -152,37 +150,17 @@ export async function GET(request: NextRequest) {
     const lastViewedAt = user?.lastNotificationView || null;
 
     // Construir la consulta base
-    const query: any = { userId: userIdObj };
+    const query: {read?: {status: boolean}, createdAt?: { $gt: Date }, userId: ObjectId} = { userId: userIdObj };
 
     // Aplicar filtros
     if (unreadOnly) {
-      query['read.status'] = false;
+      query.read = {status: false};
     }
 
     // Filtrar por notificaciones nuevas (después de lastViewedAt)
     if (newOnly && lastViewedAt) {
       query.createdAt = { $gt: new Date(lastViewedAt) };
     }
-
-    // Si solo necesitamos los contadores
-    // if (countOnly) {
-    //     const [total, unreadCount, newCount] = await Promise.all([
-    //         notificationCollection.countDocuments(query),
-    //         notificationCollection.countDocuments({ ...query, 'read.status': false }),
-    //         lastViewedAt 
-    //             ? notificationCollection.countDocuments({ 
-    //                 ...query, 
-    //                 createdAt: { $gt: new Date(lastViewedAt) } 
-    //             })
-    //             : notificationCollection.countDocuments({ ...query, 'read.status': false })
-    //     ]);
-
-    //     return NextResponse.json({
-    //         total,
-    //         unreadCount,
-    //         newCount
-    //     });
-    // }
 
     // Actualizar la última fecha de visualización si es necesario
     if (markAsViewed) {
@@ -197,7 +175,7 @@ export async function GET(request: NextRequest) {
     if (includeCounts) {
       const [total, unreadCount, newCount] = await Promise.all([
         notificationCollection.countDocuments(query),
-        notificationCollection.countDocuments({ ...query, 'read.status': false }),
+        notificationCollection.countDocuments({ ...query, read: {status: false} }),
         lastViewedAt
           ? notificationCollection.countDocuments({
             ...query,

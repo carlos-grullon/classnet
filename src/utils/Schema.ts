@@ -95,15 +95,29 @@ export async function createIndexesAndSeedData(): Promise<void> {
     console.log('Configurando colección notifications...');
     const notificationsCollection = await getCollection('notifications');
 
-    // Create indexes for notifications. They are idempotent.
-    await notificationsCollection.createIndex({ userId: 1, createdAt: -1 }, { unique: false });
-    await notificationsCollection.createIndex({
-      userId: 1,
-      "read.status": 1,
-      createdAt: -1
-    }, { unique: false });
+    // Drop existing indexes if they exist
+    try {
+      await notificationsCollection.dropIndex('userId_1_createdAt_-1');
+      await notificationsCollection.dropIndex('userId_1_read.status_1_createdAt_-1');
+      await notificationsCollection.dropIndex('idx_ttl');
+      console.log('Índices existentes eliminados.');
+    } catch (error) {
+      // Ignore errors if indexes don't exist
+      console.log('No se encontraron índices existentes para eliminar o error al eliminarlos:', error);
+    }
 
-    // TTL index for automatic cleanup (90 days)
+    // Create new indexes
+    await notificationsCollection.createIndex(
+      { userId: 1, createdAt: -1 },
+      { name: 'userId_1_createdAt_-1', unique: false }
+    );
+    
+    await notificationsCollection.createIndex(
+      { userId: 1, "read.status": 1, createdAt: -1 },
+      { name: 'userId_1_read.status_1_createdAt_-1', unique: false }
+    );
+
+    // TTL index for automatic cleanup (60 days)
     await notificationsCollection.createIndex(
       { createdAt: 1 },
       { 
@@ -111,7 +125,7 @@ export async function createIndexesAndSeedData(): Promise<void> {
         expireAfterSeconds: 5184000 // 60 days in seconds
       }
     );
-    console.log('Índices de notifications creados/asegurados.');
+    console.log('Nuevos índices de notifications creados correctamente.');
 
     // #endregion
 

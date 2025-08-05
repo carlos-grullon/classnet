@@ -106,7 +106,6 @@ export default function MonthlyPaymentsPage() {
       const response = await FetchData<PendingPaymentsResponse>('/api/admin/monthly-payments/pending', {}, 'GET');
       if (response && response.success) {
         setAllPayments(response.pendingPayments || []);
-        console.log(response.pendingPayments);
         setPendingPayments(response.pendingPayments || []);
         setClasses(response.classes || []);
       } else {

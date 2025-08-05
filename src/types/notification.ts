@@ -2,6 +2,16 @@ import { ObjectId } from 'mongodb';
 
 export type NotificationType = 'paymentReminder' | 'classUpdate' | 'newFeature' | 'system' | 'info';
 
+// Define a more specific type for notification metadata
+export interface NotificationMetadata {
+  // Common metadata fields
+  classId?: string;
+  paymentId?: string;
+  featureName?: string;
+  // Allow any string key with string or number values
+  [key: string]: string | number | boolean | undefined;
+}
+
 export interface Notification {
   _id: ObjectId;
   userId: ObjectId;
@@ -13,7 +23,7 @@ export interface Notification {
     readAt: Date | null;
   };
   link?: string;
-  metadata?: Record<string, any>;
+  metadata?: NotificationMetadata;
   createdAt: Date;
   updatedAt: Date;
   expiresAt?: Date;
@@ -25,7 +35,7 @@ export interface CreateNotificationDto {
   message: string;
   type?: NotificationType;
   link?: string;
-  metadata?: Record<string, any>;
+  metadata?: NotificationMetadata;
   expiresAt?: Date;
 }
 

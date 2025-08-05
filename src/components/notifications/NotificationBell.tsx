@@ -1,19 +1,32 @@
 'use client';
 
-import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Menu, Transition } from '@headlessui/react';
 import { FiBell, FiCheck, FiRefreshCw, FiX } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getUserNotifications, markNotificationsAsRead, updateLastNotificationView } from '@/services/notificationService';
 import { Notification } from '@/types/notification';
-import Link from 'next/link';
-import { io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { getToken } from '@/utils/Tools.tsx';
+import { ObjectId } from 'mongodb';
 
+// Define the shape of the WebSocket notification data
+interface WebSocketNotification extends Omit<Notification, 'id' | 'createdAt' | 'read'> {
+  _id: ObjectId;
+  createdAt: string;
+  read: {
+    status: boolean;
+    readAt: Date | null;
+  };
+}
 
 export function NotificationBell() {
+  // Estados para el menú
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Estados para las notificaciones
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [notifications, setNotifications] = useState<Notification[] | null>(null);
@@ -21,54 +34,15 @@ export function NotificationBell() {
   const [hasMore, setHasMore] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [showNewNotification, setShowNewNotification] = useState(false);
+
+  // Referencias
   const notificationSound = useRef<HTMLAudioElement | null>(null);
 
   // Refs for WebSocket and reconnection
-  const socketRef = useRef<any>(null);
+  const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
   const pageSize = 10;
-
-  const fetchNotifications = async (isLoadMore = false) => {
-    try {
-      if (!isLoadMore) {
-        setIsLoading(true);
-      } else {
-        setIsLoadingMore(true);
-      }
-
-      // Usamos el parámetro newOnly: false para obtener todas las notificaciones
-      const response = await getUserNotifications({
-        limit: pageSize,
-        skip: isLoadMore ? (notifications?.length || 0) : 0,
-        includeCounts: true // Incluir contadores en la respuesta
-      } as any); // Usamos 'as any' temporalmente para evitar errores de tipo
-
-      if (response) {
-        if (isLoadMore) {
-          setNotifications(prev => [...(prev || []), ...(response.data || [])]);
-        } else {
-          setNotifications(response.data || []);
-        }
-
-        // Usar los contadores del backend
-        setNewNotificationsCount(response.newCount || 0);
-        setHasMore(response.hasMore || false);
-      } else {
-        setNotifications([]);
-        setNewNotificationsCount(0);
-        setHasMore(false);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      setNotifications([]);
-      setNewNotificationsCount(0);
-      setHasMore(false);
-    } finally {
-      setIsLoading(false);
-      setIsLoadingMore(false);
-    }
-  };
 
   // Cargar notificaciones y contadores al montar el componente
   useEffect(() => {
@@ -79,12 +53,18 @@ export function NotificationBell() {
         const response = await getUserNotifications({
           limit: pageSize,
           includeCounts: true
-        } as any);
+        });
 
         if (response) {
           setNotifications(response.data || []);
           setNewNotificationsCount(response.newCount || 0);
-          setHasMore(response.hasMore || false);
+
+          // Calcular si hay más notificaciones por cargar
+          const hasMoreResults = response.hasMore !== undefined
+            ? response.hasMore
+            : (response.data?.length || 0) >= pageSize;
+
+          setHasMore(hasMoreResults);
         }
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -127,7 +107,6 @@ export function NotificationBell() {
     const connectWebSocket = async () => {
       try {
         const token = await getToken();
-        console.log('Intentando conectar al WebSocket...');
 
         // Limpiamos cualquier conexión existente
         if (socketRef.current) {
@@ -169,16 +148,27 @@ export function NotificationBell() {
         });
 
         // Escuchar eventos personalizados
-        socketRef.current.on('new-notification', (data: any) => {
-          console.log('🔔 Nueva notificación recibida:', data);
-          setNotifications(prev => [data, ...(prev || [])]);
+        socketRef.current.on('new-notification', (data: WebSocketNotification) => {
+
+          // Transform the WebSocket notification to match our Notification type
+          const newNotification: Notification = {
+            ...data,
+            createdAt: new Date(data.createdAt), // Convert string to Date
+            updatedAt: new Date(data.updatedAt), // Ensure updatedAt is also a Date
+            read: {
+              status: false,
+              readAt: null
+            }
+          };
+
+          setNotifications(prev => [newNotification, ...(prev || [])]);
           setNewNotificationsCount(prev => prev + 1);
 
-          // Mostrar notificación y ocultar después de 5 segundos
+          // Mostrar notificación y ocultar después de 4 segundos
           setShowNewNotification(true);
           setTimeout(() => {
             setShowNewNotification(false);
-          }, 5000);
+          }, 4000);
 
           // Reproducir sonido de notificación si está disponible
           if (notificationSound.current) {
@@ -197,7 +187,6 @@ export function NotificationBell() {
     const attemptReconnect = () => {
       if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
         reconnectAttempts++;
-        console.log(`🔄 Intento de reconexión ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} en ${RECONNECT_INTERVAL / 1000} segundos...`);
 
         // Limpiamos cualquier timeout previo
         if (reconnectTimeoutRef.current) {
@@ -209,7 +198,6 @@ export function NotificationBell() {
             if (!socketRef.current.connected) {
               socketRef.current.connect();
             } else {
-              console.log('✅ Ya hay una conexión activa, no es necesario reconectar');
               reconnectAttempts = 0; // Reiniciamos los intentos ya que hay conexión
             }
           } else {
@@ -227,9 +215,7 @@ export function NotificationBell() {
 
     // Escuchar cambios en la conexión a internet
     const handleOnline = () => {
-      console.log('🌐 Conexión a internet restaurada. Intentando reconectar...');
       if (!socketRef.current?.connected) {
-        console.log('🔌 Intentando reconectar el WebSocket...');
         connectWebSocket();
       }
     };
@@ -238,8 +224,6 @@ export function NotificationBell() {
 
     // Limpieza al desmontar el componente
     return () => {
-      console.log('🧹 Limpiando conexión WebSocket');
-
       // Limpiar el timeout de reconexión
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -266,39 +250,31 @@ export function NotificationBell() {
     };
   }, []);
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return;
-    await fetchNotifications(true);
-  };
+  const markAllAsRead = async () => {
+    try {
+      if (!notifications || notifications.length === 0) return;
 
-  const handleNotificationClick = async (e: React.MouseEvent, notification: Notification, closeMenu: () => void) => {
-    // Prevenir la propagación del evento para que no llegue al menú
-    e.stopPropagation();
-    e.preventDefault();
+      // Actualizar estado local
+      const unreadIds = notifications
+        .filter(n => !n.read.status && n._id)
+        .map(n => n._id.toString());
 
-    if (!notification.read.status && notification._id) {
-      try {
-        setNotifications(prev =>
-          prev?.map(n =>
-            n._id === notification._id
-              ? { ...n, read: { ...n.read, status: true } }
-              : n
-          ) || null
-        );
-        await markNotificationsAsRead([notification._id.toString()]);
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
+      if (unreadIds.length === 0) return;
 
-    // Cerrar el menú antes de navegar
-    if (notification.link) {
-      // Cerrar el menú
-      closeMenu();
-      // Pequeño retraso para permitir que la animación de cierre se complete
-      setTimeout(() => {
-        router.push(notification.link!);
-      }, 150);
+      setNotifications(prev =>
+        prev?.map(n => ({
+          ...n,
+          read: { status: true, readAt: new Date() }
+        })) || null
+      );
+
+      // Actualizar en el servidor
+      await markNotificationsAsRead(unreadIds);
+
+      // Actualizar contador
+      setNewNotificationsCount(0);
+    } catch (error) {
+      console.error('Error marking all as read:', error);
     }
   };
 
@@ -314,189 +290,256 @@ export function NotificationBell() {
     }
   }, [newNotificationsCount]);
 
+  // Efecto para manejar clics fuera del menú
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Cargar notificaciones cuando se abre el menú
+      handleMenuOpen();
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen, handleMenuOpen]);
+
+  // Función para manejar el clic en una notificación
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      // Marcar como leído si no lo está
+      if (!notification.read.status && notification._id) {
+        // Actualizar el estado local primero para una respuesta más rápida
+        setNotifications(prev =>
+          prev?.map(n =>
+            n._id === notification._id
+              ? {
+                ...n,
+                read: {
+                  status: true,
+                  readAt: new Date()
+                }
+              }
+              : n
+          ) || null
+        );
+
+        // Actualizar en el servidor
+        await markNotificationsAsRead([notification._id.toString()]);
+      }
+
+      // Navegar si hay un enlace
+      if (notification.link) {
+        setIsMenuOpen(false);
+        // Pequeño retraso para permitir la animación de cierre
+        setTimeout(() => {
+          router.push(notification.link!);
+        }, 150);
+      }
+    } catch (error) {
+      console.error('Error handling notification click:', error);
+    }
+  };
+
+  // Función para cargar más notificaciones
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    try {
+      setIsLoadingMore(true);
+      const skip = notifications?.length || 0;
+      const response = await getUserNotifications({
+        limit: pageSize,
+        skip: skip,
+        includeCounts: true
+      });
+
+      if (response?.data) {
+        // Actualizar notificaciones
+        setNotifications(prev => [...(prev || []), ...(response.data || [])]);
+
+        // Calcular si hay más notificaciones por cargar
+        const hasMoreResults = response.hasMore !== undefined
+          ? response.hasMore
+          : (response.data?.length || 0) === pageSize;
+
+        setHasMore(hasMoreResults);
+      }
+    } catch (error) {
+      console.error('Error loading more notifications:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   // Componente del botón de notificaciones
   return (
-    <Menu as="div" className="relative ml-3">
-      {({ open, close }) => {
-        // Usamos un efecto para manejar la apertura del menú
-        useEffect(() => {
-          if (open) {
+    <div className="relative ml-3" ref={menuRef}>
+      <button
+        className="relative rounded-full p-2 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors focus:outline-none"
+        onClick={() => {
+          setIsMenuOpen(!isMenuOpen);
+          if (!isMenuOpen) {
             handleMenuOpen();
           }
-        }, [open, handleMenuOpen]);
+        }}
+        aria-expanded={isMenuOpen}
+        aria-haspopup="true"
+      >
+        <span className="sr-only">Ver notificaciones</span>
+        <FiBell className="h-6 w-6" aria-hidden="true" />
+        {newNotificationsCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+            {newNotificationsCount > 9 ? '9+' : newNotificationsCount}
+          </span>
+        )}
+        <span
+          className={`absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+          title={isConnected ? 'Conectado' : 'Desconectado'}
+        />
+      </button>
 
-        // Efecto para manejar clics fuera del menú
-        useEffect(() => {
-          if (open) {
-            const handleClickOutside = (event: MouseEvent) => {
-              const target = event.target as HTMLElement;
-              if (!target.closest('.notification-menu')) {
-                close();
-              }
-            };
-
-            document.addEventListener('mousedown', handleClickOutside);
-            return () => {
-              document.removeEventListener('mousedown', handleClickOutside);
-            };
-          }
-        }, [open, close]);
-
-        return (
-          <div className="relative">
-            <Menu.Button
-              className="relative rounded-full p-2 hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors focus:outline-none"
-              onClick={() => setShowNewNotification(false)}
-            >
-              <span className="sr-only">Ver notificaciones</span>
-              <FiBell className="h-6 w-6" aria-hidden="true" />
-              {newNotificationsCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-                  {newNotificationsCount > 9 ? '9+' : newNotificationsCount}
-                </span>
-              )}
-              <span 
-                className={`absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${
-                  isConnected ? 'bg-green-500' : 'bg-red-500'
-                }`}
-                title={isConnected ? 'Conectado' : 'Desconectado'}
-              />
-            </Menu.Button>
-            
-            {/* Pop-up de nueva notificación */}
-            <Transition
-              show={showNewNotification}
-              enter="transition-opacity duration-300"
-              enterFrom="opacity-0"
-              enterTo="opacity-100"
-              leave="transition-opacity duration-500"
-              leaveFrom="opacity-100"
-              leaveTo="opacity-0"
-            >
-              <div 
-                className="absolute right-0 top-full mt-2 w-64 rounded-lg bg-white dark:bg-gray-800 p-3 shadow-xl ring-2 ring-blue-400 dark:ring-blue-500 ring-opacity-50 border border-gray-200 dark:border-gray-600 z-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <FiBell className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <div className="ml-3 w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">¡Nueva notificación!</p>
-                  </div>
-                  <div className="ml-4 flex-shrink-0 flex">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowNewNotification(false);
-                      }}
-                      className="inline-flex text-gray-400 hover:text-gray-500 focus:outline-none"
-                    >
-                      <span className="sr-only">Cerrar</span>
-                      <FiX className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
+      {isMenuOpen && (
+        <div className="fixed sm:absolute right-2 sm:right-0 sm:top-auto sm:mt-2 w-[calc(100%-1rem)] sm:w-80 max-w-[calc(100vw-2rem)] origin-top-right rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-medium text-gray-900 dark:text-white">Notificaciones</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    markAllAsRead();
+                  }}
+                  className="flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-800/50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                  title="Marcar todo como leído"
+                >
+                  <FiCheck className="h-3.5 w-3.5 mr-1.5" />
+                  <span>leer todas</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                  }}
+                  className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-all duration-200"
+                  title="Cerrar notificaciones"
+                >
+                  <span className="sr-only">Cerrar notificaciones</span>
+                  <FiX className="h-4 w-4" aria-hidden="true" />
+                </button>
               </div>
-            </Transition>
-
-            <Transition
-              show={open}
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <Menu.Items
-                static
-                className="notification-menu absolute -left-60 z-10 mt-2 w-80 max-w-sm rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-blue-400 dark:ring-blue-500 ring-opacity-50 focus:outline-none max-h-[500px] overflow-y-auto"
-              >
-                <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex justify-between items-center">
-                  <h3 className="text-base font-medium text-gray-900 dark:text-white">Notificaciones</h3>
-                  <h2 className={`text-sm font-medium ${isConnected ? 'text-green-500' : 'text-red-500'}`}>{isConnected ? 'Conectado' : 'Desconectado'}</h2>
-                </div>
-
-                {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <FiRefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-                  </div>
-                ) : !notifications || notifications.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                    No hay notificaciones
-                  </div>
-                ) : (
-                  <>
-                    {notifications.map((notification) => (
-                      <Menu.Item key={notification._id?.toString() || ''}>
-                        {({ active }) => (
-                          <div
-                            className={`px-4 py-3 text-sm cursor-pointer ${active ? 'bg-gray-200 dark:bg-gray-700' : ''
-                              } ${!notification.read.status ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
-                            onClick={(e) => handleNotificationClick(e, notification, close)}
-                          >
-                            <div className="flex items-start">
-                              <div className="flex-shrink-0 pt-0.5">
-                                {notification.read.status ? (
-                                  <FiCheck className="h-5 w-5 text-gray-400" />
-                                ) : (
-                                  <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
-                                )}
-                              </div>
-                              <div className="ml-3 flex-1">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                  {notification.title}
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-300">
-                                  {notification.message}
-                                </p>
-                                <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-                                  {formatDistanceToNow(new Date(notification.createdAt), {
-                                    addSuffix: true,
-                                    locale: es
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </Menu.Item>
-                    ))}
-
-                    {hasMore && (
-                      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-center">
-                        <button
-                          type="button"
-                          onClick={handleLoadMore}
-                          disabled={isLoadingMore}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 disabled:cursor-not-allowed w-full"
-                        >
-                          {isLoadingMore ? (
-                            <span className="flex items-center justify-center">
-                              <FiRefreshCw className="h-4 w-4 animate-spin mr-1" />
-                              Cargando...
-                            </span>
-                          ) : (
-                            'Cargar más notificaciones'
-                          )}
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2 text-center">
-                      <Link href="/notifications" className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 w-full">
-                        Ver todas las notificaciones
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </Menu.Items>
-            </Transition>
+            </div>
           </div>
-        );
-      }}
-    </Menu>
+
+          <div className="max-h-96 overflow-y-auto">
+            {isLoading ? (
+              <div className="flex justify-center py-4">
+                <FiRefreshCw className="h-5 w-5 animate-spin text-gray-400" />
+              </div>
+            ) : notifications && notifications.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification._id.toString()}
+                    className={`px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${!notification.read.status ? 'bg-blue-50 dark:bg-blue-900/30' : ''
+                      }`}
+                    onClick={() => {
+                      handleNotificationClick(notification);
+                    }}
+                  >
+                    <div className="flex items-start w-full space-x-3">
+                      <div className="flex-shrink-0 pt-1">
+                        {notification.read.status ? (
+                          <FiCheck className="h-3.5 w-3.5 text-gray-400" />
+                        ) : (
+                          <div className="h-2 w-2 mt-1.5 rounded-full bg-blue-500" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {notification.title}
+                        </p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {notification.message}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {formatDistanceToNow(new Date(notification.createdAt), {
+                          addSuffix: true,
+                          locale: es,
+                        })}
+                      </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {(notifications?.length || 0) > 0 && (
+                  <div className="flex flex-col items-center py-2">
+                    {hasMore ? (
+                      <button
+                        type="button"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 focus:outline-none disabled:opacity-50"
+                      >
+                        {isLoadingMore ? (
+                          <FiRefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          'Cargar más'
+                        )}
+                      </button>
+                    ) : (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No hay más notificaciones
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="px-4 py-6 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No hay notificaciones
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Notificación flotante - Versión profesional */}
+      {showNewNotification && (
+        <div 
+          className="absolute right-0 top-full mt-2 z-50"
+          onClick={() => {
+            setIsMenuOpen(true);
+            setShowNewNotification(false);
+          }}
+        >
+          <div className="flex items-center bg-white dark:bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-2xl hover:-translate-y-0.5">
+            <div className="relative p-3">
+              <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-sm">
+                <FiBell className="h-5 w-5" />
+              </div>
+              <span className="absolute top-2 right-2 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+              </span>
+            </div>
+            <div className="pr-4 pl-1">
+              <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Nueva notificación</p>
+            </div>
+            <div className="h-full flex items-center pr-3">
+              <span className="h-1 w-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
