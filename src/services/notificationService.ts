@@ -128,45 +128,12 @@ export async function markNotificationsAsRead(
     return false;
   }
 }
-
-/**
- * Gets the count of unread and new notifications
- * @returns Promise<{unreadCount: number, newCount: number}> Object with notification counts
- */
-// export async function getNotificationCounts() {
-//   try {
-    // Usamos el endpoint existente con limit=0 para solo obtener los contadores
-//     const response = await fetch(`${API_BASE_URL}/api/notifications?countOnly=true&limit=0`, {
-//       method: 'GET',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Cache-Control': 'no-cache'
-//       },
-//       credentials: 'include'
-//     });
-
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-
-//     const data = await response.json();
-//     return {
-//       unreadCount: data.unreadCount || 0,
-//       newCount: data.newCount || 0
-//     };
-//   } catch (error) {
-//     console.error('Error getting notification counts:', error);
-//     return { unreadCount: 0, newCount: 0 };
-//   }
-// }
-
 /**
  * Options for fetching notifications
  */
 export interface GetNotificationsOptions {
   unreadOnly?: boolean; // Solo notificaciones no leídas
   newOnly?: boolean; // Solo notificaciones nuevas (después de lastNotificationView)
-  // countOnly?: boolean;
   includeCounts?: boolean;
   limit?: number;
   skip?: number;
@@ -197,7 +164,6 @@ export async function getUserNotifications(
     const { 
       unreadOnly, 
       newOnly, 
-      // countOnly = false,
       includeCounts = false,
       limit = 10, 
       skip = 0 
@@ -206,7 +172,6 @@ export async function getUserNotifications(
     const params = new URLSearchParams({
       ...(unreadOnly && { unread: 'true' }),
       ...(newOnly && { new: 'true' }),
-      // ...(countOnly && { countOnly: 'true' }),
       ...(includeCounts && { includeCounts: 'true' }),
       limit: limit.toString(),
       skip: skip.toString()
@@ -216,7 +181,6 @@ export async function getUserNotifications(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache'
       },
       credentials: 'include'
     });
@@ -233,17 +197,6 @@ export async function getUserNotifications(
     }
 
     const data = await response.json();
-    
-    // Si solo se pidieron los contadores, devolvemos un objeto con los contadores
-    // if (countOnly) {
-    //   return {
-    //     data: [],
-    //     total: data.total || 0,
-    //     hasMore: false,
-    //     unreadCount: data.unreadCount || 0,
-    //     newCount: data.newCount || 0
-    //   };
-    // }
     
     // Si se incluyen los contadores en la respuesta
     if (includeCounts) {
