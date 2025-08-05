@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         created_at: new Date(),
         updated_at: new Date(),
         has_used_trial: false,
+        lastNotificationView: new Date(),
         auth_provider: 'google'
       });
     }

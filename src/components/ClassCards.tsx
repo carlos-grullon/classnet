@@ -128,7 +128,7 @@ export default function ClassCards() {
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Aún no te has inscrito a ninguna clase.
               </p>
-              <Button onClick={() => router.push('/student/searchclasses')}>
+              <Button onClick={() => router.push('/student/classes')}>
                 Buscar Clases
               </Button>
             </div>

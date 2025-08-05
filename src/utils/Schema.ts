@@ -1,6 +1,6 @@
 import 'dotenv/config'; // Carga variables de entorno desde .env
-import { getCollection } from './MongoDB'; // Asegúrate de que esta función maneje la conexión correctamente
-import { subjects, countries } from '../lib/data'; // Datos iniciales
+import { getCollection } from './MongoDB';
+import { subjects, countries } from '../lib/data';
 
 /**
  * Creates necessary indexes and inserts initial data if collections are empty.
@@ -9,7 +9,7 @@ import { subjects, countries } from '../lib/data'; // Datos iniciales
 export async function createIndexesAndSeedData(): Promise<void> {
   try {
     console.log('Iniciando configuración de índices y datos iniciales en las colecciones...');
-
+    
     // #region Users Collection
     console.log('Configurando índices para la colección users...');
     const usersCollection = await getCollection('users');
@@ -89,6 +89,44 @@ export async function createIndexesAndSeedData(): Promise<void> {
     } else {
       console.log('Colección countries ya contiene datos, saltando inserción inicial.');
     }
+    // #endregion
+
+    // #region Notifications Collection
+    console.log('Configurando colección notifications...');
+    const notificationsCollection = await getCollection('notifications');
+
+    // Drop existing indexes if they exist
+    try {
+      await notificationsCollection.dropIndex('userId_1_createdAt_-1');
+      await notificationsCollection.dropIndex('userId_1_read.status_1_createdAt_-1');
+      await notificationsCollection.dropIndex('idx_ttl');
+      console.log('Índices existentes eliminados.');
+    } catch (error) {
+      // Ignore errors if indexes don't exist
+      console.log('No se encontraron índices existentes para eliminar o error al eliminarlos:', error);
+    }
+
+    // Create new indexes
+    await notificationsCollection.createIndex(
+      { userId: 1, createdAt: -1 },
+      { name: 'userId_1_createdAt_-1', unique: false }
+    );
+    
+    await notificationsCollection.createIndex(
+      { userId: 1, "read.status": 1, createdAt: -1 },
+      { name: 'userId_1_read.status_1_createdAt_-1', unique: false }
+    );
+
+    // TTL index for automatic cleanup (60 days)
+    await notificationsCollection.createIndex(
+      { createdAt: 1 },
+      { 
+        name: 'idx_ttl',
+        expireAfterSeconds: 5184000 // 60 days in seconds
+      }
+    );
+    console.log('Nuevos índices de notifications creados correctamente.');
+
     // #endregion
 
     console.log('Configuración de base de datos (índices y datos iniciales) completada correctamente.');

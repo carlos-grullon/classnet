@@ -10,17 +10,17 @@ export async function POST(request: Request) {
             data.email,
         )
         const userCommonData = {
+            userId: user._id,
             userIsStudent: user.user_is_student,
             userIsTeacher: user.user_is_teacher,
             userEmail: user.email,
             userImage: user.image_path || '',
-            userName: user.username || '',
+            userName: user.username || ''
         }
         const response = NextResponse.json(userCommonData);
 
         const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
         const token = await new SignJWT({
-            userId: user._id.toString(),
             ...userCommonData
         })
         .setProtectedHeader({ alg: 'HS256' })

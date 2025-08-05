@@ -2,18 +2,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { ThemeToggle } from './ThemeToggle';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { SideMenu } from './SideMenu';
 import Image from 'next/image';
 import { useUser } from '@/providers';
 import { useRouter } from 'next/navigation';
+import { NotificationBell } from './notifications/NotificationBell';
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useUser();
-  const router = useRouter(); 
+  const router = useRouter();
 
   const isTeacherRoute = pathname?.startsWith('/teacher');
   const isStudentRoute = pathname?.startsWith('/student');
@@ -66,8 +66,6 @@ export function Navbar() {
               </Link>
             ))}
           </div>
-
-          {/* ThemeToggle con margen de 40px */}
           <div className="flex items-center ml-auto">
             <div className="h-12 w-12 border border-blue-500 rounded-full overflow-hidden cursor-pointer">
               <div className="relative h-full w-full">
@@ -81,8 +79,10 @@ export function Navbar() {
                 />
               </div>
             </div>
-            <ThemeToggle className="hidden md:block md:mx-3" />
-            <SideMenu />
+            <div className="flex items-center space-x-2">
+              <NotificationBell />
+              <SideMenu />
+            </div>
           </div>
         </div>
       </div>
