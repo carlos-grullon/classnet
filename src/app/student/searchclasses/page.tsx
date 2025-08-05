@@ -163,8 +163,8 @@ export default function StudentClasses() {
         ErrorMsj(response.error || 'Error al agendar la clase de prueba');
       }
     } catch (error) {
-      console.error('Error scheduling trial:', error);
-      ErrorMsj('Error al conectar con el servidor');
+      const message = error instanceof Error ? error.message : 'Error al conectar con el servidor';
+      ErrorMsj(message);
     } finally {
       setTrialModal({ isOpen: false, classItem: null });
     }
