@@ -39,14 +39,20 @@ export async function GET(req: Request) {
     console.log(`🔄 Starting daily tasks at ${now.toISOString()}`);
 
     // 2. Process expiring trials
-    const result = await processExpiringTrials();
+    const trialResults = await processExpiringTrials();
+    
+    // 3. Process and delete expired enrollments
+    const expiredEnrollmentsResult = await processExpiredEnrollments();
     
     console.log('✅ Daily tasks completed successfully');
     
     return NextResponse.json({
       success: true,
       message: 'Tareas diarias completadas',
-      stats: result,
+      stats: {
+        trials: trialResults,
+        expiredEnrollments: expiredEnrollmentsResult
+      },
       processedAt: now.toISOString()
     });
 
@@ -59,6 +65,50 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Finds and deletes enrollments that have expired (status 'pending_payment' with expired expiresAt)
+ */
+async function processExpiredEnrollments() {
+  const now = new Date();
+  const enrollmentsCollection = await getCollection('enrollments');
+  
+  // Find all pending payment enrollments that have expired
+  const expiredEnrollments = await enrollmentsCollection.find({
+    status: 'pending_payment',
+    expiresAt: { $exists: true, $lt: now }
+  }).toArray();
+
+  if (expiredEnrollments.length === 0) {
+    console.log('ℹ️ No se encontraron inscripciones vencidas para eliminar');
+    return { deleted: 0, errors: 0 };
+  }
+
+  console.log(`🔍 Encontradas ${expiredEnrollments.length} inscripciones vencidas para eliminar`);
+
+  let deletedCount = 0;
+  let errorCount = 0;
+
+  // Delete each expired enrollment
+  for (const enrollment of expiredEnrollments) {
+    try {
+      const result = await enrollmentsCollection.deleteOne({ _id: enrollment._id });
+      if (result.deletedCount > 0) {
+        console.log(`✅ Eliminada inscripción vencida: ${enrollment._id}`);
+        deletedCount++;
+      }
+    } catch (error) {
+      console.error(`❌ Error al eliminar inscripción ${enrollment._id}:`, error);
+      errorCount++;
+    }
+  }
+
+  return {
+    deleted: deletedCount,
+    errors: errorCount,
+    total: expiredEnrollments.length
+  };
 }
 
 async function processExpiringTrials() {
