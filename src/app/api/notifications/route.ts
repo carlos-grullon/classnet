@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     const notifications = data.userId.map(userId => {
       // Si el userId es un ObjectId válido, lo convertimos, de lo contrario lo guardamos como string
       const userIdValue = isValidObjectId(userId) ? new ObjectId(userId) : userId;
-      
+
       return {
         _id: new ObjectId(),
         userId: userIdValue,
@@ -150,11 +150,11 @@ export async function GET(request: NextRequest) {
     const lastViewedAt = user?.lastNotificationView || null;
 
     // Construir la consulta base
-    const query: {read?: {status: boolean}, createdAt?: { $gt: Date }, userId: ObjectId} = { userId: userIdObj };
+    const query: { read?: { status: boolean }, createdAt?: { $gt: Date }, userId: ObjectId } = { userId: userIdObj };
 
     // Aplicar filtros
     if (unreadOnly) {
-      query.read = {status: false};
+      query.read = { status: false };
     }
 
     // Filtrar por notificaciones nuevas (después de lastViewedAt)
@@ -175,7 +175,7 @@ export async function GET(request: NextRequest) {
     if (includeCounts) {
       const [total, unreadCount, newCount] = await Promise.all([
         notificationCollection.countDocuments(query),
-        notificationCollection.countDocuments({ ...query, read: {status: false} }),
+        notificationCollection.countDocuments({ ...query, read: { status: false } }),
         lastViewedAt
           ? notificationCollection.countDocuments({
             ...query,

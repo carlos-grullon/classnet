@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     const classesCollection = await getCollection('classes');
     const classData = await classesCollection.findOne({ _id: new ObjectId(submission!.classId) });
     await sendNotification({
-      userId: submission!.studentId,
-      title: '¡Calificación recibida!',
+      userId: [submission!.studentId],
+      title: '✅ ¡Calificación recibida!',
       message: `Tu asignación de la semana ${submission!.weekNumber} en ${classData!.subjectName} ${getLevelName(classData!.level)} ha sido calificada`,
       link: `/student/classes/${submission!.classId}/virtual-classroom`,
       type: 'info'

@@ -74,7 +74,7 @@ export async function POST(
       const classData = await classesCollection.findOne({ _id: new ObjectId(classId) });
       await sendNotification({
         userId: studentIds,
-        title: '¡Nueva asignación!',
+        title: '📝 ¡Nueva asignación!',
         message: `Tienes una nueva asignación en la clase ${classData!.subjectName} ${getLevelName(classData!.level)}`,
         link: `/student/classes/${classId}/virtual-classroom`,
         type: 'info'

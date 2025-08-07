@@ -114,7 +114,7 @@ export async function POST(
     const studentIds = enrollments.map(enrollment => enrollment.student_id);
     await sendNotification({
       userId: studentIds,
-      title: '¡Clase iniciada!',
+      title: '🔥 ¡Clase iniciada!',
       message: `Tu clase de ${classData.subjectName} ${getLevelName(classData.level)} ha comenzado`,
       link: `/student/classes/${classId}/virtual-classroom`,
       type: 'info'

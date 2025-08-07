@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
           // Enviar notificación push
           await sendNotification({
             userId: [student._id.toString()],
-            title: 'Recordatorio de pago',
+            title: '💰 Recordatorio de pago',
             message: `Recuerda realizar el pago de ${classData.subjectName} ${getLevelName(classData.level)} antes del ${formatDateLong(nextPaymentDate)}`,
             link: `/student/enrollments/${enrollment._id.toString()}`,
             type: 'paymentReminder'

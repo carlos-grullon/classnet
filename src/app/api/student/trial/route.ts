@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
     const levelName = getLevelName(classData.level);
     await sendNotification({
       userId: [studentId],
-      title: 'Inscripción a clase de prueba',
+      title: '🎉 Inscripción a clase de prueba',
       message: `Has sido inscrito a la clase de ${classData.subjectName} ${levelName}, tu período de prueba termina ${expiresAt ? 'el ' + formatInputDateToLong(expiresAt) : '7 días después que empiece la clase'}`,
       link: `/student/enrollments/${result.insertedId}`,
       type: 'info'

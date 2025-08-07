@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Textarea, Input } from '@/components';
 import { FiSave, FiX } from 'react-icons/fi';
 
@@ -30,13 +30,33 @@ export function GradeAssignmentForm({
     onSave
 }: GradeAssignmentFormProps) {
     const [grades, setGrades] = useState({
-        fileGrade: initialData?.fileGrade ?? '',
-        fileFeedback: initialData?.fileFeedback ?? '',
-        audioGrade: initialData?.audioGrade ?? '',
-        audioFeedback: initialData?.audioFeedback ?? '',
-        overallGrade: initialData?.overallGrade ?? '',
-        overallFeedback: initialData?.overallFeedback ?? ''
+        fileGrade: initialData?.fileGrade?.toString() || '',
+        fileFeedback: initialData?.fileFeedback || '',
+        audioGrade: initialData?.audioGrade?.toString() || '',
+        audioFeedback: initialData?.audioFeedback || '',
+        overallGrade: initialData?.overallGrade?.toString() || '',
+        overallFeedback: initialData?.overallFeedback || ''
     });
+
+    // Efecto para calcular automáticamente el overallGrade
+    useEffect(() => {
+        if (grades.audioGrade && grades.fileGrade) {
+            const audio = parseFloat(grades.audioGrade) || 0;
+            const file = parseFloat(grades.fileGrade) || 0;
+            const average = Math.round((audio + file) / 2);
+            
+            setGrades(prev => ({
+                ...prev,
+                overallGrade: average.toString()
+            }));
+        } else if (grades.overallGrade) {
+            // Limpiar si se borra alguno de los campos
+            setGrades(prev => ({
+                ...prev,
+                overallGrade: ''
+            }));
+        }
+    }, [grades.audioGrade, grades.fileGrade]);
 
     const [isLoading, setIsLoading] = useState(false);
 
@@ -100,7 +120,9 @@ export function GradeAssignmentForm({
                     min="0"
                     max="100"
                     value={grades.overallGrade}
-                    onChange={(e) => setGrades({ ...grades, overallGrade: e.target.value })}
+                    readOnly
+                    className="bg-gray-100 cursor-not-allowed"
+                    title="Este campo se calcula automáticamente"
                 />
                 <Textarea
                     id='overallFeedback'
