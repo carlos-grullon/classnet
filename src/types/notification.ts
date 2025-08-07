@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 
-export type NotificationType = 'paymentReminder' | 'classUpdate' | 'newFeature' | 'system' | 'info';
+export type NotificationType = 'paymentReminder' | 'paymentOverdue' | 'classUpdate' | 'newFeature' | 'system' | 'info';
 
 // Define a more specific type for notification metadata
 export interface NotificationMetadata {

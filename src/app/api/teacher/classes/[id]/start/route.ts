@@ -5,6 +5,8 @@ import { addMonths } from 'date-fns';
 import { sendClassStartNotification } from '@/utils/EmailService';
 import { formatDateLong } from '@/utils/GeneralTools.ts';
 import { v4 as uuidv4 } from 'uuid';
+import { sendNotification } from '@/services/notificationService'
+import { getLevelName } from '@/utils/GeneralTools.ts';
 
 // POST /api/teacher/classes/[id]/start - Iniciar una clase
 export async function POST(
@@ -90,8 +92,8 @@ export async function POST(
         );
         const usersCollection = await getCollection('users');
 
-        // Obtener datos del estudiante para enviar notificación
-        const student = await usersCollection.findOne({ _id: enrollment.student_id });
+        // Obtener datos del estudiante para enviar un correo
+        const student = await usersCollection.findOne({ _id: new ObjectId(enrollment.student_id) });
         if (student) {
           // Enviar notificación por correo al estudiante
           await sendClassStartNotification(
@@ -107,6 +109,16 @@ export async function POST(
         }
       }
     }
+
+    // Enviar una notificación a cada estudiante
+    const studentIds = enrollments.map(enrollment => enrollment.student_id);
+    await sendNotification({
+      userId: studentIds,
+      title: '🔥 ¡Clase iniciada!',
+      message: `Tu clase de ${classData.subjectName} ${getLevelName(classData.level)} ha comenzado`,
+      link: `/student/classes/${classId}/virtual-classroom`,
+      type: 'info'
+    });
 
     // Crear el contenido de la clase
     const classContentCollection = await getCollection('class_contents');

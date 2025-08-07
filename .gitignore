@@ -13,6 +13,7 @@ package-lock.json
 
 # testing
 /coverage
+tests_cron.ts
 
 # next.js
 /.next/

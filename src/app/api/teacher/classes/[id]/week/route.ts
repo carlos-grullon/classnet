@@ -1,10 +1,12 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
-import { formatDateToInput, parseInputDate } from '@/utils/GeneralTools';
+import { formatDateToInput, getLevelName, parseInputDate } from '@/utils/GeneralTools';
 import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
 import { getUserId } from '@/utils/Tools.ts';
+import { sendNotification } from '@/services/notificationService'
 
+// POST /api/teacher/classes/[id]/week - Crear o actualizar contenido semanal
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -13,6 +15,7 @@ export async function POST(
     const classId = (await params).id;
     const data = await request.json();
     const weeksCollection = await getCollection('weeks');
+    const classesCollection = await getCollection('classes');
     // convertir la fecha a Date para guardarla
     if (data.assignment) {
       data.assignment.dueDate = parseInputDate(data.assignment.dueDate);
@@ -56,6 +59,25 @@ export async function POST(
         assignment: data.assignment,
         createdAt: new Date(),
         updatedAt: new Date()
+      });
+
+      // Enviar notificación a los estudiantes de una nueva asignación
+      const enrollmentsCollection = await getCollection('enrollments');
+      // Busca todas las inscripciones activas en esta clase
+      const enrollments = await enrollmentsCollection.find({
+        class_id: new ObjectId(classId),
+        status: { $in: ['enrolled', 'trial'] }
+      }).toArray();
+      // Obtiene los IDs de los estudiantes
+      const studentIds = enrollments.map(enrollment => enrollment.student_id);
+      // Obtiene los datos de la clase
+      const classData = await classesCollection.findOne({ _id: new ObjectId(classId) });
+      await sendNotification({
+        userId: studentIds,
+        title: '📝 ¡Nueva asignación!',
+        message: `Tienes una nueva asignación en la clase ${classData!.subjectName} ${getLevelName(classData!.level)}`,
+        link: `/student/classes/${classId}/virtual-classroom`,
+        type: 'info'
       });
     }
 

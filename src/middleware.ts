@@ -20,6 +20,7 @@ export async function middleware(request: NextRequest) {
     '/api/auth/google/callback',
     '/api/auth/google/register',
     '/api/notifications',
+    '/api/cron',
     '/_next',
     '/favicon.ico',
     '/images',
