@@ -60,26 +60,26 @@ const questions: Question[] = [
             "Where does you live?",
         ],
         correctAnswer: 1,
-        difficulty: "intermediate",
+        difficulty: "basic",
     },
     {
         id: 7,
         question: "Complete: 'He ____ to the gym every day.'",
         options: ["go", "goes", "going", "gone"],
         correctAnswer: 1,
-        difficulty: "intermediate",
+        difficulty: "basic",
     },
     {
         id: 8,
-        question: "Choose the correct sentence:",
+        question: "What's the sentence for: 'Ella fue a la escuela'?:",
         options: [
-            "She can to swim.",
-            "She cans swim.",
-            "She can swim.",
-            "She can swimming.",
+            "She goes to school.",
+            "She went to school.",
+            "She go to school.",
+            "She can go to school.",
         ],
-        correctAnswer: 2,
-        difficulty: "intermediate",
+        correctAnswer: 1,
+        difficulty: "basic",
     },
     {
         id: 9,
@@ -90,18 +90,85 @@ const questions: Question[] = [
     },
     {
         id: 10,
-        question: "Choose the correct passive form: 'They built the house in 1990.'",
+        question: "What's the correct invitation?",
         options: [
-            "The house was built in 1990.",
-            "The house is built in 1990.",
-            "The house has built in 1990.",
-            "The house builded in 1990.",
+            "Do you want going to the party?",
+            "Do you want go to the party?",
+            "Do you want to go to the party?",
+            "Do you want to leave the party?",
         ],
-        correctAnswer: 0,
-        difficulty: "advanced",
+        correctAnswer: 2,
+        difficulty: "intermediate",
     },
     {
         id: 11,
+        question: "What’s the present continuous tense for?",
+        options: [
+            "To describe something that passed.",
+            "To describe something that is happening now.",
+            "To describe something that is going to happen.",
+            "To describe something that you do every day.",
+        ],
+        correctAnswer: 1,
+        difficulty: "intermediate",
+    },
+    {
+        id: 12,
+        question: "Answer correctly: How often do you exercise?",
+        options: [
+            "Yes, I used to exercise every day.",
+            "No, I don't exercise.",
+            "I exercise five times a week.",
+            "I eat healthy food.",
+        ],
+        correctAnswer: 2,
+        difficulty: "intermediate",
+    },
+    {
+        id: 13,
+        question: "Answer correctly: Why was he tired last week?",
+        options: [
+            "She used to go to school every day.",
+            "No, He was tired because he didn't sleep well.",
+            "His family was on vacation.",
+            "Because he didn't sleep well.",
+        ],
+        correctAnswer: 3,
+        difficulty: "advanced",
+    },
+    {
+        id: 14,
+        question: "What's the question for the answer: 'I was in Brazil for 2 months.'?",
+        options: [
+            "How long were you in Brazil?",
+            "How long have you been in Brazil?",
+            "How long had you been in Brazil?",
+            "How long has been in Brazil?",
+        ],
+        correctAnswer: 0,
+        difficulty: "intermediate",
+    },
+    {
+        id: 15,
+        question: "Choose the correct conditional: 'If I were you, I ____ take the course.'",
+        options: ["will", "would", "was", "did"],
+        correctAnswer: 1,
+        difficulty: "intermediate",
+    },
+    {
+        id: 16,
+        question: "What does 'I'm not crazy about...' mean?",
+        options: [
+            "I don't like it.",
+            "It's not interesting.",
+            "I'm not crazy.",
+            "It's interesting.",
+        ],
+        correctAnswer: 0,
+        difficulty: "intermediate",
+    },
+    {
+        id: 17,
         question: "What’s the reported speech of: 'She said, “I’m tired.”'?",
         options: [
             "She said she is tired.",
@@ -113,14 +180,14 @@ const questions: Question[] = [
         difficulty: "advanced",
     },
     {
-        id: 12,
+        id: 18,
         question: "Complete: 'If I had studied more, I ____ the exam.'",
         options: ["would pass", "will pass", "would have passed", "pass"],
         correctAnswer: 2,
         difficulty: "advanced",
     },
     {
-        id: 13,
+        id: 19,
         question: "What does 'get along with' mean?",
         options: [
             "Salir con alguien",
@@ -132,18 +199,59 @@ const questions: Question[] = [
         difficulty: "advanced",
     },
     {
-        id: 14,
+        id: 20,
         question: "What is the correct form: 'By the time I arrived, they ____.'",
         options: ["have left", "had left", "left", "has left"],
         correctAnswer: 1,
         difficulty: "advanced",
     },
     {
-        id: 15,
-        question: "Choose the correct conditional: 'If I were you, I ____ take the course.'",
-        options: ["will", "would", "was", "did"],
-        correctAnswer: 1,
-        difficulty: "intermediate",
+        id: 21,
+        question: "Choose the correct passive form: 'They built the house in 1990.'",
+        options: [
+            "The house was built in 1990.",
+            "The house is built in 1990.",
+            "The house has built in 1990.",
+            "The house builded in 1990.",
+        ],
+        correctAnswer: 0,
+        difficulty: "advanced",
+    },
+    {
+        id: 22,
+        question: "Answer correctly: 'Would you like to have dinner at Bella's Bistro with me tonight?'",
+        options: [
+            "Sorry, I'm going away next week.",
+            "No, I'm not doing anything.",
+            "Yes, that sound great, but it's my turn to pay.",
+            "Maybe, but you cook this time.",
+        ],
+        correctAnswer: 2,
+        difficulty: "advanced",
+    },
+    {
+        id: 23,
+        question: "Answer correctly: 'I don't know if you can make it to the party on Saturday, can you?'",
+        options: [
+            "I can go and have a birthday cake at the bakery.",
+            "No, I don't. But my cousin can make it.",
+            "Yes, I can make it to the party on Saturday.",
+            "This is the third time I ate today.",
+        ],  
+        correctAnswer: 2,
+        difficulty: "advanced",
+    },
+    {
+        id: 24,
+        question: "Answer correctly: 'What have you been studying lately?'",
+        options: [
+            "I have a lot of work to do lately.",
+            "No, my time isn't that busy actually.",
+            "English, it's my favorite subject.",
+            "I haven't been working out lately",
+        ],  
+        correctAnswer: 2,
+        difficulty: "advanced",
     },
 ];
 
@@ -154,6 +262,11 @@ type TestResults = {
     score: number
     level: Level
     answers: number[]
+    details: {
+        basic: { correct: number; total: number }
+        intermediate: { correct: number; total: number }
+        advanced: { correct: number; total: number }
+    }
 }
 
 export default function TestNivel() {
@@ -172,43 +285,111 @@ export default function TestNivel() {
 
     const calculateResults = useCallback((answers: (number | null)[]) => {
         const answeredQuestions = answers.filter(a => a !== null) as number[]
-        const correctAnswers = answeredQuestions.reduce((acc, answer, index) => {
-            return acc + (answer === questions[index].correctAnswer ? 1 : 0)
-        }, 0)
-
-        const percentage = (correctAnswers / questions.length) * 100
-        let level: Level = "Básico"
-
-        if (percentage >= 80) {
-            level = "Avanzado"
-        } else if (percentage >= 60) {
-            level = "Intermedio"
+        
+        // Contar respuestas correctas por nivel
+        const resultsByLevel = {
+            basic: { correct: 0, total: 0 },
+            intermediate: { correct: 0, total: 0 },
+            advanced: { correct: 0, total: 0 }
         }
 
+        // Calcular aciertos por nivel
+        answeredQuestions.forEach((answer, index) => {
+            const question = questions[index]
+            const isCorrect = answer === question.correctAnswer
+            
+            switch(question.difficulty) {
+                case 'basic':
+                    resultsByLevel.basic.total++
+                    if (isCorrect) resultsByLevel.basic.correct++
+                    break
+                case 'intermediate':
+                    resultsByLevel.intermediate.total++
+                    if (isCorrect) resultsByLevel.intermediate.correct++
+                    break
+                case 'advanced':
+                    resultsByLevel.advanced.total++
+                    if (isCorrect) resultsByLevel.advanced.correct++
+                    break
+            }
+        })
+
+        // Calcular porcentajes por nivel
+        const basicPercentage = resultsByLevel.basic.total > 0 
+            ? (resultsByLevel.basic.correct / resultsByLevel.basic.total) * 100 
+            : 0
+            
+        const intermediatePercentage = resultsByLevel.intermediate.total > 0
+            ? (resultsByLevel.intermediate.correct / resultsByLevel.intermediate.total) * 100
+            : 0
+            
+        const advancedPercentage = resultsByLevel.advanced.total > 0
+            ? (resultsByLevel.advanced.correct / resultsByLevel.advanced.total) * 100
+            : 0
+
+        // Determinar nivel basado en el rendimiento por nivel
+        let level: Level = "Básico"
+        
+        // Si el estudiante responde bien más del 70% de las preguntas avanzadas
+        if (advancedPercentage >= 70) {
+            level = "Avanzado"
+        } 
+        // Si responde bien más del 70% de las intermedias y al menos 40% de avanzadas
+        else if (intermediatePercentage >= 70 && advancedPercentage >= 40) {
+            level = "Avanzado"
+        }
+        // Si responde bien más del 70% de las básicas y al menos 40% de intermedias
+        else if (basicPercentage >= 70 && intermediatePercentage >= 40) {
+            level = "Intermedio"
+        }
+        // Si responde bien más del 50% de las básicas
+        else if (basicPercentage >= 50) {
+            level = "Básico"
+        }
+        // Si no cumple con los requisitos mínimos
+        else {
+            level = "Básico"
+        }
+
+        // Calcular puntuación total
+        const totalCorrect = resultsByLevel.basic.correct + 
+                            resultsByLevel.intermediate.correct + 
+                            resultsByLevel.advanced.correct
+
         return {
-            score: correctAnswers,
+            score: totalCorrect,
             level,
-            answers: answeredQuestions
+            answers: answeredQuestions,
+            details: {
+                basic: { correct: resultsByLevel.basic.correct, total: resultsByLevel.basic.total },
+                intermediate: { correct: resultsByLevel.intermediate.correct, total: resultsByLevel.intermediate.total },
+                advanced: { correct: resultsByLevel.advanced.correct, total: resultsByLevel.advanced.total }
+            }
         }
     }, [])
 
     const handleNextQuestion = useCallback(() => {
         if (answers[currentQuestion] === null) {
             ErrorMsj('Por favor selecciona una respuesta');
-            return
+            return;
         }
 
         if (currentQuestion < questions.length - 1) {
-            setCurrentQuestion(prev => prev + 1)
+            setCurrentQuestion(prev => prev + 1);
         } else {
-            setIsSubmitting(true)
-            // Simular carga de red
+            const unanswered = answers.some(a => a === null);
+            if (unanswered) {
+                ErrorMsj('Por favor responde todas las preguntas antes de finalizar');
+                return;
+            }
+            
+            setIsSubmitting(true);
             setTimeout(() => {
-                const results = calculateResults(answers)
-                setResults(results)
-                setShowResults(true)
-                setIsSubmitting(false)
-            }, 500)
+                const results = calculateResults(answers);
+                setResults(results);
+                setShowResults(true);
+                setIsSubmitting(false);
+            }, 500);
         }
     }, [answers, currentQuestion, calculateResults])
 
@@ -304,7 +485,42 @@ export default function TestNivel() {
                                 </div>
                             </div>
                             <div className="space-y-6 mt-4">
-                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {[
+                                        { level: 'basic', label: 'Básico', color: 'blue' },
+                                        { level: 'intermediate', label: 'Intermedio', color: 'yellow' },
+                                        { level: 'advanced', label: 'Avanzado', color: 'green' }
+                                    ].map(({ level, label, color }) => {
+                                        const { correct, total } = results.details[level as keyof typeof results.details];
+                                        const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+                                        
+                                        return (
+                                            <div key={level} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="font-medium text-gray-700 dark:text-gray-300">{label}</h4>
+                                                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                        {percentage}%
+                                                    </span>
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                                    <div 
+                                                        className={`h-2.5 rounded-full ${color === 'blue' ? 'bg-blue-500' : color === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                                        style={{ width: `${percentage}%` }}
+                                                        role="progressbar"
+                                                        aria-valuenow={percentage}
+                                                        aria-valuemin={0}
+                                                        aria-valuemax={100}
+                                                    />
+                                                </div>
+                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                                    {correct} de {total} correctas
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                
+                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Resumen de respuestas:</h3>
                                     <span className="text-sm px-3 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                                         {results.score} de {questions.length} respuestas correctas
