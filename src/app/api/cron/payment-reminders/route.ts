@@ -60,6 +60,8 @@ export async function GET(req: NextRequest) {
     const classMap = new Map(classes.map(c => [c._id.toString(), c]));
 
     // Variables para rastrear el progreso
+    console.log(`[${new Date().toISOString()}] Procesando ${enrollments.length} inscripciones...`);
+    
     let remindersSent = 0;
     let overdueNoticesSent = 0;
     let suspensionsApplied = 0;
@@ -247,18 +249,31 @@ export async function GET(req: NextRequest) {
 
     // Resumen final
     console.log(`[${new Date().toISOString()}] Proceso completado. Resumen:`);
+    console.log(`- Total de inscripciones: ${enrollments.length}`);
+    console.log(`- Procesadas: ${enrollments.length - missingDataCount}`);
+    console.log(`- Omitidas (datos faltantes): ${missingDataCount}`);
     console.log(`- Recordatorios enviados: ${remindersSent}`);
     console.log(`- Avisos de vencimiento: ${overdueNoticesSent}`);
     console.log(`- Suspensiones aplicadas: ${suspensionsApplied}`);
     console.log(`- Notificaciones push: ${notificationsSent}`);
     
+    if (missingDataCount > 0) {
+      console.warn(`[${new Date().toISOString()}] Advertencia: ${missingDataCount} inscripciones con datos incompletos no fueron procesadas`);
+    }
+    
     return NextResponse.json({
+      success: true,
       message: 'Proceso de recordatorios completado',
-      remindersSent,
-      overdueNoticesSent,
-      suspensionsApplied,
-      notificationsSent,
-      timestamp: new Date().toISOString()
+      stats: {
+        totalEnrollments: enrollments.length,
+        processed: enrollments.length - missingDataCount,
+        skipped: missingDataCount,
+        remindersSent,
+        overdueNoticesSent,
+        suspensionsApplied,
+        notificationsSent,
+        timestamp: new Date().toISOString()
+      }
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
