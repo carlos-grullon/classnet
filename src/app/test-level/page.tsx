@@ -223,7 +223,7 @@ const questions: Question[] = [
         options: [
             "Sorry, I'm going away next week.",
             "No, I'm not doing anything.",
-            "Yes, that sound great, but it's my turn to pay.",
+            "Yes, that sounds great, but it's my turn to pay.",
             "Maybe, but you cook this time.",
         ],
         correctAnswer: 2,
@@ -330,16 +330,16 @@ export default function TestNivel() {
         // Determinar nivel basado en el rendimiento por nivel
         let level: Level = "Básico"
         
-        // Si el estudiante responde bien más del 70% de las preguntas avanzadas
-        if (advancedPercentage >= 70) {
+        // Si el estudiante responde bien más del 80% de las preguntas avanzadas
+        if (advancedPercentage >= 80) {
             level = "Avanzado"
         } 
-        // Si responde bien más del 70% de las intermedias y al menos 40% de avanzadas
-        else if (intermediatePercentage >= 70 && advancedPercentage >= 40) {
+        // Si responde bien más del 90% de las intermedias y al menos 40% de avanzadas
+        else if (intermediatePercentage >= 90 && advancedPercentage >= 40) {
             level = "Avanzado"
         }
-        // Si responde bien más del 70% de las básicas y al menos 40% de intermedias
-        else if (basicPercentage >= 70 && intermediatePercentage >= 40) {
+        // Si responde bien más del 90% de las básicas y al menos 40% de intermedias
+        else if (basicPercentage >= 90 && intermediatePercentage >= 40) {
             level = "Intermedio"
         }
         // Si responde bien más del 50% de las básicas
