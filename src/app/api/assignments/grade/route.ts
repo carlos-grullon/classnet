@@ -2,6 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { getUserId } from '@/utils/Tools.ts';
 import { getCollection } from '@/utils/MongoDB.ts';
+import { sendNotification } from '@/services/notificationService'
+import { getLevelName } from '@/utils/GeneralTools';
 
 type GradeData = {
   submissionId: string;
@@ -63,6 +65,18 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Enviar notificación al estudiante
+    const submission = await submissionsCollection.findOne({ _id: new ObjectId(data.submissionId) });
+    const classesCollection = await getCollection('classes');
+    const classData = await classesCollection.findOne({ _id: new ObjectId(submission!.classId) });
+    await sendNotification({
+      userId: submission!.studentId,
+      title: '¡Calificación recibida!',
+      message: `Tu asignación de la semana ${submission!.weekNumber} en ${classData!.subjectName} ${getLevelName(classData!.level)} ha sido calificada`,
+      link: `/student/classes/${submission!.classId}/virtual-classroom`,
+      type: 'info'
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {
