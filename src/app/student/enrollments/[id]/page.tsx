@@ -70,8 +70,8 @@ const bankDetails = [
   {
     id: "bhd",
     name: "Banco BHD León",
-    accountName: "Ochayra Rodriguez Peña",
-    accountNumber: "26371340015",
+    accountName: "Carlos Grullon",
+    accountNumber: "29676120022",
     accountType: "Cuenta de Ahorros",
     logo_path: "/images/bhd-logo.png",
     reference: "Pago de clase"
