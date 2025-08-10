@@ -41,7 +41,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   useEffect(() => {
     // Usar webkitAudioContext explícitamente para Safari
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContextClass({ sampleRate: 44100 }); // Especificar sampleRate para mejor compatibilidad
+    // No especificar sampleRate inicialmente para evitar conflictos
+    const ctx = new AudioContextClass();
     audioCtxRef.current = ctx;
     
     // Configurar nodos iniciales pero silenciados
@@ -154,19 +155,42 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         };
         
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        // Solo guardar en sessionStorage
-        sessionStorage.setItem('microphonePermission', 'granted');
-        setPermissionStatus('granted');
-        
-        streamRef.current = stream;
+      
+      // Solo guardar en sessionStorage
+      sessionStorage.setItem('microphonePermission', 'granted');
+      setPermissionStatus('granted');
+      
+      streamRef.current = stream;
 
-        const audioContext = audioCtxRef.current;
-        if (!audioContext) {
-          throw new Error('AudioContext no está disponible');
+      // Obtener el sample rate del MediaStream
+      const audioTrack = stream.getAudioTracks()[0];
+      const settings = audioTrack.getSettings();
+      const streamSampleRate = settings.sampleRate || 44100;
+      
+      // Cerrar el AudioContext anterior si existe
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        try {
+          await audioCtxRef.current.close();
+        } catch (error) {
+          console.warn('Error cerrando AudioContext anterior:', error);
         }
+      }
+      
+      // Crear nuevo AudioContext con el sample rate correcto
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContextClass({ sampleRate: streamSampleRate });
+      audioCtxRef.current = audioContext;
+      
+      // Recrear gainNode con el nuevo contexto
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 2.0;
+      gainNodeRef.current = gainNode;
 
-        const source = audioContext.createMediaStreamSource(stream);
+      if (!audioContext) {
+        throw new Error('AudioContext no está disponible');
+      }
+
+      const source = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
         analyser.fftSize = 64;
 
@@ -175,8 +199,8 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         analyserRef.current = analyser;
         dataArrayRef.current = dataArray;
 
-        source.connect(gainNodeRef.current!);
-        gainNodeRef.current!.connect(analyser);
+        source.connect(gainNode);
+        gainNode.connect(analyser);
 
         // Usar un único formato para todos los navegadores
         let options = {};
@@ -243,10 +267,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       drawWaves();
     } catch (error) {
       setCountdown(null);
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        sessionStorage.setItem('microphonePermission', 'denied');
-        setPermissionStatus('denied');
-        ErrorMsj('Por favor acepta los permisos del micrófono para grabar');
+      console.error('Error en startRecording:', error);
+      
+      if (error instanceof DOMException) {
+        if (error.name === 'NotAllowedError') {
+          sessionStorage.setItem('microphonePermission', 'denied');
+          setPermissionStatus('denied');
+          ErrorMsj('Por favor acepta los permisos del micrófono para grabar');
+        } else if (error.message.includes('sample-rate') || error.message.includes('AudioContext')) {
+          ErrorMsj('Error de compatibilidad de audio. Intenta recargar la página.');
+          console.error('Error de sample rate:', error.message);
+        } else {
+          ErrorMsj('Error del navegador al acceder al micrófono');
+        }
       } else {
         const message = error instanceof Error ? error.message : 'Error al acceder al micrófono';
         ErrorMsj(message);
