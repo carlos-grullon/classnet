@@ -37,34 +37,21 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
-  // Inicializar AudioContext al montar el componente
+  // Limpiar recursos al desmontar el componente
   useEffect(() => {
-    // Usar webkitAudioContext explícitamente para Safari
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    // No especificar sampleRate inicialmente para evitar conflictos
-    const ctx = new AudioContextClass();
-    audioCtxRef.current = ctx;
-    
-    // Configurar nodos iniciales pero silenciados
-    const gainNode = ctx.createGain();
-    gainNode.gain.value = 0; // Silenciar inicialmente
-    gainNodeRef.current = gainNode;
-    
-    // Pre-warm audio processing with dummy oscillator
-    const oscillator = ctx.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 440;
-    oscillator.connect(gainNode);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.1);
-    
     return () => {
-      if (ctx.state !== 'closed') {
+      // Limpiar AudioContext al desmontar
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
         try {
-          ctx.close();
+          audioCtxRef.current.close();
         } catch (error) {
           console.warn('Error closing AudioContext:', error);
         }
+      }
+      
+      // Limpiar stream si existe
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -115,7 +102,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const startRecording = async () => {
     try {
-      if (!audioCtxRef.current) return;
       
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       
@@ -137,13 +123,20 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       setCountdown(3);
       
       const setupPromise = (async () => {
-        if (audioCtxRef.current?.state === 'suspended') {
-          await audioCtxRef.current.resume();
+        // Limpiar completamente cualquier AudioContext anterior
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+          try {
+            await audioCtxRef.current.close();
+          } catch (error) {
+            console.warn('Error cerrando AudioContext anterior:', error);
+          }
         }
         
-        if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 2.0;
-        }
+        // Limpiar referencias a nodos anteriores
+        gainNodeRef.current = null;
+        analyserRef.current = null;
+        dataArrayRef.current = null;
+        audioCtxRef.current = null;
         
         // Configuración específica para iOS
         const constraints = {
@@ -155,40 +148,31 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
         };
         
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      // Solo guardar en sessionStorage
-      sessionStorage.setItem('microphonePermission', 'granted');
-      setPermissionStatus('granted');
-      
-      streamRef.current = stream;
+        
+        // Solo guardar en sessionStorage
+        sessionStorage.setItem('microphonePermission', 'granted');
+        setPermissionStatus('granted');
+        
+        streamRef.current = stream;
 
-      // Obtener el sample rate del MediaStream
-      const audioTrack = stream.getAudioTracks()[0];
-      const settings = audioTrack.getSettings();
-      const streamSampleRate = settings.sampleRate || 44100;
-      
-      // Cerrar el AudioContext anterior si existe
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        try {
-          await audioCtxRef.current.close();
-        } catch (error) {
-          console.warn('Error cerrando AudioContext anterior:', error);
-        }
-      }
-      
-      // Crear nuevo AudioContext con el sample rate correcto
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContextClass({ sampleRate: streamSampleRate });
-      audioCtxRef.current = audioContext;
-      
-      // Recrear gainNode con el nuevo contexto
-      const gainNode = audioContext.createGain();
-      gainNode.gain.value = 2.0;
-      gainNodeRef.current = gainNode;
-
-      if (!audioContext) {
-        throw new Error('AudioContext no está disponible');
-      }
+        // Obtener el sample rate del MediaStream
+        const audioTrack = stream.getAudioTracks()[0];
+        const settings = audioTrack.getSettings();
+        const streamSampleRate = settings.sampleRate || 44100;
+        
+        console.log('Stream sample rate detectado:', streamSampleRate);
+        
+        // Crear nuevo AudioContext con el sample rate correcto
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContextClass({ sampleRate: streamSampleRate });
+        audioCtxRef.current = audioContext;
+        
+        console.log('AudioContext creado con sample rate:', audioContext.sampleRate);
+        
+        // Crear gainNode con el nuevo contexto
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 2.0;
+        gainNodeRef.current = gainNode;
 
       const source = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
