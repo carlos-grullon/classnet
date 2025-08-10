@@ -37,33 +37,21 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
-  // Inicializar AudioContext al montar el componente
+  // Limpiar recursos al desmontar el componente
   useEffect(() => {
-    // Usar webkitAudioContext explícitamente para Safari
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AudioContextClass({ sampleRate: 44100 }); // Especificar sampleRate para mejor compatibilidad
-    audioCtxRef.current = ctx;
-    
-    // Configurar nodos iniciales pero silenciados
-    const gainNode = ctx.createGain();
-    gainNode.gain.value = 0; // Silenciar inicialmente
-    gainNodeRef.current = gainNode;
-    
-    // Pre-warm audio processing with dummy oscillator
-    const oscillator = ctx.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 440;
-    oscillator.connect(gainNode);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.1);
-    
     return () => {
-      if (ctx.state !== 'closed') {
+      // Limpiar AudioContext al desmontar
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
         try {
-          ctx.close();
+          audioCtxRef.current.close();
         } catch (error) {
           console.warn('Error closing AudioContext:', error);
         }
+      }
+      
+      // Limpiar stream si existe
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -114,7 +102,6 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
 
   const startRecording = async () => {
     try {
-      if (!audioCtxRef.current) return;
       
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       
@@ -136,47 +123,41 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       setCountdown(3);
       
       const setupPromise = (async () => {
-        if (audioCtxRef.current?.state === 'suspended') {
-          await audioCtxRef.current.resume();
+        // Limpiar todo
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        if (streamRef.current) streamRef.current.getTracks().forEach(track => track.stop());
+        if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+          await audioCtxRef.current.close();
         }
         
-        if (gainNodeRef.current) {
-          gainNodeRef.current.gain.value = 2.0;
-        }
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
         
-        // Configuración específica para iOS
-        const constraints = {
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        };
-        
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        // Solo guardar en sessionStorage
         sessionStorage.setItem('microphonePermission', 'granted');
         setPermissionStatus('granted');
-        
         streamRef.current = stream;
 
-        const audioContext = audioCtxRef.current;
-        if (!audioContext) {
-          throw new Error('AudioContext no está disponible');
-        }
-
+        // Crear AudioContext sin especificar sample rate (usar el del sistema)
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContextClass();
+        audioCtxRef.current = audioContext;
+        
         const source = audioContext.createMediaStreamSource(stream);
         const analyser = audioContext.createAnalyser();
+        const gainNode = audioContext.createGain();
+        
         analyser.fftSize = 64;
-
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+        gainNode.gain.value = 2.0;
+        
+        source.connect(gainNode);
+        gainNode.connect(analyser);
+        
+        // Actualizar referencias
+        gainNodeRef.current = gainNode;
         analyserRef.current = analyser;
-        dataArrayRef.current = dataArray;
-
-        source.connect(gainNodeRef.current!);
-        gainNodeRef.current!.connect(analyser);
+        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
 
         // Usar un único formato para todos los navegadores
         let options = {};
@@ -243,10 +224,19 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({
       drawWaves();
     } catch (error) {
       setCountdown(null);
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        sessionStorage.setItem('microphonePermission', 'denied');
-        setPermissionStatus('denied');
-        ErrorMsj('Por favor acepta los permisos del micrófono para grabar');
+      console.error('Error en startRecording:', error);
+      
+      if (error instanceof DOMException) {
+        if (error.name === 'NotAllowedError') {
+          sessionStorage.setItem('microphonePermission', 'denied');
+          setPermissionStatus('denied');
+          ErrorMsj('Por favor acepta los permisos del micrófono para grabar');
+        } else if (error.message.includes('sample-rate') || error.message.includes('AudioContext')) {
+          ErrorMsj('Error de compatibilidad de audio. Intenta recargar la página.');
+          console.error('Error de sample rate:', error.message);
+        } else {
+          ErrorMsj('Error del navegador al acceder al micrófono');
+        }
       } else {
         const message = error instanceof Error ? error.message : 'Error al acceder al micrófono';
         ErrorMsj(message);
