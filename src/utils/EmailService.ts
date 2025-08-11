@@ -583,3 +583,24 @@ export async function sendVerificationEmail(email: string, token: string) {
   `;
   return await sendEmail(email, subject, htmlContent);
 }
+
+/**
+ * Envía un correo para restablecer la contraseña del usuario
+ * @param email Correo del destinatario
+ * @param token Token único para restablecer la contraseña
+ */
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const subject = 'Restablecer contraseña - ClassNet';
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/password/reset?token=${token}`;
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #3b82f6;">Solicitud para restablecer tu contraseña</h2>
+      <p>Hola,</p>
+      <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong>ClassNet</strong>.</p>
+      <p>Haz clic en el siguiente enlace para crear una nueva contraseña:</p>
+      <p><a href="${resetUrl}">Restablecer contraseña</a></p>
+      <p style="color:#6b7280; font-size:14px;">Este enlace expirará en 1 hora. Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+    </div>
+  `;
+  return await sendEmail(email, subject, htmlContent);
+}

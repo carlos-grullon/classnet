@@ -84,14 +84,18 @@ export default function LoginPage() {
                 />
               )}
             />
-
+            <div className="flex justify-between text-sm font-medium mb-1.5">
+              <label>Contraseña</label>
+              <Link href="/password/recovery" className="text-blue-500 hover:text-blue-700 ml-1">
+                Olvidaste tu contraseña?
+              </Link>
+            </div>
             <Controller
               name="password"
               control={control}
               render={({ field }) => (
                 <Input
                   {...field}
-                  label="Contraseña"
                   type="password"
                   error={errors.password?.message}
                 />
