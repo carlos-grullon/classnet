@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Tabs, Tab, TabContent } from '@/components/ui/Tabs';
 import { Button } from '@/components';
-import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink, FiSave, FiInfo, FiUpload, FiMic, FiMessageSquare } from 'react-icons/fi';
+import { FiDownload, FiAlertCircle, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiDollarSign, FiExternalLink, FiVideo, FiEdit, FiLink, FiSave, FiInfo, FiUpload, FiMic, FiMessageSquare, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import { FetchData, ErrorMsj, getFileIcon, SuccessMsj } from '@/utils/Tools.tsx';
 import { Select, SelectItem } from '@/components/ui/Select';
 import { useCountries } from '@/providers';
 import { FaWhatsapp } from 'react-icons/fa';
-import { formatInputDateToLong, parseInputDate } from '@/utils/GeneralTools';
+import { formatInputDateToLong, parseInputDate, getDayName } from '@/utils/GeneralTools';
 import Link from 'next/link';
 import { ClassContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
@@ -18,7 +18,7 @@ import { AudioRecorder } from '@/components/AudioRecorder';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { Textarea } from '@/components/Textarea';
 import { useParams } from 'next/navigation';
-import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
+import { WeekContent, WeekDayContent } from '@/interfaces/VirtualClassroom';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Input } from '@/components/Input';
 import { GradesView } from '@/components';
@@ -35,6 +35,7 @@ interface ClassInfo {
   name: string;
   level: string;
   selectedDays: string;
+  selectedDaysRaw?: string[];
   startTime: string;
   endTime: string;
   price: number;
@@ -64,11 +65,18 @@ interface SupportMaterial {
 }
 
 const EmptyWeekContent: WeekContent = {
-  meetingLink: '',
-  recordingLink: '',
-  supportMaterials: [],
-  assignment: null
+  weekNumber: 1,
+  content: []
 }
+
+type DaySubmission = {
+  fileUrl?: string | null;
+  fileName?: string | null;
+  audioUrl?: string | null;
+  message?: string | null;
+  fileSubmittedAt?: Date | null;
+  audioSubmittedAt?: Date | null;
+};
 
 export default function VirtualClassroom() {
   const params = useParams();
@@ -77,6 +85,7 @@ export default function VirtualClassroom() {
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>(EmptyWeekContent);
   const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedDay, setSelectedDay] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [expandedDescription, setExpandedDescription] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -86,42 +95,33 @@ export default function VirtualClassroom() {
     message: '',
   });
   const [assignmentType, setAssignmentType] = useState('file');
-  const [studentAssignment, setStudentAssignment] = useState<StudentAssignment>({
-    fileUrl: null,
-    fileName: null,
-    audioUrl: null,
-    message: '',
-    fileSubmission: {
-      submittedAt: null,
-      isGraded: false,
-      grade: null
-    },
-    audioSubmission: {
-      submittedAt: null,
-      isGraded: false,
-      grade: null
-    }
-  });
+  const [studentAssignmentDays, setStudentAssignmentDays] = useState<Record<string, DaySubmission>>({});
   const [linkUrl, setLinkUrl] = useState('');
   const [whatsappLink, setWhatsappLink] = useState('');
+  const currentSubmission = studentAssignmentDays[selectedDay] || {};
 
-  const getTimeRemainingMessage = (dueDate: string | Date, submission?: { submittedAt?: string | Date | null, isGraded?: boolean, grade?: number | null }) => {
+  // Función para obtener el mensaje de estado
+  const getTimeRemainingMessage = (
+    dueDate: string | Date,
+    submission?: { submittedAt?: string | Date | null; graded?: boolean; grade?: number | null; isGraded?: boolean }
+  ) => {
     const now = new Date();
     const due = dueDate instanceof Date ? dueDate : parseInputDate(dueDate);
 
-    // Normalize dates to midnight for accurate day difference calculation
+    // Normalizar a medianoche para comparar por día
     const normalizedNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const normalizedDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
 
-    // Caso 1: Asignación calificada
-    if (submission?.isGraded && submission?.submittedAt) {
+    // Si está calificado y tenemos nota, mostrarlo
+    const gradedFlag = submission?.graded ?? submission?.isGraded;
+    if (gradedFlag && submission?.submittedAt && typeof submission?.grade === 'number') {
       return {
         message: `Asignación calificada: ${submission.grade}/100`,
         color: 'text-green-600 dark:text-green-400'
       };
     }
 
-    // Caso 2: Enviada pero pendiente de calificación
+    // Si se envió
     if (submission?.submittedAt) {
       const submitted = submission.submittedAt instanceof Date ? submission.submittedAt : parseInputDate(submission.submittedAt);
       const normalizedSubmitted = new Date(submitted.getFullYear(), submitted.getMonth(), submitted.getDate());
@@ -185,6 +185,8 @@ export default function VirtualClassroom() {
             }
           );
           setWhatsappLink(data.content.class.whatsappLink);
+          const firstDay = data.content.class.selectedDaysRaw?.[0];
+          if (firstDay) setSelectedDay(firstDay);
         } else {
           ErrorMsj('Contenido no encontrado');
         }
@@ -202,18 +204,36 @@ export default function VirtualClassroom() {
   useEffect(() => {
     const fetchWeekContent = async () => {
       try {
-        const response = await FetchData<{ success: boolean, data: WeekContent, studentAssignment: StudentAssignment }>(
+        const response = await FetchData<{ success: boolean, data: WeekContent | null, studentAssignmentDays?: Record<string, DaySubmission> }>(
           `/api/teacher/classes/${classId}/week?week=${selectedWeek}`,
           {},
           'GET'
         );
         if (response.success) {
-          const content = response.data || EmptyWeekContent
-          setWeekContent(content);
-          if (response.studentAssignment) {
-            setStudentAssignment(response.studentAssignment);
-            if (!response.studentAssignment.message) {
-              setIsEditingMessage(true);
+          const days = content?.class.selectedDaysRaw || [];
+          const emptyDay: Omit<WeekDayContent, 'day'> = {
+            objective: '',
+            meetingLink: '',
+            recordingLink: '',
+            supportMaterials: [],
+            assignment: null
+          };
+          const existingMap = new Map(
+            (response.data?.content || []).map((d: WeekDayContent) => [d.day, d])
+          );
+          const merged: WeekDayContent[] = days.map((d: string) => ({
+            day: d,
+            ...(existingMap.get(d) || emptyDay)
+          }));
+          const normalized: WeekContent = { weekNumber: selectedWeek, content: merged };
+          setWeekContent(normalized);
+          if (response.studentAssignmentDays) {
+            setStudentAssignmentDays(response.studentAssignmentDays);
+            if (selectedDay) {
+              const current = response.studentAssignmentDays[selectedDay];
+              if (!current?.message) {
+                setIsEditingMessage(true);
+              }
             }
           }
         }
@@ -224,7 +244,7 @@ export default function VirtualClassroom() {
     };
 
     fetchWeekContent();
-  }, [classId, selectedWeek]);
+  }, [classId, selectedWeek, content?.class.selectedDaysRaw, selectedDay]);
 
   const handleWeekChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedWeek(parseInt(e.target.value));
@@ -232,32 +252,79 @@ export default function VirtualClassroom() {
 
   const [isEditingMessage, setIsEditingMessage] = useState(false);
 
+  // Día actual seleccionado de la semana
+  const currentDay: WeekDayContent | undefined = (weekContent.content || []).find(d => d.day === selectedDay);
+
+  // Navegación de día: siguiente
+  const goToNextDay = () => {
+    const days = content?.class.selectedDaysRaw || [];
+    if (!days.length) return;
+    const idx = Math.max(0, days.indexOf(selectedDay));
+    const next = days[(idx + 1) % days.length];
+    setAnimDir('right');
+    setFading(true);
+    setTimeout(() => {
+      setSelectedDay(next);
+      setTimeout(() => setFading(false), 20);
+    }, 150);
+  };
+
+  // Navegación de día: anterior
+  const goToPrevDay = () => {
+    const days = content?.class.selectedDaysRaw || [];
+    if (!days.length) return;
+    const idx = Math.max(0, days.indexOf(selectedDay));
+    const prev = days[(idx - 1 + days.length) % days.length];
+    setAnimDir('left');
+    setFading(true);
+    setTimeout(() => {
+      setSelectedDay(prev);
+      setTimeout(() => setFading(false), 20);
+    }, 150);
+  };
+
+  // Animación suave de título/objetivo
+  const [animDir, setAnimDir] = useState<'left' | 'right'>('right');
+  const [fading, setFading] = useState(false);
+  const slideClass = fading
+    ? (animDir === 'right' ? 'opacity-0 -translate-x-4' : 'opacity-0 translate-x-4')
+    : 'opacity-100 translate-x-0';
+
   const handleFileChange = ({ url, fileName }: { url: string; fileName: string }) => {
-    const updatedContent = {
-      ...studentAssignment,
-      fileUrl: url,
-      fileName: fileName
+    const updatedStudentAssignmentDays = {
+      ...studentAssignmentDays,
+      [selectedDay]: {
+        ...(studentAssignmentDays[selectedDay] || {}),
+        fileUrl: url,
+        fileName,
+        submittedAt: new Date().toISOString()
+      }
     };
-    setStudentAssignment(updatedContent);
-    handleAssignmentSubmit(updatedContent);
+    setStudentAssignmentDays(updatedStudentAssignmentDays);
+    handleAssignmentSubmit(updatedStudentAssignmentDays[selectedDay]);
   };
 
   const handleAudioRecordingComplete = (audioUrl: string) => {
-    const updatedContent = {
-      ...studentAssignment,
-      audioUrl: audioUrl
+    const updatedStudentAssignmentDays = {
+      ...studentAssignmentDays,
+      [selectedDay]: {
+        ...(studentAssignmentDays[selectedDay] || {}),
+        audioUrl,
+        submittedAt: new Date().toISOString()
+      }
     };
-    setStudentAssignment(updatedContent);
-    handleAssignmentSubmit(updatedContent);
+    setStudentAssignmentDays(updatedStudentAssignmentDays);
+    handleAssignmentSubmit(updatedStudentAssignmentDays[selectedDay]);
   };
 
-  const handleAssignmentSubmit = async (studentAssignment: StudentAssignment) => {
+  const handleAssignmentSubmit = async (payload: DaySubmission) => {
     try {
       setIsEditingMessage(false);
       const response = await FetchData<{ success: boolean }>(`/api/student/classes/assignment-submit`, {
         classId: classId,
         weekNumber: selectedWeek,
-        ...studentAssignment
+        day: selectedDay,
+        ...payload
       }, 'POST');
       if (response.success) {
         SuccessMsj('Asignación actualizada correctamente');
@@ -269,11 +336,15 @@ export default function VirtualClassroom() {
   };
 
   const handleConfirmChangeFile = () => {
-    setStudentAssignment(prev => ({
-      ...prev,
-      fileUrl: null,
-      fileName: null
-    }));
+    const updatedStudentAssignmentDays = {
+      ...studentAssignmentDays,
+      [selectedDay]: {
+        ...(studentAssignmentDays[selectedDay] || {}),
+        fileUrl: null,
+        fileName: null
+      }
+    };
+    setStudentAssignmentDays(updatedStudentAssignmentDays);
   };
 
   const handleRequestAction = (action: () => void, message: string) => {
@@ -484,6 +555,37 @@ export default function VirtualClassroom() {
             </TabContent>
 
             <TabContent id="week" activeId={activeId} className="mt-4">
+              {/* Encabezado centrado: flechas al lado del día y objetivo debajo */}
+              <div className="mb-6 flex flex-col items-center select-none">
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={goToPrevDay}
+                    title="Día anterior"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/40 transition"
+                  >
+                    <FiChevronLeft size={22} />
+                  </button>
+                  <div className={`text-center transition-all duration-200 ease-out transform ${slideClass}`}>
+                    <div className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+                      {getDayName([selectedDay])}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={goToNextDay}
+                    title="Siguiente día"
+                    className="flex items-center justify-center w-9 h-9 rounded-full text-blue-600 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/40 transition"
+                  >
+                    <FiChevronRight size={22} />
+                  </button>
+                </div>
+                <div className="mt-1 text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Objetivo</div>
+                <div className={`mt-1 text-gray-800 dark:text-gray-200 whitespace-pre-wrap text-center transition-all duration-200 ease-out transform ${slideClass}`}>
+                  {currentDay?.objective?.trim() ? currentDay.objective : '—'}
+                </div>
+              </div>
+
               <div className="gap-4 grid md:grid-cols-12">
                 {/* Sección Reunión */}
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border-2 border-gray-300 dark:border-gray-600 md:col-span-6 col-span-12">
@@ -504,15 +606,15 @@ export default function VirtualClassroom() {
                           <tr className="flex flex-col md:table-row">
                             <td className="border border-black dark:border-gray-400 p-2">
                               <div className="md:hidden font-medium mb-1">Link de la reunión</div>
-                              {weekContent?.meetingLink ? (
+                              {currentDay?.meetingLink ? (
                                 <div className="flex justify-center">
                                   <Link
-                                    href={weekContent.meetingLink}
+                                    href={currentDay.meetingLink}
                                     target="_blank"
                                     className="flex justify-center items-center gap-2 text-blue-500 hover:underline max-w-full"
                                   >
                                     <FiExternalLink />
-                                    <span className="truncate w-[180px] md:w-[220px] block">{weekContent.meetingLink}</span>
+                                    <span className="truncate w-[180px] md:w-[220px] block">{currentDay.meetingLink}</span>
                                   </Link>
                                 </div>
                               ) : (
@@ -524,15 +626,15 @@ export default function VirtualClassroom() {
                             </td>
                             <td className="border border-black dark:border-gray-400 p-2">
                               <div className="md:hidden font-medium mb-1">Link de la grabación</div>
-                              {weekContent?.recordingLink ? (
+                              {currentDay?.recordingLink ? (
                                 <div className="flex justify-center">
                                   <Link
-                                    href={weekContent.recordingLink}
+                                    href={currentDay.recordingLink}
                                     target="_blank"
                                     className="flex justify-center items-center gap-2 text-blue-500 hover:underline max-w-full"
                                   >
                                     <FiExternalLink />
-                                    <span className="truncate w-[180px] md:w-[220px] block">{weekContent.recordingLink}</span>
+                                    <span className="truncate w-[180px] md:w-[220px] block">{currentDay.recordingLink}</span>
                                   </Link>
                                 </div>
                               ) : (
@@ -555,13 +657,13 @@ export default function VirtualClassroom() {
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Material de apoyo</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {weekContent?.supportMaterials?.length === 0 ? (
+                    {(currentDay?.supportMaterials?.length || 0) === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-2 py-4 col-span-2">
                         <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
                         <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
                       </div>
                     ) : (
-                      weekContent?.supportMaterials?.map(material => (
+                      (currentDay?.supportMaterials || [])?.map(material => (
                         <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
@@ -589,7 +691,7 @@ export default function VirtualClassroom() {
                     <FiEdit className="text-blue-600 dark:text-blue-400" />
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Información de la Asignación - Semana {selectedWeek}</h3>
                   </div>
-                  {weekContent?.assignment ? (
+                  {currentDay?.assignment ? (
                     <div className="space-y-2">
                       <table className="w-full border border-black dark:border-gray-400">
                         <thead>
@@ -602,32 +704,44 @@ export default function VirtualClassroom() {
                         <tbody>
                           <tr>
                             <td className="p-2 border-r border-black dark:border-gray-400">
-                              {formatInputDateToLong(weekContent?.assignment?.dueDate)}
+                              {currentDay?.assignment?.dueDate ? (
+                                formatInputDateToLong(currentDay.assignment.dueDate)
+                              ) : (
+                                '—'
+                              )}
                             </td>
                             <td className="p-2 border-r border-black dark:border-gray-400">
-                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.fileSubmission).color}`}>
-                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.fileSubmission).message}
-                              </span>
+                              {currentDay?.assignment?.dueDate ? (
+                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt }).color}`}>
+                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt }).message}
+                                </span>
+                              ) : (
+                                <span className="bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center">—</span>
+                              )}
                             </td>
                             <td className="p-2">
-                              <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.audioSubmission).color}`}>
-                                {getTimeRemainingMessage(weekContent?.assignment?.dueDate, studentAssignment?.audioSubmission).message}
-                              </span>
+                              {currentDay?.assignment?.dueDate ? (
+                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt }).color}`}>
+                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt }).message}
+                                </span>
+                              ) : (
+                                <span className="bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center">—</span>
+                              )}
                             </td>
                           </tr>
                           <tr>
                             <td colSpan={3} className="p-2 border-t border-black dark:border-gray-400">
                               <div className="flex items-center gap-2">
                                 <span className="font-medium">Archivo:</span>
-                                {weekContent?.assignment?.fileLink ? (
+                                {currentDay?.assignment?.fileLink ? (
                                   <span className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
-                                    {getFileIcon(weekContent?.assignment?.fileName)}
+                                    {getFileIcon(currentDay?.assignment?.fileName)}
                                     <Link
-                                      href={weekContent?.assignment?.fileLink}
+                                      href={currentDay?.assignment?.fileLink}
                                       target="_blank"
                                       className="text-blue-500 hover:underline"
                                     >
-                                      {weekContent?.assignment?.fileName}
+                                      {currentDay?.assignment?.fileName}
                                     </Link>
                                   </span>
                                 ) : (
@@ -654,10 +768,10 @@ export default function VirtualClassroom() {
                               maskImage: expandedDescription ? 'none' : 'linear-gradient(to bottom, black 70%, transparent 100%)'
                             }}
                           >
-                            {weekContent?.assignment?.description || 'No hay descripción disponible'}
+                            {currentDay?.assignment?.description || 'No hay descripción disponible'}
                           </div>
                         </div>
-                        {weekContent?.assignment?.description && weekContent.assignment.description.length > 100 && (
+                        {currentDay?.assignment?.description && currentDay.assignment.description.length > 100 && (
                           <button
                             className="mt-1 w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             onClick={() => setExpandedDescription(!expandedDescription)}
@@ -685,7 +799,7 @@ export default function VirtualClassroom() {
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400">Enviar Asignación - Semana {selectedWeek}</h3>
                   </div>
 
-                  {weekContent.assignment ? (
+                  {currentDay?.assignment ? (
                     <>
                       <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
                         <div className="flex justify-between">
@@ -700,7 +814,7 @@ export default function VirtualClassroom() {
                               <h4 className="text-blue-500 font-semibold">Subir Link</h4>
                             </div>
                           )}
-                          {!studentAssignment.fileUrl && (
+                          {!currentSubmission.fileUrl && (
                             assignmentType === 'file' ? (
                               <Button
                                 variant='outline'
@@ -725,17 +839,17 @@ export default function VirtualClassroom() {
                           )}
                         </div>
 
-                        {studentAssignment.fileUrl ? (
+                        {currentSubmission.fileUrl ? (
                           <div className="space-y-2">
                             <div className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 rounded px-3 py-1">
-                              {getFileIcon(studentAssignment.fileName || '')}
+                              {getFileIcon(currentSubmission.fileName || '')}
                               <Link
-                                href={studentAssignment.fileUrl}
+                                href={currentSubmission.fileUrl as string}
                                 target="_blank"
                                 className="text-blue-500 hover:underline flex items-center gap-2"
                               >
                                 <FiDownload className="text-sm" />
-                                <span className="font-medium">{studentAssignment.fileName}</span>
+                                <span className="font-medium">{currentSubmission.fileName}</span>
                               </Link>
                             </div>
                             <Button
@@ -765,13 +879,17 @@ export default function VirtualClassroom() {
                                 variant="primary"
                                 className="w-full"
                                 onClick={() => {
-                                  const updatedAssignment = {
-                                    ...studentAssignment,
-                                    fileUrl: linkUrl,
-                                    fileName: 'Enlace compartido'
+                                  const updatedStudentAssignmentDays = {
+                                    ...studentAssignmentDays,
+                                    [selectedDay]: {
+                                      ...(studentAssignmentDays[selectedDay] || {}),
+                                      fileUrl: linkUrl,
+                                      fileName: 'Enlace compartido',
+                                      submittedAt: new Date().toISOString()
+                                    }
                                   };
-                                  setStudentAssignment(updatedAssignment);
-                                  handleAssignmentSubmit(updatedAssignment);
+                                  setStudentAssignmentDays(updatedStudentAssignmentDays);
+                                  handleAssignmentSubmit(updatedStudentAssignmentDays[selectedDay]);
                                   setLinkUrl('');
                                 }}
                               >
@@ -783,21 +901,27 @@ export default function VirtualClassroom() {
                         )}
                       </div>
 
-                      {weekContent?.assignment?.hasAudio && (
+                      {currentDay?.assignment?.hasAudio && (
                         <div className="space-y-4 mb-4 border-b border-gray-200 dark:border-gray-700 pb-6">
                           <div className="flex items-center gap-2">
                             <FiMic className="text-blue-500 text-lg" />
                             <h4 className="text-blue-500 font-semibold">Grabación de Audio</h4>
                           </div>
-                          {studentAssignment.audioUrl ? (
+                          {currentSubmission.audioUrl ? (
                             <AudioPlayer
-                              audioUrl={studentAssignment.audioUrl}
+                              audioUrl={currentSubmission.audioUrl}
                               onNewRecording={() => handleRequestAction(
-                                () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                                () => setStudentAssignmentDays(prev => ({
+                                  ...prev,
+                                  [selectedDay]: { ...(prev[selectedDay] || {}), audioUrl: null }
+                                })),
                                 '¿Estás seguro de que deseas grabar un nuevo audio?'
                               )}
                               onDelete={() => handleRequestAction(
-                                () => setStudentAssignment(prev => ({ ...prev, audioUrl: null })),
+                                () => setStudentAssignmentDays(prev => ({
+                                  ...prev,
+                                  [selectedDay]: { ...(prev[selectedDay] || {}), audioUrl: null }
+                                })),
                                 '¿Estás seguro de que deseas eliminar el audio?'
                               )}
                             />
@@ -813,10 +937,10 @@ export default function VirtualClassroom() {
                           <h4 className="text-blue-500 font-semibold">Mensaje para el Profesor (Opcional)</h4>
                         </div>
 
-                        {studentAssignment.message && !isEditingMessage ? (
+                        {currentSubmission.message && !isEditingMessage ? (
                           <div className="space-y-3">
                             <p className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
-                              {studentAssignment.message}
+                              {currentSubmission.message}
                             </p>
                             <div className="flex justify-end mt-4">
                               <Button
@@ -833,12 +957,17 @@ export default function VirtualClassroom() {
                           <div className='space-y-3'>
                             <Textarea
                               id="message"
-                              value={studentAssignment.message || ''}
+                              value={currentSubmission.message || ''}
                               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                                setStudentAssignment({
-                                  ...studentAssignment,
-                                  message: e.target.value
-                                });
+                                const msg = e.target.value;
+                                const updatedStudentAssignmentDays = {
+                                  ...studentAssignmentDays,
+                                  [selectedDay]: {
+                                    ...(studentAssignmentDays[selectedDay] || {}),
+                                    message: msg
+                                  }
+                                };
+                                setStudentAssignmentDays(updatedStudentAssignmentDays);
                               }}
                               placeholder="Escribe un mensaje..."
                               rows={4}
@@ -846,7 +975,7 @@ export default function VirtualClassroom() {
                             <div className="flex justify-end mt-4">
                               <Button
                                 size="sm"
-                                onClick={() => handleAssignmentSubmit(studentAssignment)}
+                                onClick={() => handleAssignmentSubmit(studentAssignmentDays[selectedDay])}
                                 className="flex items-center"
                               >
                                 <FiSave size={16} className='mr-1' />

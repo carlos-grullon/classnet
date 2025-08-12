@@ -26,45 +26,57 @@ export async function GET(
       );
     }
 
-    // Obtener todas las entregas de esta clase con datos básicos del estudiante
+    // Obtener todas las entregas de esta clase y aplanar por día desde submittedAssignments.days
     const submissionsCollection = await getCollection('submittedAssignments');
     const submissions = await submissionsCollection.aggregate([
-        { 
-          $match: { 
-            classId: new ObjectId(classId) 
-          } 
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'studentId',
-            foreignField: '_id',
-            as: 'student'
-          }
-        },
-        { $unwind: '$student' },
-        {
-          $project: {
-            _id: 1,
-            studentId: 1,
-            studentName: '$student.username',
-            weekNumber: 1,
-            message: 1,
-            fileUrl: 1,
-            fileName: 1,
-            fileGrade: 1,
-            fileFeedback: 1,
-            audioUrl: 1,
-            audioGrade: 1,
-            audioFeedback: 1,
-            overallGrade: 1,
-            overallFeedback: 1,
-            isGraded: 1,
-            createdAt: 1
-          }
-        },
-        { $sort: { weekNumber: 1, createdAt: -1 } }
-      ]).toArray();
+      { $match: { classId: new ObjectId(classId) } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'studentId',
+          foreignField: '_id',
+          as: 'student'
+        }
+      },
+      { $unwind: '$student' },
+      // Convertir el mapa days en arreglo de pares { k, v }
+      {
+        $project: {
+          _id: 1,
+          classId: 1,
+          studentId: 1,
+          weekNumber: 1,
+          studentName: '$student.username',
+          daysArray: { $objectToArray: { $ifNull: ['$days', {}] } }
+        }
+      },
+      { $unwind: '$daysArray' },
+      {
+        $project: {
+          _id: 1,
+          classId: 1,
+          studentId: 1,
+          weekNumber: 1,
+          studentName: 1,
+          day: '$daysArray.k',
+          fileUrl: '$daysArray.v.fileUrl',
+          fileName: '$daysArray.v.fileName',
+          audioUrl: '$daysArray.v.audioUrl',
+          message: '$daysArray.v.message',
+          submittedAt: '$daysArray.v.submittedAt',
+          // Campos de calificación por día (si existen)
+          fileGrade: '$daysArray.v.fileGrade',
+          fileFeedback: '$daysArray.v.fileFeedback',
+          audioGrade: '$daysArray.v.audioGrade',
+          audioFeedback: '$daysArray.v.audioFeedback',
+          overallGrade: '$daysArray.v.overallGrade',
+          overallFeedback: '$daysArray.v.overallFeedback',
+          isGraded: { $toBool: { $ifNull: ['$daysArray.v.isGraded', false] } },
+          createdAt: '$daysArray.v.submittedAt'
+        }
+      },
+      { $sort: { weekNumber: 1, day: 1 } }
+    ]).toArray();
 
     return NextResponse.json({ submissions });
   } catch (error) {

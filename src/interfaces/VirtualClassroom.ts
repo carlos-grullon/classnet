@@ -14,11 +14,28 @@ export interface Assignment {
   fileName: string;
 }
 
-export interface WeekContent {
+// Nuevo: contenido por día dentro de una semana
+export interface WeekDayContent {
+  // Día de la semana como string numérico: "1"=Lunes ... "7"=Domingo
+  day: string;
+  // Objetivo del día
+  objective: string;
   meetingLink: string;
   recordingLink: string;
   supportMaterials: SupportMaterial[];
   assignment: Assignment | null;
+}
+
+export interface WeekContent {
+  // Nuevo: semana a la que pertenece (opcional por compatibilidad)
+  weekNumber?: number;
+  // Nuevo: arreglo de contenidos por día
+  content?: WeekDayContent[];
+  // Campos legacy (mantener temporalmente por compatibilidad con páginas antiguas)
+  meetingLink?: string;
+  recordingLink?: string;
+  supportMaterials?: SupportMaterial[];
+  assignment?: Assignment | null;
 }
 
 export interface ClassContent {
@@ -34,7 +51,10 @@ export interface ClassContent {
   class: {
     name: string;
     level: string;
+    // selectedDays formateado ("Lunes, Miércoles")
     selectedDays: string;
+    // Nuevo: arreglo crudo de días seleccionados ("1".."7")
+    selectedDaysRaw?: string[];
     startTime: string;
     endTime: string;
     price: number;
@@ -43,21 +63,4 @@ export interface ClassContent {
   welcomeMessage: string;
   resources: SupportMaterial[];
   durationWeeks: number;
-}
-
-export interface StudentAssignment {
-  fileUrl: string | null;
-  fileName: string | null;
-  audioUrl: string | null;
-  message: string;
-  fileSubmission: {
-    submittedAt: string | Date | null;
-    isGraded: boolean;
-    grade: number | null;
-  };
-  audioSubmission: {
-    submittedAt: string | Date | null;
-    isGraded: boolean;
-    grade: number | null;
-  };
 }

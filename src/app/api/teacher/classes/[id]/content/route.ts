@@ -133,6 +133,7 @@ export async function GET(
       name: classData.subjectName,
       level: getLevelName(classData.level),
       selectedDays: getDayName(classData.selectedDays),
+      selectedDaysRaw: classData.selectedDays,
       startTime: mongoTimeToTimeString12h(classData.startTime),
       endTime: mongoTimeToTimeString12h(classData.endTime),
       price: classData.price,

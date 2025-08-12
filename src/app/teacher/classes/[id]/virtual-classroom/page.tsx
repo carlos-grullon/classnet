@@ -14,8 +14,8 @@ import { useCountries } from '@/providers';
 import { FiFileText, FiLink, FiAlertCircle, FiCalendar, FiVolume2, FiUser, FiMail, FiBookOpen, FiAward, FiClock, FiInfo, FiDollarSign, FiExternalLink } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import { ClassContent } from '@/interfaces/VirtualClassroom';
-import { formatInputDateToLong } from '@/utils/GeneralTools';
-import { SupportMaterial, WeekContent } from '@/interfaces/VirtualClassroom';
+import { formatInputDateToLong, getDayName } from '@/utils/GeneralTools';
+import { SupportMaterial, WeekContent, WeekDayContent } from '@/interfaces/VirtualClassroom';
 import { VirtualClassroomSkeleton } from '@/components/skeletons/VirtualClassroomSkeleton';
 import { useParams } from 'next/navigation';
 
@@ -24,18 +24,16 @@ export default function VirtualClassroom() {
   const classId = params.id as string;
   const [content, setContent] = useState<ClassContent | null>(null);
   const [weekContent, setWeekContent] = useState<WeekContent>({
-    meetingLink: '',
-    recordingLink: '',
-    supportMaterials: [],
-    assignment: null
+    weekNumber: 1,
+    content: []
   });
   const [originalWeekContent, setOriginalWeekContent] = useState<WeekContent>({
-    meetingLink: '',
-    recordingLink: '',
-    supportMaterials: [],
-    assignment: null
+    weekNumber: 1,
+    content: []
   });
   const [selectedWeek, setSelectedWeek] = useState(1);
+  // Nuevo: día seleccionado dentro de la semana
+  const [selectedDay, setSelectedDay] = useState<string>('1');
   const [isLoading, setIsLoading] = useState(true);
   const [isAddMaterialModalOpen, setIsAddMaterialModalOpen] = useState(false);
   const [materialType, setMaterialType] = useState<'link' | 'file' | null>(null);
@@ -101,6 +99,9 @@ export default function VirtualClassroom() {
         if (data.success && data.content) {
           setContent(data.content);
           setWhatsappLink(data.content.class.whatsappLink)
+          // seleccionar primer día disponible
+          const firstDay = data.content.class.selectedDaysRaw?.[0];
+          if (firstDay) setSelectedDay(firstDay);
         } else {
           ErrorMsj('Error obteniendo datos del curso');
         }
@@ -123,21 +124,32 @@ export default function VirtualClassroom() {
           {},
           'GET'
         );
-        const content = response.data || {
+        // construir contenido por día en base a selectedDaysRaw, sin lógica legacy
+        const days = content?.class.selectedDaysRaw || [];
+        const emptyDay: Omit<WeekDayContent, 'day'> = {
+          objective: '',
           meetingLink: '',
           recordingLink: '',
-          supportMaterials: [],
+          supportMaterials: [] as SupportMaterial[],
           assignment: null
         };
-        setOriginalWeekContent(content);
-        setWeekContent(content);
+        const existingMap = new Map(
+          (response.data?.content || []).map((d: WeekDayContent) => [d.day, d])
+        );
+        const merged: WeekDayContent[] = days.map((d: string) => ({
+          day: d,
+          ...(existingMap.get(d) || emptyDay)
+        }));
+        const normalized: WeekContent = { weekNumber: selectedWeek, content: merged };
+        setOriginalWeekContent(normalized);
+        setWeekContent(normalized);
       } catch (error) {
         console.error('Error loading week content:', error);
       }
     };
 
     fetchWeekContent();
-  }, [classId, selectedWeek]);
+  }, [classId, selectedWeek, content?.class.selectedDaysRaw]);
 
   if (isLoading || !content) {
     return <VirtualClassroomSkeleton />;
@@ -148,36 +160,42 @@ export default function VirtualClassroom() {
   };
 
   const handleRemoveSupportMaterial = (id: string) => {
-    const updated = {
-      ...weekContent,
-      supportMaterials: weekContent.supportMaterials.filter(m => m.id !== id)
-    }
+    const updatedDays = (weekContent.content || []).map(d =>
+      d.day === selectedDay ? { ...d, supportMaterials: (d.supportMaterials || []).filter(m => m.id !== id) } : d
+    );
+    const updated = { ...weekContent, content: updatedDays };
     setWeekContent(updated);
     handleSaveWeekContent(updated);
   };
 
   const handleOpenAssignmentModal = () => {
+    const a = (weekContent.content || []).find(d => d.day === selectedDay)?.assignment;
     setAssignmentForm({
-      dueDate: typeof weekContent.assignment?.dueDate === 'string' ? weekContent.assignment.dueDate : '',
-      description: weekContent.assignment?.description || '',
-      hasAudio: weekContent.assignment?.hasAudio || false,
-      fileLink: weekContent.assignment?.fileLink || '',
-      fileName: weekContent.assignment?.fileName || ''
+      dueDate: typeof a?.dueDate === 'string' ? a.dueDate : '',
+      description: a?.description || '',
+      hasAudio: a?.hasAudio || false,
+      fileLink: a?.fileLink || '',
+      fileName: a?.fileName || ''
     });
     setIsAssignmentModalOpen(true);
   };
 
   const handleAddAssignment = () => {
-    const updatedContent = {
-      ...weekContent,
-      assignment: {
-        dueDate: assignmentForm.dueDate,
-        description: assignmentForm.description,
-        hasAudio: assignmentForm.hasAudio,
-        fileLink: assignmentForm.fileLink,
-        fileName: assignmentForm.fileName
-      }
-    };
+    const updatedDays = (weekContent.content || []).map(d =>
+      d.day === selectedDay
+        ? {
+            ...d,
+            assignment: {
+              dueDate: assignmentForm.dueDate,
+              description: assignmentForm.description,
+              hasAudio: assignmentForm.hasAudio,
+              fileLink: assignmentForm.fileLink,
+              fileName: assignmentForm.fileName
+            }
+          }
+        : d
+    );
+    const updatedContent = { ...weekContent, content: updatedDays };
     setWeekContent(updatedContent);
     handleSaveWeekContent(updatedContent);
     setIsAssignmentModalOpen(false);
@@ -547,7 +565,7 @@ export default function VirtualClassroom() {
                 <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-lg font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                      Reunión Semana {selectedWeek}
+                      Semana {selectedWeek}
                     </h3>
                     <div className="flex gap-2">
                       {isEditingLinks ? (
@@ -566,15 +584,58 @@ export default function VirtualClassroom() {
                       )}
                     </div>
                   </div>
+                  {/* Selector de Día y objetivo */}
+                  <div className="flex flex-col gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600 dark:text-gray-300">Día:</span>
+                      <select
+                        className="border rounded px-2 py-1 bg-transparent"
+                        value={selectedDay}
+                        onChange={(e) => setSelectedDay(e.target.value)}
+                      >
+                        {(content?.class.selectedDaysRaw || []).map((d) => (
+                          <option key={d} value={d}>{getDayName([d])}</option>
+                        ))}
+                      </select>
+                      <span className="ml-2 text-sm font-medium">{getDayName([selectedDay])}</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Objetivo del día</div>
+                      <Input
+                        value={(weekContent.content || []).find(d => d.day === selectedDay)?.objective || ''}
+                        disabled={!isEditingLinks}
+                        onChange={(e) => {
+                          const updated = (weekContent.content || []).map(d =>
+                            d.day === selectedDay ? { ...d, objective: e.target.value } : d
+                          );
+                          setWeekContent({ ...weekContent, content: updated });
+                        }}
+                      />
+                    </div>
+                  </div>
                   <div className="space-y-3">
                     <div className="font-medium text-center">Link de la reunión:</div>
-                    <Input value={weekContent.meetingLink}
+                    <Input
+                      value={(weekContent.content || []).find(d => d.day === selectedDay)?.meetingLink || ''}
                       disabled={!isEditingLinks}
-                      onChange={(e) => setWeekContent({ ...weekContent, meetingLink: e.target.value })} />
+                      onChange={(e) => {
+                        const updated = (weekContent.content || []).map(d =>
+                          d.day === selectedDay ? { ...d, meetingLink: e.target.value } : d
+                        );
+                        setWeekContent({ ...weekContent, content: updated });
+                      }}
+                    />
                     <div className="font-medium text-center">Link de la grabación:</div>
-                    <Input value={weekContent.recordingLink}
+                    <Input
+                      value={(weekContent.content || []).find(d => d.day === selectedDay)?.recordingLink || ''}
                       disabled={!isEditingLinks}
-                      onChange={(e) => setWeekContent({ ...weekContent, recordingLink: e.target.value })} />
+                      onChange={(e) => {
+                        const updated = (weekContent.content || []).map(d =>
+                          d.day === selectedDay ? { ...d, recordingLink: e.target.value } : d
+                        );
+                        setWeekContent({ ...weekContent, content: updated });
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -624,13 +685,13 @@ export default function VirtualClassroom() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    {weekContent.supportMaterials.length === 0 ? (
+                    {((weekContent.content || []).find(d => d.day === selectedDay)?.supportMaterials || []).length === 0 ? (
                       <div className="flex flex-col items-center justify-center gap-2 py-4">
                         <FiAlertCircle className="w-6 h-6 text-gray-500 dark:text-gray-300" />
                         <span className="font-semibold text-gray-700 dark:text-gray-300">Nada por aquí...</span>
                       </div>
                     ) : (
-                      weekContent.supportMaterials.map(material => (
+                      ((weekContent.content || []).find(d => d.day === selectedDay)?.supportMaterials || []).map(material => (
                         <div key={material.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                           <div className="flex items-center gap-2">
                             {getFileIcon(material.link)}
@@ -663,30 +724,36 @@ export default function VirtualClassroom() {
                         <FiEdit className="mr-1" /> Editar
                       </Button>
                     </div>
-                    {weekContent.assignment ? (
+                    {((weekContent.content || []).find(d => d.day === selectedDay)?.assignment) ? (
                       <div className="space-y-2">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-500">Fecha de Entrega:</span>
                           <span className="font-semibold">
-                            {typeof weekContent.assignment.dueDate === 'string' ? formatInputDateToLong(weekContent.assignment.dueDate) : ''}
+                            {(() => {
+                              const a = (weekContent.content || []).find(d => d.day === selectedDay)?.assignment;
+                              return a && typeof a.dueDate === 'string' ? formatInputDateToLong(a.dueDate) : '';
+                            })()}
                           </span>
                         </div>
-                        {weekContent.assignment.fileLink && (
+                        {(() => {
+                          const a = (weekContent.content || []).find(d => d.day === selectedDay)?.assignment;
+                          return a?.fileLink;
+                        })() && (
                           <div className="flex flex-col gap-1">
                             <span className="text-sm text-gray-500">Archivo:</span>
                             <Link
-                              href={weekContent.assignment.fileLink}
+                              href={(weekContent.content || []).find(d => d.day === selectedDay)?.assignment?.fileLink || '#'}
                               target="_blank"
                               className="text-blue-500 hover:underline"
                             >
-                              {weekContent.assignment.fileName}
+                              {(weekContent.content || []).find(d => d.day === selectedDay)?.assignment?.fileName}
                             </Link>
                           </div>
                         )}
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={weekContent.assignment.hasAudio}
+                            checked={Boolean((weekContent.content || []).find(d => d.day === selectedDay)?.assignment?.hasAudio)}
                             readOnly
                             className="rounded text-blue-500"
                           />
@@ -921,16 +988,21 @@ export default function VirtualClassroom() {
                   link: materialData.link,
                   fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
                 };
-                const updatedContent = {
-                  ...weekContent,
-                  supportMaterials: [
-                    ...weekContent.supportMaterials.map(m => ({
-                      ...m,
-                      fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                    })),
-                    newMaterial
-                  ]
-                }
+                const updatedDays = (weekContent.content || []).map(d =>
+                  d.day === selectedDay
+                    ? {
+                        ...d,
+                        supportMaterials: [
+                          ...(d.supportMaterials || []).map(m => ({
+                            ...m,
+                            fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                          })),
+                          newMaterial
+                        ]
+                      }
+                    : d
+                );
+                const updatedContent = { ...weekContent, content: updatedDays };
                 setWeekContent(updatedContent);
                 setMaterialData({ link: '', title: '', file: null });
                 setMaterialType(null);
@@ -977,18 +1049,23 @@ export default function VirtualClassroom() {
               <FileUploader
                 path={`classes/${classId}/teacher/${selectedWeek}`}
                 onUploadSuccess={({ url, fileName }) => {
-                  const updatedContent = {
-                    ...weekContent,
-                    supportMaterials: [
-                      ...weekContent.supportMaterials,
-                      {
-                        id: Date.now().toString(),
-                        description: materialData.title || fileName || 'Documento',
-                        link: url,
-                        fileName: fileName
-                      }
-                    ]
-                  };
+                  const updatedDays = (weekContent.content || []).map(d =>
+                    d.day === selectedDay
+                      ? {
+                          ...d,
+                          supportMaterials: [
+                            ...(d.supportMaterials || []),
+                            {
+                              id: Date.now().toString(),
+                              description: materialData.title || fileName || 'Documento',
+                              link: url,
+                              fileName: fileName
+                            }
+                          ]
+                        }
+                      : d
+                  );
+                  const updatedContent = { ...weekContent, content: updatedDays };
                   setWeekContent(updatedContent);
                   handleSaveWeekContent(updatedContent);
                   setMaterialData({ link: '', title: '', file: null });
@@ -1013,16 +1090,21 @@ export default function VirtualClassroom() {
                 link: materialData.link,
                 fileName: materialData.link.split('/').pop() || materialData.title || 'Link'
               };
-              const updatedContent = {
-                ...weekContent,
-                supportMaterials: [
-                  ...weekContent.supportMaterials.map(m => ({
-                    ...m,
-                    fileName: m.fileName || m.link.split('/').pop() || 'Link'
-                  })),
-                  newMaterial
-                ]
-              };
+              const updatedDays = (weekContent.content || []).map(d =>
+                d.day === selectedDay
+                  ? {
+                      ...d,
+                      supportMaterials: [
+                        ...(d.supportMaterials || []).map(m => ({
+                          ...m,
+                          fileName: m.fileName || m.link.split('/').pop() || 'Link'
+                        })),
+                        newMaterial
+                      ]
+                    }
+                  : d
+              );
+              const updatedContent = { ...weekContent, content: updatedDays };
               setWeekContent(updatedContent);
               handleSaveWeekContent(updatedContent);
               setMaterialData({ link: '', title: '', file: null });
@@ -1039,7 +1121,7 @@ export default function VirtualClassroom() {
         isOpen={isAssignmentModalOpen}
         className='max-w-6xl'
         onClose={() => setIsAssignmentModalOpen(false)}
-        title={weekContent.assignment ? 'Editar Asignación' : 'Agregar Asignación'}
+        title={((weekContent.content || []).find(d => d.day === selectedDay)?.assignment) ? 'Editar Asignación' : 'Agregar Asignación'}
       >
         <div className="space-y-4">
           <div className="flex items-start gap-4">

@@ -4,21 +4,28 @@ import { Badge } from '@/components';
 import { AudioPlayer } from '@/components/AudioPlayer';
 import { FetchData, ErrorMsj } from '@/utils/Tools.tsx';
 import { FiDownload, FiRefreshCw } from 'react-icons/fi';
+import { getDayName } from '@/utils/GeneralTools';
 
-type submitedAssignment = {
+interface DaysJson {
+    [key: string]: {
+        fileUrl: string;
+        audioUrl: string;
+        fileName: string;
+        fileGrade: number;
+        fileFeedback: string;
+        audioGrade: number;
+        audioFeedback: string;
+        isGraded: boolean;
+        overallGrade: number;
+        overallFeedback: string;
+    };
+}
+
+interface submitedAssignment {
     _id: string;
     weekNumber: number;
-    fileUrl: string;
-    audioUrl: string;
-    fileName: string;
-    fileGrade: number;
-    fileFeedback: string;
-    audioGrade: number;
-    audioFeedback: string;
-    isGraded: boolean;
-    overallGrade: number;
-    overallFeedback: string;
-};
+    days: DaysJson;
+}
 
 export function GradesView({ classId }: { classId: string }) {
     const [grades, setGrades] = useState<submitedAssignment[]>([]);
@@ -70,6 +77,16 @@ export function GradesView({ classId }: { classId: string }) {
                 <div className="space-y-2">
                     {weeks.map(week => {
                         const grade = grades.find(g => g.weekNumber === week);
+                        let avgLabel: string | null = null;
+                        if (grade) {
+                            const entries = Object.values(grade.days || {});
+                            const totalDays = entries.length;
+                            if (totalDays > 0) {
+                                const sum = entries.reduce((acc, d) => acc + (typeof d?.overallGrade === 'number' ? (d.overallGrade as number) : 0), 0);
+                                const avg = Math.round(sum / totalDays);
+                                avgLabel = `${avg}/100`;
+                            }
+                        }
                         return (
                             <div
                                 key={week}
@@ -78,8 +95,8 @@ export function GradesView({ classId }: { classId: string }) {
                             >
                                 <div className="flex justify-between items-center">
                                     <span className="font-medium">Semana {week}</span>
-                                    {grade?.isGraded ? (
-                                        <Badge className="bg-green-500 text-black">{grade.overallGrade}/100</Badge>
+                                    {avgLabel ? (
+                                        <Badge className="bg-green-500 text-black">{avgLabel}</Badge>
                                     ) : (
                                         <Badge className="bg-yellow-500 text-black">Pendiente</Badge>
                                     )}
@@ -98,80 +115,112 @@ export function GradesView({ classId }: { classId: string }) {
                         {(() => {
                             const grade = grades.find(g => g.weekNumber === selectedWeek);
                             if (!grade) return <p>No hay datos para esta semana</p>;
-                            if (!grade.isGraded) return <p>Esta semana aún no ha sido calificada</p>;
+
+                            const dayEntries = Object.entries(grade.days || {});
+                            const totalDays = dayEntries.length;
+                            const sum = dayEntries.reduce((acc, [, d]) => acc + (typeof d?.overallGrade === 'number' ? (d.overallGrade as number) : 0), 0);
+                            const hasAnyDays = totalDays > 0;
+                            const avg = hasAnyDays ? Math.round(sum / totalDays) : null;
 
                             return (
-                                <div className="space-y-4">
-                                    {/* Calificación General */}
+                                <div className="space-y-6">
+                                    {/* Calificación General semanal */}
                                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-blue-200 dark:border-gray-600 shadow-sm">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="font-bold text-lg text-blue-800 dark:text-blue-300">Calificación General</h4>
                                             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                                {grade.overallGrade}<span className="text-lg text-gray-500 dark:text-gray-400">/100</span>
+                                                {hasAnyDays ? (
+                                                    <>
+                                                        {avg}<span className="text-lg text-gray-500 dark:text-gray-400">/100</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-gray-500 dark:text-gray-400 text-base">Pendiente</span>
+                                                )}
                                             </div>
                                         </div>
-                                        {grade.overallFeedback && (
+                                        {!hasAnyDays && (
                                             <div className="bg-white/50 dark:bg-gray-600/30 p-4 rounded-lg border border-blue-100 dark:border-gray-500">
-                                                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200">{grade.overallFeedback}</p>
+                                                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200">Aún no hay calificaciones para esta semana.</p>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Archivo y Audio */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Archivo */}
-                                        <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-700 dark:to-gray-800 p-5 rounded-xl border border-green-200 dark:border-gray-600 shadow-sm">
-                                            <h4 className="font-bold text-lg text-green-800 dark:text-green-300 mb-3">Archivo</h4>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="font-medium">Calificación:</span>
-                                                <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                                                    {grade.fileGrade}<span className="text-sm text-gray-500 dark:text-gray-400">/100</span>
-                                                </span>
-                                            </div>
-                                            {grade.fileUrl && (
-                                                <div className="mb-3">
-                                                    <a
-                                                        href={grade.fileUrl}
-                                                        download
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border border-green-200 dark:border-gray-500 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
-                                                    >
-                                                        <FiDownload size={16} />
-                                                        {grade.fileName || 'Descargar archivo'}
-                                                    </a>
+                                    {/* Detalle por día (file/audio + feedback) */}
+                                    <div className="space-y-6">
+                                        {dayEntries.map(([dayKey, d]) => (
+                                            <div key={dayKey} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="font-bold text-lg">{getDayName([dayKey])}</h4>
+                                                    {typeof d.overallGrade === 'number' ? (
+                                                        <Badge className="bg-green-500 text-black">{d.overallGrade}/100</Badge>
+                                                    ) : (
+                                                        <Badge className="bg-yellow-500 text-black">Pendiente</Badge>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {grade.fileFeedback && (
-                                                <div className="bg-white/50 dark:bg-gray-600/30 p-3 rounded-lg border border-green-100 dark:border-gray-500">
-                                                    <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 text-sm">{grade.fileFeedback}</p>
-                                                </div>
-                                            )}
-                                        </div>
 
-                                        {/* Audio */}
-                                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-700 dark:to-gray-800 p-5 rounded-xl border border-purple-200 dark:border-gray-600 shadow-sm">
-                                            <h4 className="font-bold text-lg text-purple-800 dark:text-purple-300 mb-3">Audio</h4>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <span className="font-medium">Calificación:</span>
-                                                <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
-                                                    {grade.audioGrade}<span className="text-sm text-gray-500 dark:text-gray-400">/100</span>
-                                                </span>
+                                                {d.overallFeedback && (
+                                                    <div className="bg-white/50 dark:bg-gray-600/30 p-3 rounded-lg border border-gray-200 dark:border-gray-500 mb-4">
+                                                        <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 text-sm">{d.overallFeedback}</p>
+                                                    </div>
+                                                )}
+
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* Archivo */}
+                                                    <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-700 dark:to-gray-800 p-5 rounded-xl border border-green-200 dark:border-gray-600 shadow-sm">
+                                                        <h5 className="font-bold text-md text-green-800 dark:text-green-300 mb-3">Archivo</h5>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <span className="font-medium">Calificación:</span>
+                                                            <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                                                                {typeof d.fileGrade === 'number' ? d.fileGrade : '-'}<span className="text-sm text-gray-500 dark:text-gray-400">/100</span>
+                                                            </span>
+                                                        </div>
+                                                        {d.fileUrl && (
+                                                            <div className="mb-3">
+                                                                <a
+                                                                    href={d.fileUrl}
+                                                                    download
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-700 rounded-lg border border-green-200 dark:border-gray-500 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-gray-600 transition-colors"
+                                                                >
+                                                                    <FiDownload size={16} />
+                                                                    {d.fileName || 'Descargar archivo'}
+                                                                </a>
+                                                            </div>
+                                                        )}
+                                                        {d.fileFeedback && (
+                                                            <div className="bg-white/50 dark:bg-gray-600/30 p-3 rounded-lg border border-green-100 dark:border-gray-500">
+                                                                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 text-sm">{d.fileFeedback}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Audio */}
+                                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-700 dark:to-gray-800 p-5 rounded-xl border border-purple-200 dark:border-gray-600 shadow-sm">
+                                                        <h5 className="font-bold text-md text-purple-800 dark:text-purple-300 mb-3">Audio</h5>
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <span className="font-medium">Calificación:</span>
+                                                            <span className="text-xl font-bold text-purple-600 dark:text-purple-400">
+                                                                {typeof d.audioGrade === 'number' ? d.audioGrade : '-'}<span className="text-sm text-gray-500 dark:text-gray-400">/100</span>
+                                                            </span>
+                                                        </div>
+                                                        {d.audioUrl && (
+                                                            <div className="mb-3">
+                                                                <AudioPlayer
+                                                                    audioUrl={d.audioUrl}
+                                                                    className="w-full bg-white dark:bg-gray-700 rounded-lg border border-purple-200 dark:border-gray-500 mt-2"
+                                                                />
+                                                            </div>
+                                                        )}
+                                                        {d.audioFeedback && (
+                                                            <div className="bg-white/50 dark:bg-gray-600/30 p-3 rounded-lg border border-purple-100 dark:border-gray-500">
+                                                                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 text-sm">{d.audioFeedback}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {grade.audioUrl && (
-                                                <div className="mb-3">
-                                                    <AudioPlayer
-                                                        audioUrl={grade.audioUrl}
-                                                        className="w-full bg-white dark:bg-gray-700 rounded-lg border border-purple-200 dark:border-gray-500 mt-2"
-                                                    />
-                                                </div>
-                                            )}
-                                            {grade.audioFeedback && (
-                                                <div className="bg-white/50 dark:bg-gray-600/30 p-3 rounded-lg border border-purple-100 dark:border-gray-500">
-                                                    <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200 text-sm">{grade.audioFeedback}</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             );

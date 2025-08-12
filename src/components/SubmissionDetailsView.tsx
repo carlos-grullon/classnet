@@ -1,4 +1,5 @@
 import { Button, Badge } from '@/components';
+import { getDayName } from '@/utils/GeneralTools';
 import { FiDownload, FiPlay, FiMessageSquare } from 'react-icons/fi';
 
 type SubmissionDetails = {
@@ -6,7 +7,8 @@ type SubmissionDetails = {
   fileName?: string;
   audioUrl?: string;
   message?: string;
-  submittedAt: Date;
+  audioSubmittedAt?: Date | string | null;
+  fileSubmittedAt?: Date | string | null;
   fileGrade?: number;
   fileFeedback?: string;
   audioGrade?: number;
@@ -15,6 +17,7 @@ type SubmissionDetails = {
   overallFeedback?: string;
   isGraded: boolean;
   studentName: string;
+  day?: string;
 };
 
 type SubmissionDetailsViewProps = {
@@ -29,7 +32,11 @@ export function SubmissionDetailsView({ submission, onGradeClick }: SubmissionDe
         <div>
           <h3 className="text-lg font-semibold">Detalles de la Entrega de <span className="text-blue-600 font-bold">{submission.studentName}</span></h3>
           <p className="text-sm text-gray-500">
-            Enviado el: {new Date(submission.submittedAt).toLocaleDateString()}
+            {submission.fileSubmittedAt || submission.audioSubmittedAt ? (
+              <>Enviado el: {new Date(submission.fileSubmittedAt || submission.audioSubmittedAt || '').toLocaleString()} {submission.day ? `(${getDayName([submission.day])})` : ''}</>
+            ) : (
+              <>Sin fecha de envío</>
+            )}
           </p>
         </div>
         <Badge className={`${submission.isGraded ? 'bg-green-500' : 'bg-yellow-500'}`}>

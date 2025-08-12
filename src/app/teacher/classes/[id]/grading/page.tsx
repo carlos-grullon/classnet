@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { GradeAssignmentForm, SubmissionDetailsView, Badge } from '@/components';
+import { getDayName } from '@/utils/GeneralTools';
 import { ErrorMsj, FetchData, SuccessMsj } from '@/utils/Tools.tsx';
 
 type Submission = {
@@ -9,12 +10,14 @@ type Submission = {
   studentId: string;
   studentName: string;
   weekNumber: number;
+  day: string;
   fileUrl?: string;
+  fileName?: string;
   audioUrl?: string;
   message?: string;
   isGraded: boolean;
   overallGrade?: number;
-  submittedAt: Date;
+  submittedAt: Date | string | null;
 };
 
 export default function ClassGradingPage() {
@@ -47,10 +50,10 @@ export default function ClassGradingPage() {
   }, [classId]);
 
   // Obtener detalles de una entrega específica
-  const fetchSubmissionDetails = async (submissionId: string) => {
+  const fetchSubmissionDetails = async (submissionId: string, day: string) => {
     try {
       const response = await FetchData<{ success: boolean, data: Submission }>(
-        `/api/assignments/submissions/${submissionId}`,
+        `/api/assignments/submissions/${submissionId}?day=${encodeURIComponent(day)}`,
         {},
         'GET'
       );
@@ -77,6 +80,7 @@ export default function ClassGradingPage() {
         `/api/assignments/grade`,
         {
           submissionId: selectedSubmission._id,
+          day: selectedSubmission.day,
           ...gradeData
         },
         'POST'
@@ -84,11 +88,11 @@ export default function ClassGradingPage() {
 
       // Actualizar el estado local
       setSubmissions(prev => prev.map(sub =>
-        sub._id === selectedSubmission._id
-          ? { ...sub, ...gradeData }
+        sub._id === selectedSubmission._id && sub.day === selectedSubmission.day
+          ? { ...sub, ...gradeData, isGraded: true }
           : sub
       ));
-      setSubmissionDetails(prev => prev ? { ...prev, ...gradeData } : null);
+      setSubmissionDetails(prev => prev ? { ...prev, ...gradeData, isGraded: true } : null);
       setIsEditing(false);
 
       // Mostrar notificación de éxito
@@ -135,16 +139,16 @@ export default function ClassGradingPage() {
               ) : (
                 filteredSubmissions.map(sub => (
                   <div
-                    key={sub._id}
+                    key={sub._id + sub.day}
                     onClick={() => {
                       setSelectedSubmission(sub);
-                      fetchSubmissionDetails(sub._id);
+                      fetchSubmissionDetails(sub._id, sub.day);
                       setIsEditing(false);
                     }}
                     className={`p-3 rounded-lg cursor-pointer ${selectedSubmission?._id === sub._id ? 'bg-blue-50 dark:bg-gray-700' : 'hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">Semana {sub.weekNumber}</span>
+                      <span className="font-medium">Semana {sub.weekNumber} • {getDayName([sub.day])}</span>
                       <Badge className={`${sub.isGraded ? 'bg-green-500' : 'bg-yellow-500'}`}>
                         {sub.isGraded ? 'Calificado' : 'Pendiente'}
                       </Badge>

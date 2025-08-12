@@ -2,9 +2,18 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
 import { formatDateToInput, getLevelName, parseInputDate } from '@/utils/GeneralTools';
-import { WeekContent, StudentAssignment } from '@/interfaces/VirtualClassroom';
+import { WeekContent } from '@/interfaces/VirtualClassroom';
 import { getUserId } from '@/utils/Tools.ts';
 import { sendNotification } from '@/services/notificationService'
+
+interface DaySubmission {
+  fileUrl?: string | null;
+  fileName?: string | null;
+  audioUrl?: string | null;
+  message?: string | null;
+  fileSubmittedAt?: Date | null | string;
+  audioSubmittedAt?: Date | null | string;
+}
 
 // POST /api/teacher/classes/[id]/week - Crear o actualizar contenido semanal
 export async function POST(
@@ -16,8 +25,20 @@ export async function POST(
     const data = await request.json();
     const weeksCollection = await getCollection('weeks');
     const classesCollection = await getCollection('classes');
-    // convertir la fecha a Date para guardarla
-    if (data.assignment) {
+    // convertir la(s) fecha(s) a Date para guardarlas (soporta legacy y por-día)
+    if (Array.isArray(data.content)) {
+      for (const d of data.content) {
+        if (d.assignment && d.assignment.dueDate) {
+          d.assignment.dueDate = parseInputDate(d.assignment.dueDate);
+          if (d.assignment.dueDate < new Date()) {
+            return NextResponse.json(
+              { success: false, error: 'La fecha de entrega no puede ser anterior a la fecha actual' },
+              { status: 400 }
+            );
+          }
+        }
+      }
+    } else if (data.assignment) {
       data.assignment.dueDate = parseInputDate(data.assignment.dueDate);
       // Validar que la fecha no sea anterior a la actual
       if (data.assignment.dueDate < new Date()) {
@@ -34,31 +55,19 @@ export async function POST(
 
     const existingWeek = await weeksCollection.findOne(filter);
 
+    const baseDoc: WeekContent = {
+      weekNumber: Number(data.weekNumber),
+      content: Array.isArray(data.content) ? data.content : [],
+    };
+
     if (existingWeek) {
-      await weeksCollection.updateOne(
-        filter,
-        {
-          $set: {
-            weekNumber: data.weekNumber,
-            meetingLink: data.meetingLink,
-            recordingLink: data.recordingLink,
-            supportMaterials: data.supportMaterials,
-            assignment: data.assignment,
-            updatedAt: new Date()
-          }
-        }
-      );
+      await weeksCollection.updateOne(filter, { $set: baseDoc });
       return NextResponse.json({ success: true });
     } else {
       await weeksCollection.insertOne({
         classId: new ObjectId(classId),
-        weekNumber: Number(data.weekNumber),
-        meetingLink: data.meetingLink,
-        recordingLink: data.recordingLink,
-        supportMaterials: data.supportMaterials,
-        assignment: data.assignment,
+        ...baseDoc,
         createdAt: new Date(),
-        updatedAt: new Date()
       });
 
       // Enviar notificación a los estudiantes de una nueva asignación
@@ -101,44 +110,42 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const weekNumber = Number(searchParams.get('week'));
     const weeksCollection = await getCollection<WeekContent>('weeks');
-
-    const weekData = await weeksCollection.findOne({
+    const weekData: WeekContent | null = await weeksCollection.findOne({
       classId: new ObjectId(classId),
       weekNumber
     });
     if (!weekData) {
       return NextResponse.json({ success: true, data: null });
     }
-    // convertir la fecha a string para mostrarla
-    if (weekData.assignment && weekData.assignment.dueDate instanceof Date) {
-      weekData.assignment.dueDate = formatDateToInput(weekData.assignment.dueDate);
+    // convertir fechas: solo nuevo formato por-día
+    if (Array.isArray(weekData.content)) {
+      weekData.content = weekData.content.map((d) => {
+        if (d?.assignment?.dueDate instanceof Date) {
+          d.assignment.dueDate = formatDateToInput(d.assignment.dueDate);
+        }
+        return d;
+      });
     }
 
-    let studentAssignment: StudentAssignment | null = null;
+    // Obtener la(s) entrega(s) del estudiante en formato por-día (nueva estructura)
+    const submittedAssignmentsCollection = await getCollection('submittedAssignments');
+    const Assignment = await submittedAssignmentsCollection.findOne({
+      weekNumber,
+      classId: new ObjectId(classId),
+      studentId: new ObjectId(userId)
+    });
 
-    if (weekData.assignment) {
-      const submittedAssignmentsCollection = await getCollection('submittedAssignments');
-      const Assignment = await submittedAssignmentsCollection.findOne({
-        weekNumber,
-        classId: new ObjectId(classId),
-        studentId: new ObjectId(userId)
-      });
-      if (Assignment) {
-        studentAssignment = {
-          fileUrl: Assignment.fileUrl || null,
-          fileName: Assignment.fileName || null,
-          audioUrl: Assignment.audioUrl || null,
-          message: Assignment.message || null,
-          fileSubmission: {
-            submittedAt: Assignment.fileUrl ? formatDateToInput(Assignment.submittedAt) || null : null,
-            isGraded: Assignment.fileUrl ? Assignment.isGraded || false : false,
-            grade: Assignment.fileGrade || null
-          },
-          audioSubmission: {
-            submittedAt: Assignment.audioUrl ? formatDateToInput(Assignment.submittedAt) || null : null,
-            isGraded: Assignment.audioUrl ? Assignment.isGraded || false : false,
-            grade: Assignment.audioGrade || null
-          }
+    let studentAssignmentDays: Record<string, DaySubmission> | null = null;
+    if (Assignment?.days && typeof Assignment.days === 'object') {
+      studentAssignmentDays = {};
+      for (const [day, sub] of Object.entries<DaySubmission>(Assignment.days)) {
+        studentAssignmentDays[day] = {
+          fileUrl: sub?.fileUrl ?? null,
+          fileName: sub?.fileName ?? null,
+          audioUrl: sub?.audioUrl ?? null,
+          message: sub?.message ?? '',
+          fileSubmittedAt: sub?.fileSubmittedAt instanceof Date ? formatDateToInput(sub.fileSubmittedAt) : sub?.fileSubmittedAt ?? null,
+          audioSubmittedAt: sub?.audioSubmittedAt instanceof Date ? formatDateToInput(sub.audioSubmittedAt) : sub?.audioSubmittedAt ?? null
         };
       }
     }
@@ -146,7 +153,8 @@ export async function GET(
     return NextResponse.json({
       success: true,
       data: weekData || null,
-      studentAssignment: studentAssignment
+      studentAssignment: null,
+      studentAssignmentDays
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error desconocido';
