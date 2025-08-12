@@ -664,16 +664,18 @@ export default function VirtualClassroom() {
                       </div>
                     ) : (
                       (currentDay?.supportMaterials || [])?.map(material => (
-                        <div key={material.id} className="flex items-center justify-between p-2 bg-gray-200 dark:bg-gray-700 rounded">
-                          <div className="flex items-center gap-2">
-                            {getFileIcon(material.link)}
-                            <div>
-                              <p className="font-medium">{material.description}</p>
+                        <div key={material.id} className="flex items-start p-2 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                          <div className="flex items-start gap-2 min-w-0 w-full">
+                            <div className="shrink-0">{getFileIcon(material.link)}</div>
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium break-words overflow-hidden line-clamp-2">
+                                {material.description}
+                              </p>
                               {material.fileName && (
                                 <Link
                                   href={material.link}
                                   target="_blank"
-                                  className="text-blue-500 hover:underline"
+                                  className="text-blue-500 hover:underline block max-w-full overflow-hidden text-ellipsis whitespace-nowrap break-all"
                                 >
                                   {material.fileName}
                                 </Link>
