@@ -92,6 +92,8 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
     try {
       setIsLoading(true);
       setError('');
+      // Normalizar MIME: algunos archivos pueden no tener file.type
+      const normalizedType = file.type || 'application/octet-stream';
       
       // PASO 1: Solicitar la URL pre-firmada a tu API Route
       // Tu API Route '/api/upload-files' ahora espera un JSON con el nombre, tipo y path.
@@ -102,7 +104,7 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
         },
         body: JSON.stringify({ 
           fileName: file.name,   // El nombre original del archivo
-          fileType: file.type,   // El tipo MIME del archivo
+          fileType: normalizedType,   // El tipo MIME del archivo (normalizado)
           path: path             // La carpeta de destino en S3
         }),
       });
@@ -120,7 +122,7 @@ export function FileUploader({ onUploadSuccess, path = ''}: FileUploaderProps) {
       const uploadToS3Response = await fetch(presignedUrl, {
         method: 'PUT', // Para subidas directas de objetos individuales, siempre es PUT
         headers: {
-          'Content-Type': file.type, // Asegúrate que el Content-Type coincida con el generado en la URL
+          'Content-Type': normalizedType, // Debe coincidir con el Content-Type firmado
           // Si al generar la URL pre-firmada en S3Service.ts usaste ACL: 'public-read',
           // a veces es necesario incluir también el header 'x-amz-acl': 'public-read' aquí.
           // Prueba sin él primero, y si hay problemas, descoméntalo:

@@ -7,10 +7,12 @@ export async function POST(request: NextRequest) {
     // Aquí, ya NO esperamos un 'formData' con el archivo completo.
     // Solo esperamos un JSON con el nombre del archivo, su tipo y el path.
     const { fileName, fileType, path } = await request.json(); 
+    // Normalizar el tipo de archivo: algunos navegadores no envían MIME para ciertos archivos
+    const safeFileType = fileType || 'application/octet-stream';
     
-    if (!fileName || !fileType) {
+    if (!fileName) {
       return NextResponse.json(
-        { error: "Faltan datos: nombre y tipo de archivo son requeridos." },
+        { error: "Faltan datos: el nombre de archivo es requerido." },
         { status: 400 }
       );
     }
@@ -36,10 +38,12 @@ export async function POST(request: NextRequest) {
       
       // Texto/otros
       'text/plain',
-      'application/json'
+      'application/json',
+      // Fallback cuando el navegador no provee MIME (evita mismatch de firma)
+      'application/octet-stream'
     ];
     
-    if (!allowedTypes.includes(fileType)) { // Usamos fileType aquí
+    if (!allowedTypes.includes(safeFileType)) { // Usamos el tipo normalizado
       return NextResponse.json(
         { error: "Tipo de archivo no soportado" }, 
         { status: 400 }
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Llama a la nueva función para obtener la URL pre-firmada
-    const { url: presignedUrl, s3ObjectUrl } = await getPresignedUploadUrl(fileName, fileType, path || 'uploads');
+    const { url: presignedUrl, s3ObjectUrl } = await getPresignedUploadUrl(fileName, safeFileType, path || 'uploads');
 
     // Retorna la URL pre-firmada y la URL pública final del objeto
     return NextResponse.json({ presignedUrl, s3ObjectUrl });

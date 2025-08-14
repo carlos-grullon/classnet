@@ -76,6 +76,9 @@ type DaySubmission = {
   message?: string | null;
   fileSubmittedAt?: Date | null;
   audioSubmittedAt?: Date | null;
+  fileGrade?: number | null;
+  audioGrade?: number | null;
+  isGraded?: boolean
 };
 
 export default function VirtualClassroom() {
@@ -229,6 +232,7 @@ export default function VirtualClassroom() {
           setWeekContent(normalized);
           if (response.studentAssignmentDays) {
             setStudentAssignmentDays(response.studentAssignmentDays);
+            console.log("esta es la respuesta",response.studentAssignmentDays);
             if (selectedDay) {
               const current = response.studentAssignmentDays[selectedDay];
               if (!current?.message) {
@@ -714,8 +718,8 @@ export default function VirtualClassroom() {
                             </td>
                             <td className="p-2 border-r border-black dark:border-gray-400">
                               {currentDay?.assignment?.dueDate ? (
-                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt }).color}`}>
-                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt }).message}
+                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt, graded: currentSubmission.isGraded, grade: currentSubmission.fileGrade }).color}`}>
+                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.fileSubmittedAt, graded: currentSubmission.isGraded, grade: currentSubmission.fileGrade }).message}
                                 </span>
                               ) : (
                                 <span className="bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center">—</span>
@@ -723,8 +727,8 @@ export default function VirtualClassroom() {
                             </td>
                             <td className="p-2">
                               {currentDay?.assignment?.dueDate ? (
-                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt }).color}`}>
-                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt }).message}
+                                <span className={`bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center ${getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt, graded: currentSubmission.isGraded, grade: currentSubmission.audioGrade }).color}`}>
+                                  {getTimeRemainingMessage(currentDay.assignment.dueDate, { submittedAt: currentSubmission.audioSubmittedAt, graded: currentSubmission.isGraded, grade: currentSubmission.audioGrade }).message}
                                 </span>
                               ) : (
                                 <span className="bg-gray-200 dark:bg-gray-700 p-1 rounded font-semibold block text-center">—</span>

@@ -13,6 +13,9 @@ interface DaySubmission {
   message?: string | null;
   fileSubmittedAt?: Date | null | string;
   audioSubmittedAt?: Date | null | string;
+  fileGrade?: number | null;
+  audioGrade?: number | null;
+  isGraded?: boolean;
 }
 
 // POST /api/teacher/classes/[id]/week - Crear o actualizar contenido semanal
@@ -145,7 +148,10 @@ export async function GET(
           audioUrl: sub?.audioUrl ?? null,
           message: sub?.message ?? '',
           fileSubmittedAt: sub?.fileSubmittedAt instanceof Date ? formatDateToInput(sub.fileSubmittedAt) : sub?.fileSubmittedAt ?? null,
-          audioSubmittedAt: sub?.audioSubmittedAt instanceof Date ? formatDateToInput(sub.audioSubmittedAt) : sub?.audioSubmittedAt ?? null
+          audioSubmittedAt: sub?.audioSubmittedAt instanceof Date ? formatDateToInput(sub.audioSubmittedAt) : sub?.audioSubmittedAt ?? null,
+          fileGrade: sub?.fileGrade ?? null,
+          audioGrade: sub?.audioGrade ?? null,
+          isGraded: sub?.isGraded ?? false
         };
       }
     }
