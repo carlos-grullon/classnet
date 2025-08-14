@@ -28,29 +28,7 @@ export async function POST(
     const data = await request.json();
     const weeksCollection = await getCollection('weeks');
     const classesCollection = await getCollection('classes');
-    // convertir la(s) fecha(s) a Date para guardarlas (soporta legacy y por-día)
-    if (Array.isArray(data.content)) {
-      for (const d of data.content) {
-        if (d.assignment && d.assignment.dueDate) {
-          d.assignment.dueDate = parseInputDate(d.assignment.dueDate);
-          if (d.assignment.dueDate < new Date()) {
-            return NextResponse.json(
-              { success: false, error: 'La fecha de entrega no puede ser anterior a la fecha actual' },
-              { status: 400 }
-            );
-          }
-        }
-      }
-    } else if (data.assignment) {
-      data.assignment.dueDate = parseInputDate(data.assignment.dueDate);
-      // Validar que la fecha no sea anterior a la actual
-      if (data.assignment.dueDate < new Date()) {
-        return NextResponse.json(
-          { success: false, error: 'La fecha de entrega no puede ser anterior a la fecha actual' },
-          { status: 400 }
-        );
-      }
-    }
+    
     const filter = {
       classId: new ObjectId(classId),
       weekNumber: Number(data.weekNumber)
