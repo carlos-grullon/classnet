@@ -80,10 +80,12 @@ export function GradesView({ classId }: { classId: string }) {
                         let avgLabel: string | null = null;
                         if (grade) {
                             const entries = Object.values(grade.days || {});
-                            const totalDays = entries.length;
-                            if (totalDays > 0) {
-                                const sum = entries.reduce((acc, d) => acc + (typeof d?.overallGrade === 'number' ? (d.overallGrade as number) : 0), 0);
-                                const avg = Math.round(sum / totalDays);
+                            // Solo promediar días calificados (overallGrade numérico)
+                            const graded = entries.filter(d => typeof d?.overallGrade === 'number');
+                            const gradedCount = graded.length;
+                            if (gradedCount > 0) {
+                                const sum = graded.reduce((acc, d) => acc + (d.overallGrade as number), 0);
+                                const avg = Math.round(sum / gradedCount);
                                 avgLabel = `${avg}/100`;
                             }
                         }
@@ -117,10 +119,12 @@ export function GradesView({ classId }: { classId: string }) {
                             if (!grade) return <p>No hay datos para esta semana</p>;
 
                             const dayEntries = Object.entries(grade.days || {});
-                            const totalDays = dayEntries.length;
-                            const sum = dayEntries.reduce((acc, [, d]) => acc + (typeof d?.overallGrade === 'number' ? (d.overallGrade as number) : 0), 0);
-                            const hasAnyDays = totalDays > 0;
-                            const avg = hasAnyDays ? Math.round(sum / totalDays) : null;
+                            // Filtrar solo días calificados
+                            const gradedDayEntries = dayEntries.filter(([, d]) => typeof d?.overallGrade === 'number');
+                            const gradedCount = gradedDayEntries.length;
+                            const sum = gradedDayEntries.reduce((acc, [, d]) => acc + (d.overallGrade as number), 0);
+                            const hasAnyGradedDays = gradedCount > 0;
+                            const avg = hasAnyGradedDays ? Math.round(sum / gradedCount) : null;
 
                             return (
                                 <div className="space-y-6">
@@ -129,7 +133,7 @@ export function GradesView({ classId }: { classId: string }) {
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="font-bold text-lg text-blue-800 dark:text-blue-300">Calificación General</h4>
                                             <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                                                {hasAnyDays ? (
+                                                {hasAnyGradedDays ? (
                                                     <>
                                                         {avg}<span className="text-lg text-gray-500 dark:text-gray-400">/100</span>
                                                     </>
@@ -138,7 +142,7 @@ export function GradesView({ classId }: { classId: string }) {
                                                 )}
                                             </div>
                                         </div>
-                                        {!hasAnyDays && (
+                                        {!hasAnyGradedDays && (
                                             <div className="bg-white/50 dark:bg-gray-600/30 p-4 rounded-lg border border-blue-100 dark:border-gray-500">
                                                 <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-200">Aún no hay calificaciones para esta semana.</p>
                                             </div>
@@ -147,14 +151,12 @@ export function GradesView({ classId }: { classId: string }) {
 
                                     {/* Detalle por día (file/audio + feedback) */}
                                     <div className="space-y-6">
-                                        {dayEntries.map(([dayKey, d]) => (
+                                        {gradedDayEntries.map(([dayKey, d]) => (
                                             <div key={dayKey} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <h4 className="font-bold text-lg">{getDayName([dayKey])}</h4>
-                                                    {typeof d.overallGrade === 'number' ? (
+                                                    {typeof d.overallGrade === 'number' && (
                                                         <Badge className="bg-green-500 text-black">{d.overallGrade}/100</Badge>
-                                                    ) : (
-                                                        <Badge className="bg-yellow-500 text-black">Pendiente</Badge>
                                                     )}
                                                 </div>
 
