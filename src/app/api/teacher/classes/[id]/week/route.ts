@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId } from 'mongodb';
-import { formatDateToInput, getLevelName, parseInputDate } from '@/utils/GeneralTools';
+import { formatDateToInput, getLevelName } from '@/utils/GeneralTools';
 import { WeekContent } from '@/interfaces/VirtualClassroom';
 import { getUserId } from '@/utils/Tools.ts';
 import { sendNotification } from '@/services/notificationService'
