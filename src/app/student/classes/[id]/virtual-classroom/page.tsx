@@ -232,13 +232,14 @@ export default function VirtualClassroom() {
           setWeekContent(normalized);
           if (response.studentAssignmentDays) {
             setStudentAssignmentDays(response.studentAssignmentDays);
-            console.log("esta es la respuesta",response.studentAssignmentDays);
             if (selectedDay) {
               const current = response.studentAssignmentDays[selectedDay];
               if (!current?.message) {
                 setIsEditingMessage(true);
               }
             }
+          } else {
+            setStudentAssignmentDays({});
           }
         }
       } catch (error) {
