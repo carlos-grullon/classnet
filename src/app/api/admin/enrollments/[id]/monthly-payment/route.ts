@@ -95,7 +95,7 @@ export async function PATCH(
     }
 
     // Validar estado
-    const validStatuses = ['pending', 'approved', 'rejected'];
+    const validStatuses = ['pending', 'approved', 'rejected', 'overdue'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Estado no válido' }, { status: 400 });
     }
@@ -121,7 +121,8 @@ export async function PATCH(
           ...(status === 'approved' && { 
             lastPaymentDate: enrollment.paymentsMade[paymentIndex].date,
             nextPaymentDueDate: addMonths(enrollment.nextPaymentDueDate, 1)
-          })
+          }),
+          status: status === 'approved' && 'enrolled'
         }
       }
     );

@@ -174,11 +174,7 @@ export async function GET(req: NextRequest) {
             await enrollmentsCollection.updateOne(
               { _id: new ObjectId(enrollment._id) },
               {
-                $push: { paymentsMade: newPayment },
-                $set: {
-                  status: 'payment_overdue',
-                  lastUpdated: now.toISOString()
-                }
+                $push: { paymentsMade: newPayment }
               }
             );
 
@@ -202,7 +198,7 @@ export async function GET(req: NextRequest) {
               await sendNotification({
                 userId: [student._id.toString()],
                 title: '❌ Pago vencido',
-                message: `El pago de ${classData.subjectName} ${getLevelName(classData.level)} está vencido. Tienes 7 días de gracia.`,
+                message: `El pago de ${classData.subjectName} ${getLevelName(classData.level)} está vencido. Tienes 10 días de gracia.`,
                 link: `/student/enrollments/${enrollment._id.toString()}`,
                 type: 'paymentOverdue'
               });
@@ -221,8 +217,8 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // 4. Suspender al estudiante si han pasado más de 20 días desde la fecha de vencimiento
-      else if (isAfter(today, addDays(nextPaymentDate, 20))) {
+      // 4. Suspender al estudiante si han pasado más de 10 días desde la fecha de vencimiento
+      else if (isAfter(today, addDays(nextPaymentDate, 10))) {
         // Solo suspender si no está ya suspendido
         if (enrollment.status !== 'suspended_due_to_non_payment') {
           await enrollmentsCollection.updateOne(

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '@/utils/MongoDB';
 import { ObjectId, Document } from 'mongodb';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, addDays } from 'date-fns';
 import { sendTrialExpiredEmail, sendTrialExpiryNotificationEmail } from '@/utils/EmailService';
 
 // Increase max listeners for the process to avoid memory leak warnings
@@ -173,8 +173,8 @@ async function handleExpiredTrial(enrollment: Enrollment) {
       $set: { 
         status: 'pending_payment',
         updatedAt: new Date(),
-        expiredAt: new Date()
-      } 
+        expiredAt: addDays(new Date(), 15),
+      }
     }
   );
 
