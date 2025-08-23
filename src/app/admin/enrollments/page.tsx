@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card, Button, Modal } from '@/components';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Card, Button, Modal, DataTable } from '@/components';
 import { FiClock, FiCheckCircle, FiXCircle, FiUpload, FiAlertTriangle, FiSearch, FiEye, FiRefreshCw } from 'react-icons/fi';
 import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx';
 import Image from 'next/image';
 import { useCallback } from 'react';
+import { type ColumnDef } from '@tanstack/react-table';
 
 // Interfaz para las inscripciones
 interface Enrollment {
@@ -73,7 +74,7 @@ interface EnrollmentStatusResponse {
   message: string;
   enrollment: {
     id: string;
-    status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
+    status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'overdue' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
     updatedAt: string;
     notes?: string;
   };
@@ -141,7 +142,7 @@ export default function AdminEnrollments() {
 
   useEffect(() => {
     fetchEnrollments();
-  }, [pagination.page, pagination.limit]);
+  }, [fetchEnrollments]);
 
   const handleViewDetails = (enrollment: Enrollment) => {
     setDetailModal({
@@ -163,7 +164,7 @@ export default function AdminEnrollments() {
 
   const handleUpdateStatus = async () => {
     if (!detailModal.enrollment) return;
-    if (updateForm.status === 'proof_rejected' || updateForm.status === 'trial_proof_rejected') {
+    if (updateForm.status === 'proof_rejected' || updateForm.status === 'trial_proof_rejected' || updateForm.status === 'overdue') {
       if (updateForm.notes === '') {
         ErrorMsj('Por favor, añade notas o motivo de rechazo');
         return;
@@ -197,7 +198,8 @@ export default function AdminEnrollments() {
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value;
     setStatusFilter(newStatus);
-    fetchEnrollments(newStatus);
+    // Resetear a la primera página para evitar páginas vacías al cambiar el filtro
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   // Función para obtener el color según el estado
@@ -217,6 +219,8 @@ export default function AdminEnrollments() {
         return 'text-green-500 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       case 'proof_rejected':
         return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      case 'overdue':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'cancelled':
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
       default:
@@ -234,6 +238,8 @@ export default function AdminEnrollments() {
       case 'enrolled':
         return <FiCheckCircle className="mr-2" />;
       case 'proof_rejected':
+        return <FiAlertTriangle className="mr-2" />;
+      case 'overdue':
         return <FiAlertTriangle className="mr-2" />;
       case 'cancelled':
         return <FiXCircle className="mr-2" />;
@@ -259,6 +265,8 @@ export default function AdminEnrollments() {
         return 'Inscrito';
       case 'proof_rejected':
         return 'Comprobante Rechazado';
+      case 'overdue':
+        return 'Vencido';
       case 'cancelled':
         return 'Cancelada';
       case 'trial':
@@ -271,6 +279,57 @@ export default function AdminEnrollments() {
         return 'Desconocido';
     }
   };
+
+  // Columnas para DataTable (TanStack)
+  const columns: ColumnDef<Enrollment, any>[] = useMemo(() => [
+    {
+      header: 'Clase',
+      accessorFn: (row) => `${row.class.subjectName} - ${getLevelName(row.class.level)}`,
+      cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
+    },
+    {
+      header: 'Estudiante',
+      accessorFn: (row) => `${row.student.name} ${row.student.lastName}`,
+      cell: (info) => <span>{info.getValue() as string}</span>,
+    },
+    {
+      header: 'Profesor',
+      accessorFn: (row) => row.class.teacherName,
+    },
+    {
+      header: 'Estado',
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(row.original.status)}`}>
+          {getStatusIcon(row.original.status)}
+          {getStatusText(row.original.status)}
+        </div>
+      ),
+      enableSorting: false,
+    },
+    {
+      header: 'Monto',
+      accessorFn: (row) => `$${row.paymentAmount}`,
+      cell: (info) => <span className="text-blue-600 dark:text-blue-400 font-medium">{info.getValue() as string}</span>,
+    },
+    {
+      header: 'Fecha',
+      accessorFn: (row) => new Date(row.createdAt).toLocaleDateString(),
+    },
+    {
+      id: 'actions',
+      header: 'Acciones',
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          {row.original.paymentProof && (
+            <Button size="sm" variant="outline" onClick={() => handleViewImage(row.original.paymentProof!)} icon={<FiEye />}>Ver</Button>
+          )}
+          <Button size="sm" onClick={() => handleViewDetails(row.original)}>Gestionar</Button>
+        </div>
+      ),
+      enableSorting: false,
+    },
+  ], [handleViewDetails]);
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -307,6 +366,7 @@ export default function AdminEnrollments() {
                   <option value="proof_submitted">Comprobante Enviado</option>
                   <option value="enrolled">Inscrito</option>
                   <option value="proof_rejected">Comprobante Rechazado</option>
+                  <option value="overdue">Vencido</option>
                   <option value="cancelled">Cancelada</option>
                   <option value="trial">Período de Prueba</option>
                 </select>
@@ -329,90 +389,29 @@ export default function AdminEnrollments() {
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-700 dark:border-primary-400 mb-4"></div>
             <p className="text-gray-500 dark:text-gray-400">Cargando inscripciones...</p>
           </div>
-        ) : enrollments.length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* Lista de inscripciones */}
-            {enrollments.map((enrollment) => (
-              <Card key={enrollment.id} className="p-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-lg">
-                        {enrollment.class.subjectName} - {getLevelName(enrollment.class.level)}
-                      </h3>
-                      <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(enrollment.status)}`}>
-                        {getStatusIcon(enrollment.status)}
-                        {getStatusText(enrollment.status)}
-                      </div>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Estudiante: <span className="font-medium">{enrollment.student.name} {enrollment.student.lastName}</span>
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Profesor: <span className="font-medium">{enrollment.class.teacherName}</span>
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Fecha: {new Date(enrollment.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-2 items-end">
-                    <p className="text-blue-600 dark:text-blue-400 font-medium">
-                      ${enrollment.paymentAmount}
-                    </p>
-                    {enrollment.paymentProof && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewImage(enrollment.paymentProof!)}
-                        icon={<FiEye />}
-                      >
-                        Ver Comprobante
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      onClick={() => handleViewDetails(enrollment)}
-                    >
-                      Gestionar
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-
-            {/* Paginación */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center mt-6 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, page: Math.max(0, pagination.page - 1) })}
-                  disabled={pagination.page === 0}
-                >
-                  Anterior
-                </Button>
-                <span className="py-2 px-4 bg-gray-100 dark:bg-gray-800 rounded-md text-sm">
-                  Página {pagination.page + 1} de {pagination.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, page: Math.min(pagination.totalPages - 1, pagination.page + 1) })}
-                  disabled={pagination.page === pagination.totalPages - 1}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            )}
-          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <FiSearch className="w-12 h-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No se encontraron inscripciones</h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              {statusFilter ? 'Prueba con otro filtro de estado' : 'No hay inscripciones registradas en el sistema'}
-            </p>
+          <div>
+            <DataTable<Enrollment>
+              columns={columns}
+              data={enrollments}
+              manualPagination
+              pageCount={pagination.totalPages}
+              pagination={{ pageIndex: Math.max(0, (pagination.page || 1) - 1), pageSize: pagination.limit }}
+              onPaginationChange={(updater) => {
+                const next = typeof updater === 'function' ? updater({ pageIndex: Math.max(0, (pagination.page || 1) - 1), pageSize: pagination.limit }) : updater;
+                setPagination((prev) => ({ ...prev, page: next.pageIndex + 1, limit: next.pageSize }));
+              }}
+              emptyMessage={
+                <div className="flex flex-col items-center justify-center text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <FiSearch className="w-12 h-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No se encontraron inscripciones</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {statusFilter ? 'Prueba con otro filtro de estado' : 'No hay inscripciones registradas en el sistema'}
+                  </p>
+                </div>
+              }
+              showPaginationControls
+            />
           </div>
         )}
       </div>

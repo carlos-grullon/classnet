@@ -12,7 +12,7 @@ import { useCallback } from 'react';
 // Interfaz para la inscripción
 interface Enrollment {
   id: string;
-  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
+  status: 'pending_payment' | 'proof_submitted' | 'enrolled' | 'proof_rejected' | 'overdue' | 'cancelled' | 'trial' | 'trial_proof_submitted' | 'trial_proof_rejected';
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -129,6 +129,8 @@ export default function EnrollmentDetails() {
         return 'text-green-600 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
       case 'proof_rejected':
         return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+      case 'overdue':
+        return 'text-red-500 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
       case 'cancelled':
         return 'text-gray-500 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
       case 'trial':
@@ -177,6 +179,8 @@ export default function EnrollmentDetails() {
         return 'Inscrito';
       case 'proof_rejected':
         return 'Comprobante Rechazado';
+      case 'overdue':
+        return 'Vencido';
       case 'cancelled':
         return 'Cancelada';
       case 'trial':

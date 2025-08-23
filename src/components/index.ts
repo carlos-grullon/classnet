@@ -28,3 +28,4 @@ export * from './ui/Tabs';
 export * from './GradeAssignmentForm'
 export * from './SubmissionDetailsView'
 export * from './GradesView'
+export * from './DataTable';
