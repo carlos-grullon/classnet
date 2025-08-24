@@ -12,7 +12,7 @@ import {
 } from "@tanstack/react-table";
 
 export type DataTableProps<TData> = {
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
   data: TData[];
   // Server-side pagination support
   pageCount?: number; // required when manualPagination=true

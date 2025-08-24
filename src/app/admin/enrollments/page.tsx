@@ -7,6 +7,7 @@ import { FetchData, ErrorMsj, SuccessMsj, getLevelName } from '@/utils/Tools.tsx
 import Image from 'next/image';
 import { useCallback } from 'react';
 import { type ColumnDef } from '@tanstack/react-table';
+import { Class } from '@/interfaces/Class';
 
 // Interfaz para las inscripciones
 interface Enrollment {
@@ -117,7 +118,7 @@ export default function AdminEnrollments() {
   const [selectedClass, setSelectedClass] = useState<null | { _id: string; subjectName: string; level: string; teacherName?: string }>(null);
   const [classSearchOpen, setClassSearchOpen] = useState(false);
   const [classSearchLoading, setClassSearchLoading] = useState(false);
-  const [classResults, setClassResults] = useState<Array<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }>>([]);
+  const [classResults, setClassResults] = useState<Class[]>([]);
   const [classPagination, setClassPagination] = useState({ pageIndex: 0, pageSize: 20, totalPages: 0 });
 
   const fetchEnrollments = useCallback(async (status?: string) => {
@@ -154,7 +155,7 @@ export default function AdminEnrollments() {
     fetchEnrollments();
   }, [fetchEnrollments]);
 
-  const handleViewDetails = (enrollment: Enrollment) => {
+  const handleViewDetails = useCallback((enrollment: Enrollment) => {
     setDetailModal({
       isOpen: true,
       enrollment
@@ -163,7 +164,7 @@ export default function AdminEnrollments() {
       status: enrollment.status,
       notes: enrollment.notes || ''
     });
-  };
+  }, []);
 
   const handleViewImage = (imageUrl: string) => {
     setImageModal({
@@ -218,7 +219,7 @@ export default function AdminEnrollments() {
     try {
       const params = new URLSearchParams();
       params.append('page', String(pageIndex)); // /api/classes utiliza 0-based
-      const res = await FetchData<{ classes: any[]; totalPages: number; page: number }>(`/api/classes?${params.toString()}`, {}, 'GET');
+      const res = await FetchData<{ classes: Class[]; totalPages: number; page: number }>(`/api/classes?${params.toString()}`, {}, 'GET');
       setClassResults(res.classes || []);
       setClassPagination({ pageIndex: res.page || 0, pageSize: 20, totalPages: res.totalPages || 0 });
     } catch (error) {
@@ -308,7 +309,7 @@ export default function AdminEnrollments() {
   };
 
   // Columnas para DataTable (TanStack)
-  const columns: ColumnDef<Enrollment, any>[] = useMemo(() => [
+  const columns: ColumnDef<Enrollment, unknown>[] = useMemo(() => [
     {
       header: 'Clase',
       accessorFn: (row) => `${row.class.subjectName} - ${getLevelName(row.class.level)}`,
@@ -359,7 +360,7 @@ export default function AdminEnrollments() {
   ], [handleViewDetails]);
 
   // Columnas para tabla de clases en el modal
-  const classColumns: ColumnDef<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }, any>[] = useMemo(() => [
+  const classColumns: ColumnDef<Class, unknown>[] = useMemo(() => [
     { header: 'Materia', accessorKey: 'subjectName' },
     { header: 'Profesor', accessorKey: 'teacherName' },
     { header: 'Nivel', accessorFn: (row) => getLevelName(row.level) },
@@ -371,7 +372,12 @@ export default function AdminEnrollments() {
         <Button
           size="sm"
           onClick={() => {
-            setSelectedClass({ _id: row.original._id, subjectName: row.original.subjectName, level: row.original.level, teacherName: row.original.teacherName });
+            setSelectedClass({
+              _id: row.original._id,
+              subjectName: row.original.subjectName ?? '',
+              level: row.original.level,
+              teacherName: row.original.teacherName,
+            });
             setClassSearchOpen(false);
             setPagination((prev) => ({ ...prev, page: 1 }));
           }}
@@ -653,7 +659,7 @@ export default function AdminEnrollments() {
           {classSearchLoading ? (
             <div className="flex justify-center py-8">Cargando...</div>
           ) : (
-            <DataTable<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }>
+            <DataTable<Class>
               columns={classColumns}
               data={classResults}
               manualPagination
