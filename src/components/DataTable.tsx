@@ -33,6 +33,10 @@ export type DataTableProps<TData> = {
   emptyMessage?: React.ReactNode;
   // Optional built-in pagination controls (simple prev/next)
   showPaginationControls?: boolean;
+  // Sticky header when parent container scrolls vertically
+  stickyHeader?: boolean;
+  // Max height for vertical scroll inside the table wrapper
+  bodyMaxHeight?: string; // e.g., '24rem'
 };
 
 export function DataTable<TData>(props: DataTableProps<TData>) {
@@ -55,6 +59,8 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
       <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">Sin datos para mostrar</div>
     ),
     showPaginationControls = false,
+    stickyHeader = false,
+    bodyMaxHeight,
   } = props;
 
   const table = useReactTable({
@@ -78,9 +84,15 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
 
   return (
     <div className={className}>
-      <div className="w-full overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700">
+      <div
+        className={
+          "w-full overflow-x-auto rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm " +
+          (bodyMaxHeight ? "overflow-y-auto" : "")
+        }
+        style={bodyMaxHeight ? { maxHeight: bodyMaxHeight } : undefined}
+      >
         <table className={"w-full text-sm " + (tableClassName ?? "")}> 
-          <thead className={headerClassName ?? "bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300"}>
+          <thead className={(headerClassName ?? "bg-gray-50 dark:bg-gray-900/40 text-gray-700 dark:text-gray-300") + (stickyHeader ? " sticky top-0 z-10" : "")}>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-gray-200 dark:border-gray-700">
                 {headerGroup.headers.map((header) => {
@@ -120,7 +132,10 @@ export function DataTable<TData>(props: DataTableProps<TData>) {
           <tbody className={bodyClassName ?? "divide-y divide-gray-200 dark:divide-gray-700"}>
             {hasRows ? (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50/60 dark:hover:bg-gray-900/40">
+                <tr
+                  key={row.id}
+                  className={"bg-white dark:bg-gray-900/20 hover:bg-gray-100 dark:hover:bg-gray-800/40"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-3 py-2 align-top text-gray-800 dark:text-gray-100">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

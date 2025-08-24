@@ -88,7 +88,7 @@ export default function AdminEnrollments() {
   const [statusFilter, setStatusFilter] = useState<string>('proof_submitted');
   const [pagination, setPagination] = useState({
     page: 1, // Comenzar desde la página 1, no 0
-    limit: 10,
+    limit: 35,
     total: 0,
     totalPages: 0
   });
@@ -113,6 +113,13 @@ export default function AdminEnrollments() {
 
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Filtro por clase
+  const [selectedClass, setSelectedClass] = useState<null | { _id: string; subjectName: string; level: string; teacherName?: string }>(null);
+  const [classSearchOpen, setClassSearchOpen] = useState(false);
+  const [classSearchLoading, setClassSearchLoading] = useState(false);
+  const [classResults, setClassResults] = useState<Array<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }>>([]);
+  const [classPagination, setClassPagination] = useState({ pageIndex: 0, pageSize: 20, totalPages: 0 });
+
   const fetchEnrollments = useCallback(async (status?: string) => {
     setIsLoading(true);
     try {
@@ -120,6 +127,9 @@ export default function AdminEnrollments() {
       const filter = status !== undefined ? status : statusFilter;
       if (filter) {
         url += `&status=${filter}`;
+      }
+      if (selectedClass?._id) {
+        url += `&classId=${selectedClass._id}`;
       }
       const response = await FetchData<EnrollmentResponse>(url, {}, 'GET');
       if (response.success) {
@@ -138,7 +148,7 @@ export default function AdminEnrollments() {
     } finally {
       setIsLoading(false);
     }
-  }, [pagination.page, pagination.limit, statusFilter]);
+  }, [pagination.page, pagination.limit, statusFilter, selectedClass?._id]);
 
   useEffect(() => {
     fetchEnrollments();
@@ -200,6 +210,23 @@ export default function AdminEnrollments() {
     setStatusFilter(newStatus);
     // Resetear a la primera página para evitar páginas vacías al cambiar el filtro
     setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  // Búsqueda de clases (simple, sin zod)
+  const fetchClassesForModal = async (pageIndex: number = 0) => {
+    setClassSearchLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('page', String(pageIndex)); // /api/classes utiliza 0-based
+      const res = await FetchData<{ classes: any[]; totalPages: number; page: number }>(`/api/classes?${params.toString()}`, {}, 'GET');
+      setClassResults(res.classes || []);
+      setClassPagination({ pageIndex: res.page || 0, pageSize: 20, totalPages: res.totalPages || 0 });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al buscar clases';
+      ErrorMsj(message);
+    } finally {
+      setClassSearchLoading(false);
+    }
   };
 
   // Función para obtener el color según el estado
@@ -331,6 +358,30 @@ export default function AdminEnrollments() {
     },
   ], [handleViewDetails]);
 
+  // Columnas para tabla de clases en el modal
+  const classColumns: ColumnDef<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }, any>[] = useMemo(() => [
+    { header: 'Materia', accessorKey: 'subjectName' },
+    { header: 'Profesor', accessorKey: 'teacherName' },
+    { header: 'Nivel', accessorFn: (row) => getLevelName(row.level) },
+    { header: 'Precio', accessorFn: (row) => (row.price ? `$${row.price}` : '-') },
+    {
+      id: 'accion',
+      header: 'Acción',
+      cell: ({ row }) => (
+        <Button
+          size="sm"
+          onClick={() => {
+            setSelectedClass({ _id: row.original._id, subjectName: row.original.subjectName, level: row.original.level, teacherName: row.original.teacherName });
+            setClassSearchOpen(false);
+            setPagination((prev) => ({ ...prev, page: 1 }));
+          }}
+        >
+          Seleccionar
+        </Button>
+      ),
+    },
+  ], []);
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -350,8 +401,36 @@ export default function AdminEnrollments() {
 
         {/* Filtros */}
         <div className="mb-6">
-          <Card className="p-4">
+          <Card className="p-4" fullWidth>
             <div className="flex flex-col md:flex-row md:items-center gap-4">
+              {/* Clase selector */}
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Clase</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedClass ? `${selectedClass.subjectName} - ${getLevelName(selectedClass.level)}` : 'Todas las clases'}
+                    className="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
+                  />
+                  <Button variant="outline" onClick={() => { setClassSearchOpen(true); fetchClassesForModal(0); }} icon={<FiSearch />} />
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (selectedClass) {
+                        setSelectedClass(null);
+                        setPagination((prev) => ({ ...prev, page: 1 }));
+                        // No llamamos fetch inmediatamente para evitar usar el valor anterior de selectedClass.
+                        // useEffect volverá a ejecutar fetchEnrollments con el estado actualizado (sin classId).
+                      }
+                    }}
+                    disabled={!selectedClass}
+                    icon={<FiXCircle />}
+                  >
+                    Limpiar
+                  </Button>
+                </div>
+              </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Filtrar por estado
@@ -390,7 +469,8 @@ export default function AdminEnrollments() {
             <p className="text-gray-500 dark:text-gray-400">Cargando inscripciones...</p>
           </div>
         ) : (
-          <div>
+          <>
+            {/* Altura aproximada para ~10 filas (cada fila ~2.2-2.4rem incluyendo paddings) */}
             <DataTable<Enrollment>
               columns={columns}
               data={enrollments}
@@ -398,8 +478,9 @@ export default function AdminEnrollments() {
               pageCount={pagination.totalPages}
               pagination={{ pageIndex: Math.max(0, (pagination.page || 1) - 1), pageSize: pagination.limit }}
               onPaginationChange={(updater) => {
-                const next = typeof updater === 'function' ? updater({ pageIndex: Math.max(0, (pagination.page || 1) - 1), pageSize: pagination.limit }) : updater;
-                setPagination((prev) => ({ ...prev, page: next.pageIndex + 1, limit: next.pageSize }));
+                const next = typeof updater === 'function' ? updater({ pageIndex: Math.max(0, (pagination.page || 1) - 1), pageSize: 35 }) : updater;
+                const cappedSize = Math.min(35, Math.max(1, next.pageSize));
+                setPagination((prev) => ({ ...prev, page: next.pageIndex + 1, limit: cappedSize }));
               }}
               emptyMessage={
                 <div className="flex flex-col items-center justify-center text-center p-8 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
@@ -410,9 +491,14 @@ export default function AdminEnrollments() {
                   </p>
                 </div>
               }
-              showPaginationControls
+              stickyHeader
+              bodyMaxHeight="24rem"
+              headerClassName="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
             />
-          </div>
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              Total: <span className="font-medium">{pagination.total}</span> inscripciones
+            </div>
+          </>
         )}
       </div>
 
@@ -546,6 +632,41 @@ export default function AdminEnrollments() {
               />
             )}
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal de búsqueda de clases */}
+      <Modal
+        isOpen={classSearchOpen}
+        onClose={() => setClassSearchOpen(false)}
+        title="Buscar Clase"
+        className="max-w-2xl"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600 dark:text-gray-300">Listado de clases</div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => fetchClassesForModal(0)} icon={<FiSearch />}>Buscar</Button>
+            </div>
+          </div>
+
+          {classSearchLoading ? (
+            <div className="flex justify-center py-8">Cargando...</div>
+          ) : (
+            <DataTable<{ _id: string; subjectName: string; teacherName: string; level: string; price?: number }>
+              columns={classColumns}
+              data={classResults}
+              manualPagination
+              pageCount={classPagination.totalPages}
+              pagination={{ pageIndex: classPagination.pageIndex, pageSize: classPagination.pageSize }}
+              onPaginationChange={(updater) => {
+                const next = typeof updater === 'function' ? updater(classPagination) : updater;
+                fetchClassesForModal(next.pageIndex);
+              }}
+              showPaginationControls
+              emptyMessage={<div className="p-4 text-center text-sm text-gray-500">No se encontraron clases</div>}
+            />
+          )}
         </div>
       </Modal>
     </div>

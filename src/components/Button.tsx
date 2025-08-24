@@ -4,7 +4,7 @@ import React, { forwardRef } from 'react';
 import { FiLoader } from 'react-icons/fi';
 
 export interface ButtonProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'ghost';
   size?: 'sm' | 'md' | 'lg';

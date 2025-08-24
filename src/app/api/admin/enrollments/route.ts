@@ -20,12 +20,13 @@ export async function GET(req: NextRequest) {
     // Parámetros de paginación y filtro
     const url = new URL(req.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1')); // Asegurar que page sea al menos 1
-    const limit = Math.max(1, parseInt(url.searchParams.get('limit') || '10')); // Asegurar que limit sea al menos 1
+    const limit = Math.min(35, Math.max(1, parseInt(url.searchParams.get('limit') || '10'))); // Asegurar que limit sea al menos 1 y como máximo 35
     const skip = (page - 1) * limit;
     const status = url.searchParams.get('status') || '';
+    const classId = url.searchParams.get('classId') || '';
     
     // Construir filtro
-    const filter: { status?: string | { $in: string[] } } = {};
+    const filter: { status?: string | { $in: string[] }; class_id?: ObjectId } = {};
     if (status) {
       if (status === 'proof_submitted') {
         filter.status = { $in: ['proof_submitted', 'trial_proof_submitted'] };
@@ -33,6 +34,18 @@ export async function GET(req: NextRequest) {
         filter.status = { $in: ['proof_rejected', 'trial_proof_rejected'] };
       } else {
         filter.status = status;
+      }
+    }
+    if (classId) {
+      try {
+        filter.class_id = new ObjectId(classId);
+      } catch {
+        // Si classId no es válido, devolver vacío para evitar errores
+        return NextResponse.json({
+          success: true,
+          enrollments: [],
+          pagination: { page, limit, total: 0, totalPages: 0 }
+        });
       }
     }
     
